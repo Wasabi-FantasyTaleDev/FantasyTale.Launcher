@@ -57,13 +57,15 @@ additional draw must run synchronously in the render thread, not a timer or
 background callback. Reusing its slot is a possible initial rendering strategy,
 but hook calling convention, HUD lifetime and maximum-HP semantics remain gates.
 
-An experimental exit package now lives under
+The former experimental exit package lived under
 `native/samples/bubblefighter.fantasy.mid-match-exit`, with a single identity,
 kr-812-only compatibility and default-false `all_modes` option. Five sites
 pass offline byte verification; managed parsing/defaults and incompatible
 build rejection pass. Retail 0.1.0 displayed the confirmation but did not exit;
 0.1.1 sent game 506 but subsequently crashed. Version 0.1.2 withdraws that
-fallback and restores the relay confirmation path. It is not bundled or complete.
+fallback and restores the relay confirmation path. The obsolete sample has since
+been removed; the maintained implementation is under
+`modules/BubbleFighter/native/mid-match-exit`.
 
 kr-812 `sub_897850` stamps relay opcode 20008; the tested client has only its
 game TCP connection. `sub_6688E0` already constructs `Packet_gcpRoomReqLeaveGame`

@@ -113,6 +113,9 @@ tracing when no supported imports exist. No trace file is created in that case.
 
 ## Offline prerequisite evidence
 
+The following exit-plugin evidence records the retired sample. That source has
+been removed; current ESC sources are listed in the [plugin source map](../plugin-source-map.md).
+
 On 2026-10-10, `tools/verify-plugin/verify_plugin.py` checked
 `native/samples/bubblefighter.fantasy.mid-match-exit` 0.1.2 against the tracked
 KR2015 `BubbleFighterU.exe` using build id `kr-812`. All five RVA patches matched

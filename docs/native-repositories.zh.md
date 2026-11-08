@@ -44,8 +44,8 @@
    每个仓库必须可以依靠固定版本、文档明确的 SDK 输入独立构建。
 4. 分离运行时、宿主及插件的打包。现有 `tools/package-native.ps1` 仍混合这些步骤，
    还会改写认证包文件哈希。迁移必须保留已发布包的不可变性，不能对冻结发行包运行它来走捷径。
-5. 删除或迁移已跟踪实现前，验证干净检出构建、插件加载、必装插件及 profile 行为。
-   未完成的前进起跳不进入商店发行。分别记录两个仓库的来源及依赖声明。
+5. 删除或迁移受支持的实现前，验证干净检出构建、插件加载、必装插件及 profile 行为。
+   已弃用的实现和停止维护的实验从公开源码移除。分别记录两个仓库的来源及依赖声明。
 
 ## 私有仓库清单
 
@@ -57,12 +57,12 @@ Launcher 与客户端集成共分四个仓库。SDK 和通用运行时留在 Lau
 - [FantasyTale.Launcher.TalesRunner](https://github.com/Wasabi-FantasyTaleDev/FantasyTale.Launcher.TalesRunner)：私有超级跑跑集成与专用插件。
 - [FantasyTale.Launcher.AirRider](https://github.com/Wasabi-FantasyTaleDev/FantasyTale.Launcher.AirRider)：私有跑跑飞空艇集成与专用插件。
 
-泡泡战士本地检出已包含独立的一键跑步，以及包含 13 个客户端 profile、14 组插件定义的
+泡泡战士本地检出已包含独立的一键跑步，以及包含客户端 profile 和现用插件定义的
 集成源码快照，涵盖认证、Overlay 和诊断模块。快照中的原生工程仍引用 Launcher 的共享构建输入，
 一键跑步和诊断模式已有独立公开 ABI 构建记录，后者源码位于该仓库的
 `native/crash-recorder`。干净源码构建及实际 DLL 加载测试覆盖合成宿主中的异常记录、
 失败清理、minidump 结构和真实同步接收记录，不代表游戏行为验收通过，也没有迁移
-`nmcogame` 和认证组件。前进起跳实验源码仅保留供研究，不进入商店发行。
+`nmcogame` 和认证组件。停止维护的前进起跳实验和已被替代的独立插件包已从公开源码移除。
 超级跑跑和跑跑飞空艇仓库仍只有职责说明，上述迁移验收要求仍未完成。
 现有服务端仓库独立维护，不在此次拆分范围。对外再分发仍需完成
 [公开仓库审查](release/public-repository-audit.zh.md)中的剩余项目。

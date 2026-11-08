@@ -60,9 +60,9 @@ The source-level dependency inventory and the ordered C ABI migration plan are i
    payload hashes. Migration must preserve immutable published packages and must
    not run that script against a frozen release as a shortcut.
 5. Verify a clean checkout, plugin loading and required-plugin/profile behavior
-   before deleting or relocating tracked implementation files. Keep unfinished
-   forward-jump work out of store releases. Record provenance and dependency
-   notices for each repository independently.
+   before deleting or relocating supported implementation files. Deprecated
+   implementations and abandoned experiments are removed from the public tree.
+   Record provenance and dependency notices for each repository independently.
 
 ## Private repository inventory
 
@@ -76,15 +76,15 @@ All four repositories were confirmed private when the new repositories were crea
 - [FantasyTale.Launcher.AirRider](https://github.com/Wasabi-FantasyTaleDev/FantasyTale.Launcher.AirRider): private Air Rider integration and plugins.
 
 The local Bubble Fighter checkout contains standalone Auto Dash and an integration source
-snapshot with 13 build profiles and 14 plugin definition directories, including
+snapshot with build profiles and supported plugin definitions, including
 authentication, overlay and diagnostic modules. The snapshot's native projects
 still reference shared Launcher build inputs. Auto Dash and diagnostic mode now
 have independent public-ABI builds; diagnostic source lives under
 `native/crash-recorder` in that repository. Its clean-source build and actual DLL
 loader validate exception capture, failure cleanup, minidump structure and real
 synchronous receive tracing in a synthetic host. These checks do not accept game
-behavior or migrate `nmcogame` and authentication. Experimental forward-jump sources are retained
-for research and are not a store release. Tales Runner and Air Rider remain
+behavior or migrate `nmcogame` and authentication. Abandoned forward-jump sources
+and superseded standalone plugin packages have been removed. Tales Runner and Air Rider remain
 boundary-documentation repositories. The migration gates above remain open.
 Existing server repositories are independent and are not part of this split.
 Public redistribution still depends on the outstanding checks in
