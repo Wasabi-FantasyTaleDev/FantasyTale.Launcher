@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Integration source copies share the root runtime but must not overwrite its deployed binaries. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutDir>$(MSBuildThisFileDirectory)..\artifacts\native-integration\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)..\artifacts\obj\native-integration\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+</Project>

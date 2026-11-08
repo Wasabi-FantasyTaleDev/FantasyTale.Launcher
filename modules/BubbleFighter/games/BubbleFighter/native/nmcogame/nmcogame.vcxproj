@@ -12,12 +12,13 @@
     <RootNamespace>nmcogame</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="..\..\..\..\native\Native.Configuration.props" />
+  <Import Project="..\..\..\..\..\..\native\Native.Configuration.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <Import Project="..\..\..\..\native\Native.props" />
+  <Import Project="..\..\..\..\..\..\native\Native.props" />
+  <Import Project="..\..\..\..\native\integration-output.props" />
   <PropertyGroup>
     <TargetName>nmcogame</TargetName>
   </PropertyGroup>
@@ -48,7 +49,7 @@
     <None Include="nmcogame.def" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\native\runtime\fthook.vcxproj">
+    <ProjectReference Include="..\..\..\..\..\..\native\runtime\fthook.vcxproj">
       <Project>{CBB749D1-4B9E-48C4-8E22-9E6ACBADB808}</Project>
     </ProjectReference>
   </ItemGroup>

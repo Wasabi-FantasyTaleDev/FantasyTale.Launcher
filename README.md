@@ -37,6 +37,9 @@ Windows 11 WinUI 3 application.
 
 ## Documentation
 
+- [Plugin source map](docs/plugin-source-map.md): implementation files and generators for each plugin.
+- [Development tools](tools/README.md): retained build tools and local-only analysis exclusions.
+
 - [Architecture](docs/architecture.md)
 - [Hook plugin format](docs/hook/plugin-format.md)
 - [Session contract](docs/hook/session-contract.md)

@@ -31,12 +31,15 @@
 
 ## 文档
 
+- [插件源码索引](docs/plugin-source-map.zh.md)：逐个插件的实现文件与资源生成入口。
+- [开发工具清单](tools/README.zh.md)：保留的构建工具及仅供本地分析的忽略项。
+
 - [架构](docs/architecture.zh.md)
 - [Hook 插件格式](docs/hook/plugin-format.zh.md)
 - [会话约定（英文）](docs/hook/session-contract.md)
 - [设计决策（英文）](docs/decisions/README.md)
 - [路线图（英文）](docs/roadmap.md)
-- [贡献规则（英文）](CONTRIBUTING.zh.md)
+- [贡献指南](CONTRIBUTING.zh.md)
 
 ## 相关项目
 

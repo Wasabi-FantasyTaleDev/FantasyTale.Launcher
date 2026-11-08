@@ -69,3 +69,14 @@ __pycache__/
 /.claude/
 /ft-shots/
 /WORKSPACE.md
+
+# Local-only client comparison and historical resource investigation.
+/tools/game-ui/extract.py
+/tools/game-ui/extract-v3.py
+/tools/game-ui/inspect-ui-sounds.py
+/modules/BubbleFighter/tools/character-model-verifier/
+/modules/BubbleFighter/tools/pirate-expression-verifier/
+/tools/local/
+/tools/research/
+/modules/BubbleFighter/tools/local/
+/modules/BubbleFighter/tools/research/
