@@ -81,6 +81,8 @@ build TOML 读取时间戳。每个同时运行的测试实例使用独立日志
 
 ## 离线前置证据
 
+下述离场插件记录针对已弃用的示例，其源码现已移除；当前 ESC 实现见[插件源码索引](../plugin-source-map.zh.md)。
+
 2026-10-10，使用 `tools/verify-plugin/verify_plugin.py`，以构建标识 `kr-812`
 对跟踪中的 KR2015 `BubbleFighterU.exe` 检查了
 `native/samples/bubblefighter.fantasy.mid-match-exit` 0.1.2。五个 RVA 补丁全部命中

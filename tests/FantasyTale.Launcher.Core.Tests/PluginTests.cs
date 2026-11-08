@@ -191,24 +191,6 @@ public sealed class PluginTests : IDisposable
     }
 
     [Fact]
-    public void ExperimentalExitPackageRetainsOfficialDefaultsAndLimitsUnverifiedBuilds()
-    {
-        var directory = TestRepository.StartDirectory();
-        while (!File.Exists(Path.Combine(directory!.FullName, "AGENTS.md"))) directory = directory.Parent;
-        var plugin = PluginCatalog.LoadFile(Path.Combine(directory.FullName, "native", "samples",
-            "bubblefighter.fantasy.mid-match-exit", "plugin.toml"));
-        var game = GameCatalog.Load(Path.Combine(directory.FullName, "games")).Single(g => g.Id == "bubblefighter");
-        var build = game.Builds.Single(b => b.Id == "kr-812");
-        Assert.True(PluginCatalog.IsAvailable(plugin, build));
-        Assert.False(PluginCatalog.IsAvailable(plugin, game.Builds.Single(b => b.Id == "id-1809")));
-        Assert.Equal(false, PluginCatalog.ResolveOptions(plugin, build, new Dictionary<string, object>())["all_modes"]);
-        Assert.Equal(true, PluginCatalog.ResolveOptions(plugin, build, new Dictionary<string, object> { ["all_modes"] = true })["all_modes"]);
-        Assert.All(plugin.Patches, patch => Assert.Equal("all_modes", patch.When));
-        Assert.Equal(5, plugin.Patches.Count);
-        Assert.Equal("ESC 提前离场", plugin.Name.Resolve("zh-CN"));
-    }
-
-    [Fact]
     public void AutoDashUsesOnePluginWithVerifiedBuildScopedPatchesAndExcludesNativeSupport()
     {
         var directory = TestRepository.StartDirectory();
@@ -247,26 +229,6 @@ public sealed class PluginTests : IDisposable
         Assert.Equal("74 23", krPatch.Expect);
         var twPatch = plugin.Patches.Single(p => p.Builds.Single() == "tw-454");
         Assert.Equal("74 4A", twPatch.Expect);
-    }
-
-    [Fact]
-    public void ForwardJumpRetainsCn2011ResearchButIsUnavailablePendingStartupAcceptance()
-    {
-        var directory = TestRepository.StartDirectory();
-        while (!File.Exists(Path.Combine(directory!.FullName, "AGENTS.md"))) directory = directory.Parent;
-        var plugin = PluginCatalog.LoadFile(Path.Combine(directory.FullName, "experimental-plugins", "BubbleFighter",
-            "bubblefighter.fantasy.forward-jump", "plugin.toml"));
-        var game = GameCatalog.Load(Path.Combine(directory.FullName, "games")).Single(g => g.Id == "bubblefighter");
-        Assert.Equal("前进起跳", plugin.Name.Resolve("zh-CN"));
-        Assert.Equal("Forward Jump", plugin.Name.Resolve("en"));
-        Assert.False(PluginCatalog.IsAvailable(plugin, game.Builds.Single(b => b.Id == "cn-279")));
-        Assert.All(game.Builds.Where(b => b.Id != "cn-279"), b => Assert.False(PluginCatalog.IsAvailable(plugin, b)));
-        Assert.Equal(true, PluginCatalog.ResolveOptionValues(plugin,
-            new Dictionary<string, object>())["forward_jump"]);
-        var patch = Assert.Single(plugin.Patches);
-        Assert.Equal("cn-279", Assert.Single(patch.Builds));
-        Assert.Equal("74 72", patch.Expect);
-        Assert.Equal("90 90", patch.Write);
     }
 
     [Fact]

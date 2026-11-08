@@ -30,6 +30,8 @@
 
 共享[资源编辑提供器](../src/FantasyTale.Launcher.Games.BubbleFighter/ResourceEdits/)、[归档组合](../src/FantasyTale.Launcher.Games.BubbleFighter/Archives/)和[原生补丁引擎](../native/runtime/src/engine.cpp)负责执行数据定义。游戏字体、角色模型和场景贴图仍由使用者提供；源码保留生成脚本与配置，不包含这些原始素材。
 
+旧版皮蛋、旧版黑妞及角色模型重制独立插件已由新旧角色模型切换取代，旧 font-weight 插件已由中文字体支持取代。这些旧实现、专用生成脚本和测试，以及已弃用的安全兼容插件、停止维护的前进起跳实验和旧 ESC 补丁示例均已移除；上表所列的现用 ESC 实现继续保留。商店弃用记录、旧 ID 别名和冲突声明仍供已有安装升级使用。`gpk_stub` 仍是国服认证组件的打包输入，继续保留。
+
 `modules/BubbleFighter/native/cn-auth/cn_auth.vcxproj` 指向模块内 `games/BubbleFighter/native/login-bridge` 下的适配器，不是只有空工程。`native/sdk/sample_locator.vcxproj` 是 SDK 导出模板；`tools/package-native-sdk.ps1` 会把它与 `native/samples/sample.locator/sample.c` 一起复制到 SDK 包。请构建导出后的 SDK 示例，或源码树内 `native/samples/sample.locator` 的工程。
 
 启动器集成请从根目录原生解决方案构建。模块内的集成副本通过已修正的相对导入使用根目录运行时，输出到模块独立的 `artifacts/native-integration` 目录；独立模块工程则使用固定版本 SDK。参见[贡献指南](../CONTRIBUTING.zh.md)和[工具清单](../tools/README.zh.md)。

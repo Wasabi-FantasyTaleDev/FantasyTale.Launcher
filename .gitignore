@@ -80,3 +80,24 @@ __pycache__/
 /tools/research/
 /modules/BubbleFighter/tools/local/
 /modules/BubbleFighter/tools/research/
+
+# Retired plugin implementations; migration and store retirement data remain tracked.
+/docs/hook/forward-jump.md
+/experimental-plugins/BubbleFighter/bubblefighter.fantasy.forward-jump/
+/experimental-plugins/BubbleFighter/bubblefighter.fantasy.forward-jump-cn2011-preview/
+/games/BubbleFighter/native/forward-jump/
+/native/tests/forward_jump_tests.cpp
+/native/tests/forward_jump_tests.vcxproj
+/native/samples/bubblefighter.fantasy.mid-match-exit/
+/modules/BubbleFighter/games/BubbleFighter/native/forward-jump/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.forward-jump/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.forward-jump-cn2011-preview/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.dao-classic-model/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.dizni-classic-model/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.lxmarid-remaster/
+/modules/BubbleFighter/games/BubbleFighter/plugins/bubblefighter.fantasy.font-weight-1.0.3/
+/store-plugins/BubbleFighter/bubblefighter.fantasy.font-weight-1.0.4/
+/store-plugins/BubbleFighter/bubblefighter.fantasy.legacy-security-compatibility/
+/modules/BubbleFighter/tools/package-classic-character-models.py
+/modules/BubbleFighter/tools/package-lxmarid-remaster.py
+/modules/BubbleFighter/tools/tests/test_classic_character_models.py
