@@ -1,0 +1,54 @@
+schema = 1
+source_commit = "4b1f72a2edce2f2caec3429980d4900e3616e406"
+capability = "bf-native-center-automatic-v1"
+capabilities_sha256 = "e74b7dc6bf1b4d87cf2971ba93145a91c6eacf1d697cf81293502a67f365677b"
+runtime_version = "10.0.14"
+extensions_version = "10.0.2"
+merged_source_commit = "46fd44ba7565a003ad46756ecf7af60799e6b50f"
+
+[[files]]
+path = "notices/DependencyInjection.Abstractions-THIRD-PARTY-NOTICES.txt"
+size = 78041
+sha256 = "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21"
+
+[[files]]
+path = "notices/DotNet-LICENSE.txt"
+size = 1139
+sha256 = "d7a68596ab69b06f51ca278a6545148e4269a9381c26d597c13df5d88e08cf5b"
+
+[[files]]
+path = "notices/DotNet-THIRD-PARTY-NOTICES.txt"
+size = 78041
+sha256 = "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21"
+
+[[files]]
+path = "notices/FantasyTale.Gateway-LICENSE.txt"
+size = 1076
+sha256 = "f8497c706b59c88ae1ab6455a5097126c54ee0de042fb54b095c89fd2ae35e7f"
+
+[[files]]
+path = "notices/Logging.Abstractions-THIRD-PARTY-NOTICES.txt"
+size = 78041
+sha256 = "6d15e10a101c6bfff2ab4429ed061bf76c456fc4b23ad6b03e0d0f8377148a21"
+
+[[files]]
+path = "win-arm64/FantasyTale.Gateway.capabilities.json"
+size = 535
+sha256 = "e74b7dc6bf1b4d87cf2971ba93145a91c6eacf1d697cf81293502a67f365677b"
+
+[[files]]
+path = "win-arm64/FantasyTale.Gateway.exe"
+size = 3266048
+sha256 = "f95a1aa2c0a03de429c221eb2ad618c777dfd0ae15dfac742f2ef48539dcbac2"
+machine = 43620
+
+[[files]]
+path = "win-x64/FantasyTale.Gateway.capabilities.json"
+size = 535
+sha256 = "e74b7dc6bf1b4d87cf2971ba93145a91c6eacf1d697cf81293502a67f365677b"
+
+[[files]]
+path = "win-x64/FantasyTale.Gateway.exe"
+size = 3146752
+sha256 = "cd6a0113a7b4db3c9ca65eb95077ff4c45061d74bff50c2e45706b6fe224caa5"
+machine = 34404

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="/ui-library/game-ui.css">
+<script type="importmap">
+{
+  "imports": {
+    "vue": "/ui-library/vue.esm-browser.prod.js"
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    overflow: hidden;
+  }
+  /* Each panel is absolutely positioned; placement is set inline by C# or CSS in the panel itself. */
+  .ft-panel {
+    position: absolute;
+    display: none;
+  }
+  .ft-panel.visible { display: block; }
+  #overlay-backdrop { position:absolute;inset:0;display:none;pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="overlay-backdrop" aria-hidden="true"></div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const theme = params.get('theme') ?? 'v2';
+  if (!['v1', 'v2', 'v3'].includes(theme)) throw new Error(`Unknown overlay theme: ${theme}`);
+  document.documentElement.dataset.ftTheme = theme;
+  window.fantasyTaleOverlayTheme = theme;
+  // The compiled game UI library is exposed as an optional capability. It is
+  // loaded once and stays dormant until a plugin mounts a Vue component; the
+  // foundation overlay itself never paints over the game during loading.
+  window.fantasyTaleGameUiReady = import('/ui-library/game-ui.js')
+    .then(module => { window.fantasyTaleGameUi = module; return module; })
+    .catch(error => { window.fantasyTaleGameUiError = String(error); return null; });
+</script>
+<script type="module">
+import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks } from './panel-stack.js';
+import { resolveAnchor } from './anchors.js';
+import { waitForNativeSurface } from './surface-ready.js';
+/**
+ * overlayBus — the communication contract between C# and panel components.
+ *
+ * C# → page:  postWebMessageAsString(JSON)
+ *   { type: "register",   panelId, html?, fileName? }
+ *   { type: "unregister", panelId }
+ *   { type: "show",       panelId }
+ *   { type: "hide",       panelId }
+ *   { type: "send",       panelId, name, data }
+ *
+ * page → C#:  chrome.webview.postMessage(JSON)
+ *   { type: "event", panelId, name, data }
+ *
+ * Panel components → overlayBus:
+ *   overlayBus.emit(panelId, name, data)   // send to C#
+ *   overlayBus.on(panelId, name, handler)  // receive from C#
+ */
+
+const panels = new Map(); // panelId → { host: HTMLElement, shadow: ShadowRoot, listeners: Map }
+const backdrop = document.getElementById('overlay-backdrop');
+let physicalViewport = { pixelWidth: innerWidth, pixelHeight: innerHeight };
+const uiLibrary = Promise.all([import('vue'), import('/ui-library/game-ui.js')])
+    .then(([vue, components]) => ({ vue, components }));
+const resourceRoot = new URLSearchParams(location.search).get('resources') === 'external'
+    ? 'https://resources.fantasytale.local/' : '/resources/';
+const localeCatalog = await fetch('/locales.json').then(r => {
+    if (!r.ok) throw new Error('Overlay locale catalog is unavailable.');
+    return r.json();
+});
+const requestedLocale = params.get('locale') ?? localeCatalog.default;
+const activeLocale = localeCatalog.locales[requestedLocale]?.status === 'ready' ? requestedLocale : localeCatalog.default;
+document.documentElement.lang = activeLocale;
+function translate(key) {
+    return localeCatalog.locales[activeLocale].messages[key]
+        ?? localeCatalog.locales[localeCatalog.default].messages[key] ?? key;
+}
+
+// Custom HTML cues have no assigned assets. Native Vue controls bind their own
+// resource-backed player, including the original event gains.
+const soundAssets = new Map();
+function playSound(panelId, cue) {
+    if (!['dialog-open', 'button-press', 'notification'].includes(cue)) return false;
+    const source = soundAssets.get(cue);
+    if (!source) return false;
+    const audio = new Audio(source);
+    audio.play().catch(() => {});
+    return true;
+}
+
+function createPanel(panelId, html) {
+    if (panels.has(panelId)) throw new Error(`Overlay panel already exists: ${panelId}`);
+    const host = document.createElement('div');
+    host.className = 'ft-panel';
+    host.dataset.panelId = panelId;
+    const shadow = host.attachShadow({ mode: 'open' });
+    shadow.innerHTML = html;
+    const sizing = document.createElement('style');
+    sizing.textContent = ':host,*,*::before,*::after{box-sizing:border-box}';
+    shadow.prepend(sizing);
+    const sharedStyle = document.querySelector('link[href="/ui-library/game-ui.css"]');
+    if (sharedStyle instanceof HTMLLinkElement) shadow.prepend(sharedStyle.cloneNode(true));
+    const entry = { host, shadow, listeners: new Map(), app: null, interactive: false, modal: false, layer: 0, dialog: false,
+        dragging: false, dragged: false, anchor: null, requestedVisible: false, backdrop: false, backdropColor: null, passThroughOutside: false };
+    panels.set(panelId, entry);
+    document.body.appendChild(host);
+    const observer = new ResizeObserver(reportPresentation);
+    observer.observe(host);
+    entry.observer = observer;
+    shadow.addEventListener('pointerdown', () => { bringToFront(panels, panelId); reportPresentation(); });
+    shadow.addEventListener('keydown', e => handlePanelKey(e, entry));
+    shadow.addEventListener('click', e => {
+        const action = e.target instanceof Element ? e.target.closest('[data-overlay-action]') : null;
+        if (!action || !inputPanels(orderedPanels(panels)).includes(entry)) return;
+        playSound(panelId, 'button-press');
+        window.overlayBus.emit(panelId, 'html.action', { name: action.getAttribute('data-overlay-action') });
+    });
+    return entry;
+}
+
+let lastPresentation = '';
+function reportPresentation(force = false) {
+    const shown = orderedPanels(panels);
+    const receivers = inputPanels(shown);
+    shown.forEach((p, index) => {
+        p.host.style.zIndex = String(index + 1);
+        p.host.style.pointerEvents = receivers.includes(p) ? 'auto' : 'none';
+        p.host.inert = !receivers.includes(p);
+    });
+    const modal = receivers.find(p => p.modal);
+    const scrimOwner = shown.findLast(p => p.backdrop);
+    backdrop.style.display = scrimOwner ? 'block' : 'none';
+    if (scrimOwner) {
+        // TODO: replace the neutral default with the approved game scrim color.
+        backdrop.style.background = scrimOwner.backdropColor ?? 'rgba(0,0,0,0.3)';
+        backdrop.style.zIndex = String(shown.indexOf(scrimOwner) * 2 + 1);
+    }
+    shown.forEach((p, index) => { p.host.style.zIndex = String(index * 2 + 2); });
+    const state = JSON.stringify({
+        type: 'presentation-state', visible: shown.length > 0,
+        busy: pendingCommands > 0,
+        interactive: receivers.length > 0, modal: !!modal,
+        passThroughOutside: passesOutsideClicks(shown),
+        capturePointer: receivers.some(p => p.dragging),
+        regions: receivers.map(p => {
+            const r = p.host.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+        }),
+    });
+    if (force === true || state !== lastPresentation) {
+        lastPresentation = state;
+        window.chrome?.webview?.postMessage(state);
+    }
+}
+
+function hidePanel(entry) {
+    entry.requestedVisible = false;
+    entry.host.classList.remove('visible');
+    entry.dragging = false;
+    reportPresentation();
+}
+
+function updateAnchor(entry) {
+    if (!entry.anchor) return;
+    const a = entry.anchor;
+    entry.host.classList.toggle('visible', entry.requestedVisible && a.visible !== false);
+    if (!entry.requestedVisible || a.visible === false) return;
+    const rect = entry.host.getBoundingClientRect();
+    const bounds = resolveAnchor(a, { ...physicalViewport, width: innerWidth, height: innerHeight }, rect);
+    entry.host.style.transform = 'none';
+    entry.host.style.left = bounds.x + 'px';
+    entry.host.style.top = bounds.y + 'px';
+    if ((a.placement ?? 'cover') === 'cover') {
+        entry.host.style.width = bounds.width + 'px'; entry.host.style.height = bounds.height + 'px';
+    }
+}
+
+function handlePanelKey(e, entry) {
+    if (e.defaultPrevented) return;
+    const receivers = inputPanels(orderedPanels(panels));
+    if (receivers.at(-1) !== entry) return;
+    if (e.key === 'Escape' && entry.dialog) {
+        const panelId = entry.host.dataset.panelId;
+        hidePanel(entry);
+        window.overlayBus.emit(panelId, entry.extensionSettings ? 'game-ui.cancel' : 'game-ui.action', { name: 'cancel' });
+        e.preventDefault();
+    }
+    if (e.key === 'Tab' && entry.modal) {
+        const items = [...entry.shadow.querySelectorAll('button,input,select,textarea,[tabindex]')]
+            .filter(p => !p.disabled && p.tabIndex >= 0 && p.getClientRects().length);
+        if (!items.length) { e.preventDefault(); return; }
+        const index = items.indexOf(entry.shadow.activeElement);
+        items[(index + (e.shiftKey ? -1 : 1) + items.length) % items.length].focus();
+        e.preventDefault();
+    }
+}
+document.addEventListener('keydown', e => {
+    const top = inputPanels(orderedPanels(panels)).at(-1);
+    if (top) handlePanelKey(e, top);
+});
+function clampPanel(entry) {
+    if (!entry.dragged || !entry.host.classList.contains('visible')) return;
+    const r = entry.host.getBoundingClientRect();
+    entry.host.style.left = Math.max(0, Math.min(innerWidth - r.width, r.left)) + 'px';
+    entry.host.style.top = Math.max(0, Math.min(innerHeight - r.height, r.top)) + 'px';
+}
+window.addEventListener('resize', () => {
+    for (const entry of panels.values()) { if (entry.anchor) updateAnchor(entry); else clampPanel(entry); }
+    reportPresentation();
+});
+
+window.overlayBus = {
+    /** Build capabilities are selected by data, independently of a plugin's shared behavior. */
+    buildContext: null,
+    hasCapability(name) { return this.buildContext?.profile?.capabilities?.includes(name) === true; },
+    /** Shell strings currently ship in zh-CN; other catalog rows remain explicit TODOs. */
+    locale: activeLocale,
+    translate,
+    /** Optional sound provider; unassigned sound cues deliberately remain silent. */
+    playSound,
+    /**
+     * Send an event from a panel's JS to the C# host.
+     * @param {string} panelId
+     * @param {string} name
+     * @param {any}    data
+     */
+    emit(panelId, name, data = {}) {
+        window.chrome.webview.postMessage(
+            JSON.stringify({ type: 'event', panelId, name, data }));
+    },
+
+    /**
+     * Register a handler for events sent from C# to a specific panel.
+     * @param {string}   panelId
+     * @param {string}   name
+     * @param {Function} handler  receives (data, panelId)
+     */
+    on(panelId, name, handler) {
+        const entry = panels.get(panelId);
+        if (!entry) return;
+        if (!entry.listeners.has(name)) entry.listeners.set(name, []);
+        entry.listeners.get(name).push(handler);
+    },
+
+    /** Resolve the optional Vue component library and the selected native theme. */
+    loadGameUi() {
+        return uiLibrary.then(value => ({ ...value, theme: window.fantasyTaleOverlayTheme }));
+    },
+
+    /** Mount one library component into a panel's shadow root. */
+    async mountGameUi(panelId, component, props = {}, target = null) {
+        const entry = panels.get(panelId);
+        if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
+        const { vue, components } = await uiLibrary;
+        if (panels.get(panelId) !== entry) return;
+        const selected = typeof component === 'string' ? components[component] : component;
+        if (!selected) throw new Error(`Unknown game UI component: ${component}`);
+        entry.extensionSettings = selected === components.BfExtensionSettings;
+        entry.dialog = selected === components.BfMessageBox || selected === components.BfDialog || entry.extensionSettings;
+        if (entry.dialog && theme !== 'v3' && Array.isArray(props.buttons)) {
+            props = { ...props, buttons: props.buttons.map((button, index) => ({
+                ...button, sprite: button.sprite ?? (theme === 'v1'
+                    ? `Images/Ui/DialogButton${index === 0 ? 'Ok' : 'Cancel'}-Up.smf`
+                    : `Images/Ui/DialogBtn${index === 0 ? 'Ok' : 'Cancel'}.smf`),
+            })) };
+        }
+        const mountPoint = target ? entry.shadow.querySelector(target) : entry.shadow.querySelector('[data-game-ui-root]');
+        if (!(mountPoint instanceof HTMLElement)) throw new Error('The panel mount target was not found.');
+        entry.app?.unmount();
+        entry.uiObserver?.disconnect();
+        const surface = waitForNativeSurface(mountPoint);
+        const emitComponentEvent = (name, data) => {
+            if (panels.get(panelId) !== entry) return;
+            if (name === 'action') playSound(panelId, 'button-press');
+            if (['action', 'close', 'save', 'cancel'].includes(name) && entry.dialog) hidePanel(entry);
+            if (name === 'error') { surface.fail(data); hidePanel(entry); }
+            window.overlayBus.emit(panelId, 'game-ui.' + name,
+                name === 'error' ? { message: String(data) } : data ?? {});
+        };
+        entry.app = vue.createApp({
+            render: () => vue.h(components.BfUiProvider,
+                { theme: window.fantasyTaleOverlayTheme, clientDate: window.overlayBus.buildContext?.buildDate?.slice(0, 10), resourceRoot, onError: e => emitComponentEvent('error', e) },
+                { default: () => vue.h(selected, { ...props,
+                    onAction: data => emitComponentEvent('action', data),
+                    onChange: data => emitComponentEvent('change', data),
+                    onClose: data => emitComponentEvent('close', data),
+                    onSave: data => emitComponentEvent('save', data),
+                    onCancel: () => emitComponentEvent('cancel'),
+                    onError: e => emitComponentEvent('error', e),
+                }) }),
+        });
+        const mounted = entry.app.mount(mountPoint);
+        // The resource-backed renderer creates its title bar asynchronously.
+        // Observe that creation without polling, then attach the default drag handle.
+        entry.uiObserver = new MutationObserver(() => {
+            const handle = entry.shadow.querySelector('.bf-window .caption');
+            if (handle && !handle.dataset.overlayDrag) {
+                handle.dataset.overlayDrag = 'true';
+                handle.style.cursor = 'move';
+                window.overlayBus.makeDraggable(panelId, handle);
+            }
+        });
+        entry.uiObserver.observe(mountPoint, { childList: true, subtree: true });
+        await surface.ready;
+        return mounted;
+    },
+
+    /**
+     * Make the panel host draggable within the game window.
+     * The host element should have `pointer-events: none` in its base CSS;
+     * the drag handle inside the shadow DOM must set `pointer-events: auto`.
+     * @param {string}      panelId
+     * @param {HTMLElement} handle   The element inside the shadow DOM that initiates the drag.
+     */
+    makeDraggable(panelId, handle) {
+        const entry = panels.get(panelId);
+        if (!entry) return;
+        const host = entry.host;
+        let startX = 0, startY = 0, startLeft = 0, startTop = 0, dragging = false;
+
+        handle.addEventListener('pointerdown', e => {
+            if (e.button !== 0) return;
+            // Anchored panels follow their source; dragging the source UI is a
+            // locator concern and must not detach the replacement HTML surface.
+            if (entry.anchor) return;
+            dragging = true;
+            entry.dragging = true;
+            entry.dragged = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const bounds = host.getBoundingClientRect();
+            startLeft = bounds.left;
+            startTop = bounds.top;
+            host.style.transform = 'none';
+            host.style.left = startLeft + 'px';
+            host.style.top = startTop + 'px';
+            handle.setPointerCapture(e.pointerId);
+            reportPresentation();
+            e.preventDefault();
+        });
+
+        handle.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            // Clamp within the overlay surface (which is already clamped to the game client area).
+            const maxLeft = window.innerWidth  - host.offsetWidth;
+            const maxTop  = window.innerHeight - host.offsetHeight;
+            host.style.left = Math.max(0, Math.min(maxLeft, startLeft + dx)) + 'px';
+            host.style.top  = Math.max(0, Math.min(maxTop,  startTop  + dy)) + 'px';
+            reportPresentation();
+        });
+
+        const endDrag = () => {
+            if (!dragging) return;
+            dragging = false;
+            entry.dragging = false;
+            // Restore click-through so the game receives input again.
+            reportPresentation();
+        };
+        handle.addEventListener('pointerup',     endDrag);
+        handle.addEventListener('pointercancel', endDrag);
+        handle.addEventListener('lostpointercapture', endDrag);
+    },
+};
+
+// ── Message handler (C# → page) ──────────────────────────────────────────────
+
+async function handleMessage(e) {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+
+    const { type, panelId } = msg;
+    if (type === 'build-context') {
+        window.overlayBus.buildContext = msg.context;
+        for (const id of panels.keys()) window.overlayBus.emit(id, 'game-ui.context', msg.context);
+        return;
+    }
+    if (type === 'viewport') {
+        physicalViewport = { pixelWidth: msg.pixelWidth, pixelHeight: msg.pixelHeight };
+        for (const entry of panels.values()) if (entry.anchor) updateAnchor(entry);
+        reportPresentation();
+        return;
+    }
+    if (!type || !panelId) return;
+
+    switch (type) {
+        case 'register': {
+            // Publish the entry before loading a package file. This keeps show/hide/send
+            // ordered when a file-backed panel arrives immediately after registration.
+            const entry = createPanel(panelId, msg.html ?? '');
+            entry.layer = Number.isInteger(msg.layer) ? Math.max(0, Math.min(10000, msg.layer)) : 0;
+            entry.interactive = msg.interactive === true;
+            entry.modal = msg.modal === true;
+            entry.passThroughOutside = msg.passThroughOutside === true;
+            entry.backdrop = msg.backdrop === true;
+            entry.backdropColor = typeof msg.backdropColor === 'string' && msg.backdropColor.length <= 64
+                && CSS.supports('color', msg.backdropColor) ? msg.backdropColor : null;
+            if (window.overlayBus.buildContext) window.overlayBus.emit(panelId, 'game-ui.context', window.overlayBus.buildContext);
+
+            let html = msg.html ?? '';
+            if (!html && msg.fileName) {
+                try {
+                    const resp = await fetch(`https://overlay.fantasytale.local/${msg.fileName}`);
+                    html = resp.ok ? await resp.text() : `<p style="color:red">Failed to load ${msg.fileName}</p>`;
+                } catch {
+                    html = `<p style="color:red">Error loading ${msg.fileName}</p>`;
+                }
+            }
+            if (msg.fileName && panels.get(panelId) === entry) {
+                const content = document.createElement('div');
+                content.innerHTML = html;
+                entry.shadow.append(content);
+            }
+            const componentRoot = entry.shadow.querySelector('[data-game-ui-root][data-game-ui-component]');
+            if (componentRoot instanceof HTMLElement) {
+                try {
+                    await window.overlayBus.mountGameUi(panelId, componentRoot.dataset.gameUiComponent,
+                        JSON.parse(componentRoot.dataset.gameUiProps || '{}'));
+                    window.overlayBus.emit(panelId, 'game-ui.mounted');
+                } catch (error) {
+                    window.overlayBus.emit(panelId, 'game-ui.error', { message: String(error) });
+                }
+            }
+            break;
+        }
+
+        case 'unregister': {
+            const entry = panels.get(panelId);
+            if (entry) { entry.observer.disconnect(); entry.uiObserver?.disconnect(); entry.app?.unmount(); entry.host.remove(); panels.delete(panelId); }
+            reportPresentation();
+            break;
+        }
+
+        case 'show': {
+            const entry = panels.get(panelId);
+            if (entry) { entry.requestedVisible = true; entry.host.classList.add('visible'); updateAnchor(entry); }
+            if (panels.has(panelId)) clampPanel(panels.get(panelId));
+            bringToFront(panels, panelId);
+            reportPresentation();
+            break;
+        }
+
+        case 'hide': {
+            const entry = panels.get(panelId);
+            if (entry) hidePanel(entry);
+            break;
+        }
+
+        case 'send': {
+            const entry = panels.get(panelId);
+            if (!entry) break;
+            if (msg.name === 'game-ui.bring-to-front') {
+                bringToFront(panels, panelId);
+                reportPresentation();
+                break;
+            }
+            if (msg.name === 'game-ui.sound') { playSound(panelId, msg.data?.cue); break; }
+            if (msg.name === 'game-ui.configure') {
+                if (Number.isInteger(msg.data?.layer) && msg.data.layer >= 0 && msg.data.layer <= 10000)
+                    entry.layer = msg.data.layer;
+                if (typeof msg.data?.interactive === 'boolean') entry.interactive = msg.data.interactive;
+                if (typeof msg.data?.modal === 'boolean') entry.modal = msg.data.modal;
+                if (typeof msg.data?.passThroughOutside === 'boolean') entry.passThroughOutside = msg.data.passThroughOutside;
+                if (typeof msg.data?.backdrop === 'boolean') entry.backdrop = msg.data.backdrop;
+                if (msg.data?.backdropColor === null) entry.backdropColor = null;
+                else if (typeof msg.data?.backdropColor === 'string' && msg.data.backdropColor.length <= 64
+                    && CSS.supports('color', msg.data.backdropColor)) entry.backdropColor = msg.data.backdropColor;
+                reportPresentation();
+                break;
+            }
+            if (msg.name === 'game-ui.anchor') {
+                if (!entry.anchor && msg.data) entry.originalLayout = entry.host.style.cssText;
+                entry.anchor = msg.data;
+                if (entry.anchor) updateAnchor(entry);
+                else {
+                    entry.host.style.cssText = entry.originalLayout ?? '';
+                    entry.host.classList.toggle('visible', entry.requestedVisible);
+                }
+                reportPresentation();
+                break;
+            }
+            if (msg.name === 'html.update') {
+                for (const target of entry.shadow.querySelectorAll('[data-overlay-text]')) {
+                    const key = target.getAttribute('data-overlay-text');
+                    if (Object.hasOwn(msg.data ?? {}, key)) target.textContent = String(msg.data[key] ?? '');
+                }
+                break;
+            }
+            if (msg.name === 'game-ui.interactive') {
+                entry.interactive = msg.data?.interactive === true;
+                reportPresentation();
+                break;
+            }
+            if (msg.name === 'game-ui.message-box') {
+                const data = { ...msg.data,
+                    title: msg.data?.title ?? translate('dialog.title'),
+                    buttons: msg.data?.buttons ?? [{ name: 'ok', label: translate('dialog.confirm') }],
+                };
+                if (typeof data?.title !== 'string' || typeof data?.text !== 'string'
+                    || data.title.length > 256 || data.text.length > 8192
+                    || !Array.isArray(data.buttons) || data.buttons.length < 1 || data.buttons.length > 4
+                    || data.buttons.some(b => typeof b?.name !== 'string' || !b.name || b.name.length > 64
+                        || typeof b?.label !== 'string' || !b.label || b.label.length > 128))
+                    throw new Error('Invalid message box options.');
+                entry.interactive = true;
+                entry.modal = true;
+                await window.overlayBus.mountGameUi(panelId, 'BfMessageBox', data);
+                entry.requestedVisible = true;
+                entry.host.classList.add('visible');
+                updateAnchor(entry);
+                bringToFront(panels, panelId);
+                reportPresentation();
+                window.overlayBus.emit(panelId, 'game-ui.mounted');
+                playSound(panelId, 'dialog-open');
+                break;
+            }
+            if (msg.name === 'game-ui.mount') {
+                try {
+                    if (typeof msg.data?.component !== 'string') throw new Error('A game UI component name is required.');
+                    await window.overlayBus.mountGameUi(panelId, msg.data.component, msg.data.props ?? {}, msg.data.target ?? null);
+                    window.overlayBus.emit(panelId, 'game-ui.mounted');
+                } catch (error) {
+                    window.overlayBus.emit(panelId, 'game-ui.error', { message: String(error) });
+                }
+                break;
+            }
+            const handlers = entry.listeners.get(msg.name);
+            handlers?.forEach(h => h(msg.data ?? {}, panelId));
+            break;
+        }
+    }
+}
+
+// Keep mount/show/hide ordered even while a component or file is loading.
+let commandQueue = Promise.resolve();
+let pendingCommands = 0;
+window.chrome?.webview?.addEventListener('message', e => {
+    if (pendingCommands >= 256) {
+        window.chrome.webview.postMessage(JSON.stringify({ type: 'page-error', code: 'queue-full' }));
+        return;
+    }
+    pendingCommands++;
+    commandQueue = commandQueue.then(() => handleMessage(e)).catch(error => {
+        let panelId;
+        try { panelId = JSON.parse(e.data).panelId; } catch { /* Malformed commands have no owner. */ }
+        if (typeof panelId === 'string') {
+            const entry = panels.get(panelId);
+            if (entry) hidePanel(entry);
+            window.overlayBus.emit(panelId, 'game-ui.error', { message: String(error) });
+        }
+    }).finally(() => {
+        pendingCommands--; reportPresentation(true);
+        try {
+            const { wakeId } = JSON.parse(e.data);
+            if (Number.isSafeInteger(wakeId)) window.chrome.webview.postMessage(JSON.stringify({type:'command-completed',wakeId}));
+        } catch { /* Malformed input is reported by the command error path. */ }
+    });
+});
+
+// Signal only after the command listener exists, so early startup panels cannot
+// be lost between document navigation and module initialization.
+await uiLibrary;
+window.chrome?.webview?.postMessage(JSON.stringify({ type: 'page-ready' }));
+reportPresentation();
+
+// Explicit local preview only; the installed foundation remains visually empty.
+if (new URLSearchParams(location.search).get('preview') === 'game-ui') {
+    const preview = createPanel('local.game-ui-preview', '<div data-game-ui-root></div>');
+    preview.host.style.cssText = 'left:24px;top:24px;pointer-events:none';
+    preview.host.classList.add('visible');
+    await window.overlayBus.mountGameUi('local.game-ui-preview', 'BfMessageBox', {
+        title: 'Fantasy Tale Overlay', text: 'HTML / Vue UI',
+        buttons: [{ name: 'Ok', label: 'OK' }],
+    });
+    reportPresentation();
+}
+</script>
+</body>
+</html>

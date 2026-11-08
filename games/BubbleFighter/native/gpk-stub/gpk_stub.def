@@ -1,0 +1,4 @@
+LIBRARY gpk_stub
+EXPORTS
+    gp_create=_gp_create@8 @1 NONAME
+    gp_release=_gp_release@0 @2 NONAME

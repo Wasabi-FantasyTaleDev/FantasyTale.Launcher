@@ -1,0 +1,26 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.mid-match-exit"
+version = "0.2.6"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.7.2 <4.0.0"
+minimum_launcher_version = "0.1.61"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+name = { en = "Leave an ongoing match", "zh-CN" = "ESC 提前离场" }
+description = { "zh-CN" = "安装后可在对局中途按下 ESC 提前返回广场。", "zh-TW" = "安裝後可在對局中途按下 ESC 提前返回廣場。", "en" = "Press ESC during a match to return to the plaza early.", "ko" = "설치 후 경기 도중 ESC를 눌러 광장으로 돌아갈 수 있습니다.", "id" = "Tekan ESC saat pertandingan untuk kembali ke plaza lebih awal.", "vi" = "Nhấn ESC trong trận đấu để trở về quảng trường sớm.", "th" = "กด ESC ระหว่างการแข่งขันเพื่อกลับลานก่อนจบการแข่งขัน" }
+
+[compatibility]
+builds = ["cn-279", "cn-324", "cn-404", "cn-406", "cn-408", "cn-706", "cn-717", "cn-735", "cn-774", "id-400", "id-1809", "kr-812", "kr-1256", "tw-454"]
+
+[native]
+library = "mid_match_exit.dll"
+entry = "fthook_plugin_main"
+
+[companion.messages]
+"game.command.execute" = 1
+"game.session.state" = 1
+
+# Early-client Escape is observed by the worker without declaring any memory write.

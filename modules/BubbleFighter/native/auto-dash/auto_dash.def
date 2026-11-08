@@ -1,0 +1,3 @@
+LIBRARY auto_dash
+EXPORTS
+    fthook_plugin_main

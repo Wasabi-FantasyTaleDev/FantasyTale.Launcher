@@ -1,0 +1,36 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.login-fix-kr"
+aliases = ["bubblefighter.fantasy.kr-auth"]
+version = "0.1.5"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.7.2 <4.0.0"
+minimum_launcher_version = "0.1.57"
+update_source = "fantasy-tale"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Korean client authentication component"
+"zh-CN" = "韩服认证组件"
+"zh-TW" = "韓國認證元件"
+ko = "한국 클라이언트 인증 구성 요소"
+id = "Komponen autentikasi klien Korea"
+vi = "Thành phần xác thực máy khách Hàn Quốc"
+
+[plugin.description]
+en = "Required for KR2026 launcher ticket login. Keep this component installed, enabled and up to date."
+"zh-CN" = "用于韩服 2026 的启动器票据登录，请保持安装、启用并更新至最新版本。"
+"zh-TW" = "用於韓國 2026 的啟動器票據登入，請保持安裝、啟用並更新至最新版本。"
+ko = "한국 2026 클라이언트의 런처 티켓 로그인에 필요합니다. 설치 및 활성화하고 최신 버전을 유지하세요."
+id = "Diperlukan untuk login tiket launcher Korea 2026. Tetap pasang, aktifkan, dan perbarui komponen ini."
+vi = "Cần thiết để đăng nhập bằng vé launcher cho bản Hàn Quốc 2026. Hãy cài đặt, bật và cập nhật thành phần này."
+
+[compatibility]
+builds = ["kr-1256"]
+
+[native]
+library = "kr_auth.dll"
+entry = "fthook_plugin_main"

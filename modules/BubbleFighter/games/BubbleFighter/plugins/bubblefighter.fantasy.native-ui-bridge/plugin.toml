@@ -1,0 +1,37 @@
+schema = 1
+
+[plugin]
+update_source = "fantasy-tale"
+id = "bubblefighter.fantasy.native-ui-bridge"
+aliases = ["bubblefighter.fantasy.overlay-notifications"]
+version = "0.1.2"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.7.2 <4.0.0"
+minimum_launcher_version = "0.1.57"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+name = { "zh-CN" = "Fantasy Tale 游戏控件调用支持", "zh-TW" = "Fantasy Tale 遊戲控制項呼叫支援", en = "Fantasy Tale Game Control Support", ko = "Fantasy Tale 게임 컨트롤 호출 지원", id = "Dukungan Kontrol Game Fantasy Tale", vi = "Hỗ trợ gọi điều khiển trò chơi Fantasy Tale" }
+description = { "zh-CN" = "启用后可在已适配的版本中调用原生组件能力", "zh-TW" = "啟用後可在已適配的版本中呼叫原生元件功能", en = "Enables native component capabilities in supported client builds.", ko = "지원되는 클라이언트 버전에서 기본 구성 요소 기능을 호출할 수 있습니다.", id = "Memungkinkan pemanggilan kemampuan komponen bawaan pada versi klien yang didukung.", vi = "Cho phép gọi chức năng thành phần gốc trên các phiên bản được hỗ trợ." }
+
+[compatibility]
+builds = ["*"]
+
+[native]
+library = "game_controls.dll"
+
+[[options]]
+key = "max_pending"
+type = "int"
+default = 4
+min = 1
+max = 64
+label = { "zh-CN" = "待处理组件调用上限", "zh-TW" = "待處理元件呼叫上限", en = "Maximum pending control calls", ko = "최대 대기 중 컨트롤 호출 수", id = "Panggilan kontrol tertunda maksimum", vi = "Số lệnh gọi điều khiển chờ tối đa" }
+
+[[options]]
+key = "retained_results"
+type = "int"
+default = 256
+min = 64
+max = 4096
+label = { "zh-CN" = "保留的调用结果数", "zh-TW" = "保留的呼叫結果數", en = "Retained control results", ko = "보관된 컨트롤 호출 결과 수", id = "Hasil panggilan kontrol tersimpan", vi = "Số kết quả gọi điều khiển được lưu" }

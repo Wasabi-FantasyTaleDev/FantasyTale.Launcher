@@ -1,0 +1,26 @@
+services:
+  directory:
+    build: .
+    image: ${FT_DIRECTORY_IMAGE:-fantasytale-directory:local}
+    restart: unless-stopped
+    ports:
+      - "${FT_DIRECTORY_PORT:-8096}:8096"
+    environment:
+      FT_DIRECTORY_Name: ${FT_DIRECTORY_NAME:-Fantasy Tale}
+      FT_DIRECTORY_AdminToken: ${FT_DIRECTORY_ADMIN_TOKEN:?Set the private directory administrator token}
+      FT_DIRECTORY_HostPolicy: ${FT_DIRECTORY_HOST_POLICY:-auto}
+      FT_DIRECTORY_Region: ${FT_DIRECTORY_REGION:-}
+    volumes:
+      - directory-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    mem_limit: ${FT_DIRECTORY_MEMORY:-256m}
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+
+volumes:
+  directory-data:

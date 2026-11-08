@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "runtime_version": "3.7.2",
+  "abi_version": 1,
+  "files": [
+    {
+      "path": "include/fthook/plugin_abi.h",
+      "size": 9714,
+      "sha256": "7b2821dc395cfa0c91450fa45ecda9f31769a46cc613e44ff8ce90bcd3143185"
+    },
+    {
+      "path": "LICENSE",
+      "size": 1076,
+      "sha256": "f8497c706b59c88ae1ab6455a5097126c54ee0de042fb54b095c89fd2ae35e7f"
+    },
+    {
+      "path": "README.md",
+      "size": 3349,
+      "sha256": "f5509da8e180fae85fb5a2c8a5b7b4383ab1e31409be31743186def5c22c1395"
+    },
+    {
+      "path": "README.zh.md",
+      "size": 2976,
+      "sha256": "b261500bca6331cc0074e9bc6b29cb32646e46a659d87f69365e591c562a9346"
+    },
+    {
+      "path": "sample/sample.c",
+      "size": 1105,
+      "sha256": "52f2a43b7d84102edaad0325dafeb33f2d89f6d018a5f2174dbb6efbfb5ffc79"
+    },
+    {
+      "path": "sample/sample.def",
+      "size": 54,
+      "sha256": "eda2211be11ae98616af34bff2ed7f2051f9a243fd574f482b3c91fd9bbd6501"
+    },
+    {
+      "path": "sample/sample_locator.vcxproj",
+      "size": 2039,
+      "sha256": "c140caac5a6319cd3c2630a348a1499e29b3e81fcaf06a5ddaa0399cffabd5f6"
+    }
+  ]
+}

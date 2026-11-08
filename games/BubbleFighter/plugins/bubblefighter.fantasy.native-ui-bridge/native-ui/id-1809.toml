@@ -1,0 +1,77 @@
+schema = 1
+build = "id-1809"
+timestamp = 0x54C99FF6
+
+# All addresses are RVAs in the unpacked id-1809 main image.
+[addresses]
+allocate = 0x5F5E00 # id-1809 sub_75D190 allocates 0x310 bytes with this cdecl allocator.
+construct_message = 0x436CD0 # id-1809 sub_75D190 pushes storage/title/body/mode/icon to the stdcall constructor.
+layout_message = 0x437E00 # id-1809 sub_837E00 lays out the dialog and reads its icon-free flag at +776.
+modal_message = 0x61DC90 # id-1809 sub_75D190 calls vtable slot 208 with four flags.
+message_vtable = 0x8ABBAC # id-1809 sub_836CD0 assigns the DlgMessageBox primary vtable.
+notify = 0x480F70 # id-1809 sub_95AB50 supplies MainApp, body, empty sound, three -1 values and a zero style byte.
+application = 0x9F5C28 # id-1809 sub_95AB50 passes this global as MainApp.
+ui_context = 0x9F2704 # id-1809 sub_837E00 measures text with this XUI context.
+ui_manager = 0x9F214C # id-1809 sub_A1DC90 registers modal controls with this UI manager.
+chat = 0x3740C0 # id-1809 sub_778990 passes borrowed caption/body strings and a single color to local chat.
+append_announcement = 0x48D5D0 # id-1809 sub_8816E0 appends a deep-copied 76-byte record through id-1809 sub_8901D0.
+clock = 0x97E858 # id-1809 sub_8816E0 and id-1809 sub_8809E0 read the native clock pointer here.
+clock_now = 0x5FDE70 # id-1809 sub_9FDE70 returns the clock used by the announcement renderer.
+
+[values]
+message_abi = 3 # id-1809 sub_75D190 uses a stdcall constructor.
+modal_abi = 1 # id-1809 sub_75D190 supplies four flags to id-1809 sub_A1DC90.
+notify_abi = 4 # id-1809 sub_95AB50 calls the seven-argument stdcall notification owner.
+chat_abi = 1 # id-1809 sub_7740C0 takes module in ECX, then caption/color/body on the stack.
+message_size = 784 # id-1809 sub_75D190 allocates 0x310 bytes.
+reference_offset = 8 # id-1809 sub_75D190 retains the dialog around its modal call.
+secondary_offset = 4 # id-1809 sub_75D190 releases through the secondary vtable.
+destructor_slot = 0 # id-1809 sub_75D190 invokes the secondary deleting destructor.
+release_previous = 1 # id-1809 sub_75D190 destroys when decrement reaches zero.
+ok_offset = 760 # id-1809 sub_837C90 binds the first button to command 257.
+cancel_offset = 764 # id-1809 sub_837C90 binds the second button to command 256.
+command_offset = 576 # id-1809 sub_837C90 writes each button command at +576.
+text_slot = 20 # id-1809 sub_837C90 sets control text through vtable slot 20.
+modal_slot = 208 # id-1809 sub_75D190 calls the modal method through slot 208.
+without_icon_offset = 776 # id-1809 sub_837E00 hides icons when this byte is set.
+notification_offset = 368 # id-1809 sub_880F70 owns and replaces MainApp notification at +368.
+chat_offset = 460 # id-1809 sub_6829F0 passes MainApp chat module at +460.
+chat_view_offset = 128 # id-1809 sub_777D50 and id-1809 sub_778480 consume the active chat view at module +128.
+announcement_offset = 312 # id-1809 sub_8816E0 owns the notice vector at +312/+316/+320.
+announcement_limit = 7 # id-1809 sub_8816E0 evicts before inserting the eighth notice.
+icon_notice = 0 # id-1809 Ui/DlgMessageBox.ui maps pnlIcon array 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # id-1809 Ui/DlgMessageBox.ui maps pnlIcon array 1 to MsgBoxIconWarning.png.
+icon_question = 2 # id-1809 Ui/DlgMessageBox.ui maps pnlIcon array 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # id-1809 Ui/DlgMessageBox.ui maps pnlIcon array 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 7F CE B7 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 C8 04 B7 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 AB F9 B5 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "64 A1 00 00 00 00 6A FF 68 32 70 B9 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 10 41 BA 00 64 A1 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 32 4A B8 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

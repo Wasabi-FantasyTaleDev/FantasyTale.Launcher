@@ -1,0 +1,270 @@
+schema = 1
+source_build = "kr2011-winter"
+source_timestamp = 0x4EF1C0F2
+
+[music]
+option = "christmas_bgm"
+member = "Sounds/SoundList.xml"
+
+[[music.routes]]
+option = "main_style"
+keys = ["m-lobbystage-rollback", "m-lobbystage"]
+group = "BF/music/Pregame/carol"
+event = "stage-lobby-carol"
+
+[[music.routes]]
+option = "plaza_style"
+keys = ["m-multistage-rollback", "m-multistage"]
+group = "BF/music/Pregame/carol"
+event = "room-multi-carol"
+
+[[styles]]
+option = "main_style"
+value = "snow"
+prefixes = ["Scenes/stage_Main/", "Dds/Scenes/stage_Main/"]
+count = 509
+index_sha256 = "c6ba5f6ba54ab61987743a5c9e04787bc7b8909ba900f024756a0421ae253366"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/flower_port_01.dds"
+target = "Dds/Scenes/stage_Main/flower_port_01.dds"
+sha256 = "b42639b85d9c5abc49fad40bbbacf786e598f0002b4762d3bf669b5c9d833bf8"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/flower_port_02.dds"
+target = "Dds/Scenes/stage_Main/flower_port_02.dds"
+sha256 = "73584dd64f18cb9fe09e903d16da613d1a48cbace056839f173a4c73b3f44f27"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/grass_flower.dds"
+target = "Dds/Scenes/stage_Main/grass_flower.dds"
+sha256 = "9ea885e27160528ca3fb72ec85bf592f987239595abb84c1e0cffecfdccea09d"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/house_stonetile_01.dds"
+target = "Dds/Scenes/stage_Main/house_stonetile_01.dds"
+sha256 = "213a762c1eac3de63f009d536030553d052010c5e2b1363eb50f2fa92ac8863b"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_house_B_01.dds"
+target = "Dds/Scenes/stage_Main/vb_house_B_01.dds"
+sha256 = "f536a160c25c5272ba826f53a45ff8b36e7fa1821627f4c4635e69de9d86861f"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_house_B_02.dds"
+target = "Dds/Scenes/stage_Main/vb_house_B_02.dds"
+sha256 = "c0e4fd7ac1b75ddc581fc694ea00eff2b0c0535cb8d7994ddfa76b030f149609"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_house_B_03.dds"
+target = "Dds/Scenes/stage_Main/vb_house_B_03.dds"
+sha256 = "6f43c6f65635fc2a905c71a7b89fc4792363d6f13726cd605b1a083ef8b0e794"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_house_D_01.dds"
+target = "Dds/Scenes/stage_Main/vb_house_D_01.dds"
+sha256 = "7b44ab0ca2c5c3d1487bdb83dd006b0d6f58ac14db277aeec5b98d3e4578e58b"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_roof_A_02.dds"
+target = "Dds/Scenes/stage_Main/vb_roof_A_02.dds"
+sha256 = "83b541af59c34adb6e9f7094a138acad64800777355648c1718d0c5871a3c4d6"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vb_roof_A_03.dds"
+target = "Dds/Scenes/stage_Main/vb_roof_A_03.dds"
+sha256 = "905dfa5ac9b43f69c04bda8279b6d75d761acb9194626d0986f83e8d9f25cad8"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_churchwall_01.dds"
+target = "Dds/Scenes/stage_Main/vr_churchwall_01.dds"
+sha256 = "5bb576653e6bac6882276bbecd19d66f94766c8342518385497e459c5f48e54d"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_churchwall_02.dds"
+target = "Dds/Scenes/stage_Main/vr_churchwall_02.dds"
+sha256 = "3f4f126622c52ef71801c9fa5cff0dbb7d4c8fdb54c5951d21101011b008fe92"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_house_A_01.dds"
+target = "Dds/Scenes/stage_Main/vr_house_A_01.dds"
+sha256 = "8cc629f258cab0c870735022201d5304a6f46b3091348568d0e41957880a21e5"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_house_A_02.dds"
+target = "Dds/Scenes/stage_Main/vr_house_A_02.dds"
+sha256 = "4b883abb4de7506b7a3993a1114e033ef741b7d0b7d39a4db7be78e524987cb2"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_house_D_01.dds"
+target = "Dds/Scenes/stage_Main/vr_house_D_01.dds"
+sha256 = "e51e9f7348e1983cecc9b1f8435bbcf8843b1c12489118d0903a6837b0d6cf2d"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/vr_roof_A_03.dds"
+target = "Dds/Scenes/stage_Main/vr_roof_A_03.dds"
+sha256 = "877c03f203b5af74e5c266a68c2a3426698fbc166291a841ac7af99cc918dbc7"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Village/wood_001.dds"
+target = "Dds/Scenes/stage_Main/wood_001.dds"
+sha256 = "c1e466e8751b39794c415cf913ee2ef086b74205fde7919bcb574006492d1b58"
+
+[[styles]]
+option = "plaza_style"
+value = "snow"
+prefixes = ["Scenes/stage_Plaza/", "Dds/Scenes/stage_Plaza/"]
+count = 106
+index_sha256 = "2f994a93ce94766a3409c1b3dba0500e9b0e1ead6112346c710cb4d3404259d4"
+
+[[styles.dependencies]]
+source = "Dds/Maps/Texture/Common/common_Red_ballon.dds"
+target = "Dds/Scenes/stage_Plaza/common_Red_ballon.dds"
+sha256 = "6ef3e032709ee781c038d24f5065e64aa3f4d75460c507771e45890cf5988060"
+
+[[clients]]
+build = "cn-279"
+timestamp = 1302252631
+count = 436
+index_sha256 = "da07dc7d051897a56fd3355523ed5e5a9879d51f79407e49f9a15f9d2835266b"
+[clients.additions]
+"Scenes/stage_Main/" = "Pack/Scenes0001.pkn"
+"Dds/Scenes/stage_Main/" = "Pack/Dds0005.pkn"
+"Scenes/stage_Plaza/" = "Pack/Scenes0002.pkn"
+"Dds/Scenes/stage_Plaza/" = "Pack/Dds0005.pkn"
+"Models/Characters/NPC_Lomi/Default/" = "Pack/Models0004.pkn"
+"Models/Characters/NPC_Pini/Default/" = "Pack/Models0004.pkn"
+"Models/Characters/NPC_Pini/common/" = "Pack/Models0004.pkn"
+
+[[clients]]
+build = "cn-324"
+timestamp = 1348326924
+count = 553
+index_sha256 = "1bf91f464289711d22cf2820d25ab9be4f862485b6bc1b30bbf119e6c61355db"
+[clients.additions]
+"Scenes/stage_Main/" = "Scenes/stage_Main/stage_Main.bfz"
+"Dds/Scenes/stage_Main/" = "Dds/Scenes/stage_Main/stage_Main.bfz"
+"Scenes/stage_Plaza/" = "Scenes/stage_Plaza/stage_Plaza.bfz"
+"Dds/Scenes/stage_Plaza/" = "Dds/Scenes/stage_Plaza/stage_Plaza.bfz"
+"Models/Characters/NPC_Lomi/Default/" = "Models/Characters/NPC_Lomi/Default/Default.bfz"
+"Models/Characters/NPC_Pini/Default/" = "Models/Characters/NPC_Pini/Default/Default.bfz"
+"Models/Characters/NPC_Pini/common/" = "Models/Characters/NPC_Pini/common/common.bfz"
+
+[[clients]]
+build = "cn-406"
+timestamp = 1372413413
+count = 591
+index_sha256 = "157f1ac36cbd0179ddbdd876d7de1f309609fb5e23c76d2fd452e144e738f09d"
+[clients.additions]
+"Scenes/stage_Main/" = "Scenes/stage_Main/stage_Main.bfz"
+"Dds/Scenes/stage_Main/" = "Dds/Scenes/stage_Main/stage_Main.bfz"
+"Scenes/stage_Plaza/" = "Scenes/stage_Plaza/stage_Plaza.bfz"
+"Dds/Scenes/stage_Plaza/" = "Dds/Scenes/stage_Plaza/stage_Plaza.bfz"
+"Models/Characters/NPC_Lomi/Default/" = "Models/Characters/NPC_Lomi/Default/Default.bfz"
+"Models/Characters/NPC_Pini/Default/" = "Models/Characters/NPC_Pini/Default/Default.bfz"
+"Models/Characters/NPC_Pini/common/" = "Models/Characters/NPC_Pini/common/common.bfz"
+
+[[sources]]
+build = "kr2015-original"
+timestamp = 0x55376C47
+
+[[outfits]]
+option = "lomi_outfit"
+value = "christmas"
+source_build = "kr2011-winter"
+prefix = "Models/Characters/NPC_Lomi/Default/"
+count = 48
+index_sha256 = "b2f18814057650a9256f9785be9e653b10d93967620943be4369af91b80bbfa8"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/lomi_Arm.png"
+target = "Models/Characters/NPC_Lomi/Default/lomi_Arm.png"
+sha256 = "fdfcec67a1202768335687baf8382a78b1c754fe0d6ae68f2420803428fae5c0"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/lomi_Leg.png"
+target = "Models/Characters/NPC_Lomi/Default/lomi_Leg.png"
+sha256 = "6283165ee3f4f4ce283e8848ed7e01daf53a4cb5fadfb94e9067d4864ef51e7a"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santalomi_Body.png"
+target = "Models/Characters/NPC_Lomi/Default/santalomi_Body.png"
+sha256 = "04a55f2aab06f088644849ef7e45ee9310fb1303d68267093a56da12ac95a022"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santalomi_Feet.PNG"
+target = "Models/Characters/NPC_Lomi/Default/santalomi_Feet.png"
+sha256 = "3e73c58e5413e0fbc07b23ab863f50013dc9b1c88414e3917369585289c00ae2"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santalomi_Hand.PNG"
+target = "Models/Characters/NPC_Lomi/Default/santalomi_Hand.png"
+sha256 = "90d960155baecd8a93a8a705c472ea68b1592b3f77d6fa67a0afe4cb5bbe0e9b"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santalomi_Head.PNG"
+target = "Models/Characters/NPC_Lomi/Default/santalomi_Head.png"
+sha256 = "6ca465435faaf6c76edd1f4244d3fe02dbe5a52f4e2e030a02802560fe7d38b5"
+
+[[outfits]]
+option = "pini_outfit"
+value = "original"
+source_build = "kr2015-original"
+builds = ["cn-324", "cn-406"]
+prefix = "Models/Characters/NPC_Pini/Default/"
+count = 21
+index_sha256 = "56d491e4252011378f172942719a36fb982c7048901143ca835c5bfb441bd669"
+
+[outfits.missing_companions]
+source_build = "kr2011-winter"
+prefix = "Models/Characters/NPC_Pini/common/"
+count = 20
+index_sha256 = "16ff0c3f7ccc5a229246811cefaa6e7de9b179ce590537e0fdea1ee8d1b0af0f"
+
+[[outfits]]
+option = "pini_outfit"
+value = "christmas"
+source_build = "kr2011-winter"
+prefix = "Models/Characters/NPC_Pini/Default/"
+count = 21
+index_sha256 = "72b095c4e521ff94e22149fc24627dc08d664b1189023f3e6af27ad210a80d77"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santa_pini-body.png"
+target = "Models/Characters/NPC_Pini/Default/santa_pini-body.png"
+sha256 = "07ae3cc9580a825d782c968d254913827a9a1cc0d46687c68e9e38871ef04592"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santa_pini-feet.png"
+target = "Models/Characters/NPC_Pini/Default/santa_pini-feet.png"
+sha256 = "c85f491e22c7cc865675de54d5c0659999066049deb272efd9782451247fefa6"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santa_pini-hand.png"
+target = "Models/Characters/NPC_Pini/Default/santa_pini-hand.png"
+sha256 = "e1e2a6b2464309e362af46fb88f8642bc41b75272f32512dc5f17d151abcee15"
+
+[[outfits.dependencies]]
+source = "Models/Characters/Texture/santa_pini-head.png"
+target = "Models/Characters/NPC_Pini/Default/santa_pini-head.png"
+sha256 = "de866d4cce7572a2a379d748e79a369d42641d59f8d335bedf5df98a25470f26"
+
+[outfits.missing_companions]
+source_build = "kr2011-winter"
+prefix = "Models/Characters/NPC_Pini/common/"
+count = 20
+index_sha256 = "16ff0c3f7ccc5a229246811cefaa6e7de9b179ce590537e0fdea1ee8d1b0af0f"
+
+[[outfits]]
+option = "pini_outfit"
+value = "zombie"
+source_build = "cn-324"
+prefix = "Models/Characters/NPC_Pini/Default/"
+count = 25
+index_sha256 = "56127f38615b3d9aec1b30db8427e292a26615b6fff2a1306f95e8d87976024e"
+
+[outfits.missing_companions]
+source_build = "kr2011-winter"
+prefix = "Models/Characters/NPC_Pini/common/"
+count = 20
+index_sha256 = "16ff0c3f7ccc5a229246811cefaa6e7de9b179ce590537e0fdea1ee8d1b0af0f"

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Output paths and compiler settings shared by every native project; imported after Microsoft.Cpp.props. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- One output folder, so the tests find nmcogame.dll beside themselves. -->
+    <OutDir>$(NativeRoot)out\$(Configuration)\</OutDir>
+    <IntDir>$(NativeRoot)out\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <ExternalIncludePath>$(NativeRoot)third_party\tomlplusplus;$(ExternalIncludePath)</ExternalIncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <!-- /Brepro and /d1trimfile make the bytes depend on the source only, not on build time or checkout folder,
+           so a rebuilt payload keeps the SHA-256 that its plugin.toml publishes. -->
+      <AdditionalOptions>/utf-8 /Zc:__cplusplus /Brepro /d1trimfile:$(NativeRoot)..\ %(AdditionalOptions)</AdditionalOptions>
+      <!-- Static CRT: the DLLs land in game folders that have no matching redistributable. -->
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(NativeRoot)runtime\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;WIN32_LEAN_AND_MEAN;NOMINMAX;UNICODE;_UNICODE;FTHOOK_VERSION_STRING="$(FtHookVersion)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/Brepro /PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Lib>
+      <AdditionalOptions>/Brepro %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+</Project>

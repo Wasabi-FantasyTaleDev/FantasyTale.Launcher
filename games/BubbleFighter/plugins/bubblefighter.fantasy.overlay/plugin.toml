@@ -1,0 +1,36 @@
+schema = 1
+
+[plugin]
+update_source = "fantasy-tale"
+id = "bubblefighter.fantasy.overlay"
+version = "0.2.0"
+game = "bubblefighter"
+kind = "overlay"
+runtime = ""
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+homepage = "https://github.com/Wasabi-FantasyTaleDev/FantasyTale.Launcher"
+
+[plugin.name]
+en = "Fantasy Tale Overlay"
+"zh-CN" = "Fantasy Tale 游戏内叠加层"
+"zh-TW" = "Fantasy Tale 遊戲內疊加層"
+ko = "Fantasy Tale 게임 오버레이"
+id = "Fantasy Tale Overlay"
+vi = "Lớp phủ trong trò chơi Fantasy Tale"
+
+[plugin.description]
+en = "Optional HTML overlay foundation for compatible game plugins."
+"zh-CN" = "可选的 HTML 游戏内叠加层基础，用于支持该能力的插件。"
+"zh-TW" = "可選的 HTML 遊戲內疊加層基礎，用於支援該能力的模組。"
+ko = "호환 플러그인을 위한 선택적 HTML 게임 오버레이 기반입니다."
+id = "Fondasi overlay HTML opsional untuk plugin game yang kompatibel."
+vi = "Nền tảng lớp phủ HTML tùy chọn cho các plugin trò chơi tương thích."
+
+[compatibility]
+builds = ["*"]
+
+[overlay]
+# The foundation package does not render a panel by itself. Other trusted packages
+# may register panels through the versioned launcher broker.
+entry = ""

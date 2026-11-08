@@ -1,0 +1,77 @@
+schema = 1
+build = "cn-706"
+timestamp = 0x5420DCC3
+
+# All addresses are RVAs in the unpacked cn-706 main image.
+[addresses]
+allocate = 0x5DBDD0 # cn-706 sub_444FE0 allocates 0x300 bytes with this cdecl allocator.
+construct_message = 0x41C4E0 # cn-706 sub_444FE0 pushes storage/title/body/mode/icon to the stdcall constructor.
+layout_message = 0x41D610 # cn-706 sub_81D610 measures body/buttons and reads the icon-free byte at +760.
+modal_message = 0x608460 # cn-706 sub_444FE0 calls slot 208 with flags 0,1,1,0.
+message_vtable = 0x894D9C # cn-706 sub_81C4E0 assigns the primary DlgMessageBox vtable.
+notify = 0x46B750 # cn-706 sub_448DB0 supplies MainApp, body, sound, three -1 defaults and style 0.
+application = 0x9DC638 # cn-706 sub_448DB0 passes this global's value as MainApp.
+ui_context = 0x9D8BEC # cn-706 sub_81D610 measures native text through this XUI context.
+ui_manager = 0x9D862C # cn-706 sub_A08460 reads and restores modal controls through this UI manager.
+chat = 0x355750 # cn-706 sub_41DA20 calls the thiscall caption/color/body wrapper.
+append_announcement = 0x478310 # cn-706 sub_86BC40 appends a 76-byte record through cn-706 sub_878310.
+clock = 0x966858 # cn-706 sub_86BC40 and cn-706 sub_86B1C0 use this native clock pointer.
+clock_now = 0x5E7CB0 # cn-706 sub_9E7CB0 reads the announcement clock.
+
+[values]
+message_abi = 3 # cn-706 sub_444FE0 supplies five stack arguments; cn-706 sub_81C4E0 returns with RET 20.
+modal_abi = 1 # cn-706 sub_444FE0 supplies four flags to cn-706 sub_A08460.
+notify_abi = 4 # cn-706 sub_448DB0 supplies seven stack arguments to cn-706 sub_86B750.
+chat_abi = 1 # cn-706 sub_41DA20 supplies module in ECX and caption/color/body on the stack.
+message_size = 768 # cn-706 sub_444FE0 allocates 0x300 bytes before construction.
+reference_offset = 8 # cn-706 sub_444FE0 retains the dialog around its modal call.
+secondary_offset = 4 # cn-706 sub_6694D0 releases through the secondary object at +4.
+destructor_slot = 0 # cn-706 sub_6694D0 invokes the secondary deleting destructor.
+release_previous = 1 # cn-706 sub_6694D0 destroys when decrement reaches zero.
+ok_offset = 744 # cn-706 sub_81D4A0 binds the first button to command 257.
+cancel_offset = 748 # cn-706 sub_81D4A0 binds the second button to command 256.
+command_offset = 576 # cn-706 sub_81D4A0 writes button commands at +0x240.
+text_slot = 20 # cn-706 sub_81D4A0 sets control text through vtable slot +20.
+modal_slot = 208 # cn-706 sub_444FE0 invokes the modal method through slot +208.
+without_icon_offset = 760 # cn-706 sub_81D610 selects the icon-free layout with this byte.
+notification_offset = 360 # cn-706 sub_86B750 owns and replaces MainApp's notification at +360.
+chat_offset = 452 # cn-706 sub_41DA20 passes MainApp's chat module at +452.
+chat_view_offset = 128 # cn-706 sub_7593E0 consumes the active chat view at module +128.
+announcement_offset = 304 # cn-706 sub_86BC40 owns the notice vector at +304/+308/+312.
+announcement_limit = 7 # cn-706 sub_86BC40 evicts before inserting the eighth notice.
+icon_notice = 0 # cn-706 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # cn-706 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
+icon_question = 2 # cn-706 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # cn-706 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 DF 7C B6 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 08 BB B5 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 6B B2 B4 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "64 A1 00 00 00 00 6A FF 68 62 28 B8 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 10 F9 B8 00 64 A1 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 72 EF B6 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

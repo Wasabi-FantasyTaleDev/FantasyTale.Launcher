@@ -1,0 +1,84 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "id-400"
+game = "bubblefighter"
+branch = "id"
+build_date = "2014-01-23 10:40:10"
+protocol_version = 400
+patch_version = "113"
+executable = "CrazyShooter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "id-400"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7120
+
+[build.name]
+"en" = "Indonesia 2014-01-23"
+"zh-CN" = "印尼服 2014-01-23"
+"zh-TW" = "印度尼西亞 2014-01-23"
+"ko" = "인도네시아 2014-01-23"
+"id" = "Indonesia 2014-01-23"
+"vi" = "Indonesia 2014-01-23"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x52E07057
+
+[launch]
+native_language = "id"
+launcher_login = "optional"
+login = "nmco"                    # gamewidget | nmco | hook
+# id-400 0x854E90 starts without an account argument; sign-in belongs to the client UI.
+arguments = ["/sid=0"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = []
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-400"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.font-support-cn"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-400"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-400"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-400"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-400"]
+sources = []

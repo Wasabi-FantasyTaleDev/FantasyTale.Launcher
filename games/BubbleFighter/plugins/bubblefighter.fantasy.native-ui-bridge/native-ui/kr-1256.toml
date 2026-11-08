@@ -1,0 +1,63 @@
+schema = 1
+build = "kr-1256"
+timestamp = 0x69FD90C8
+
+# All addresses are RVAs in the unpacked kr-1256 main image.
+[addresses]
+allocator = 0x14E6D44       # kr-1256 sub_899620 dereferences the UI allocator and calls slot +4.
+construct_message = 0x2265D0 # kr-1256 sub_6265D0 copies title/body and forwards mode/icon to sub_6266B0.
+layout_message = 0x2279A0  # kr-1256 sub_6279A0 sizes the native message box before modal display.
+modal_message = 0xBCDFD0   # kr-1256 sub_899620 passes an interruption byte followed by 0,1,1,0.
+message_vtable = 0x1178314 # kr-1256 sub_6265D0 writes the DlgMessageBox vtable.
+set_text = 0xBB5E70        # kr-1256 sub_627630 sets its native body label through sub_FB5E70.
+notify = 0x95EB80          # kr-1256 sub_D5EB80 takes text in ECX and calls the notification owner.
+application = 0x14E560C    # kr-1256 sub_D5EB80 uses this notification owner.
+ui_context = 0x14E689C     # kr-1256 sub_6279A0 uses this native rendering context.
+ui_manager = 0x14E6850     # kr-1256 sub_FCDFD0 uses this native UI manager.
+chat = 0x0DC0D0            # kr-1256 sub_4DC0D0 copies caption/body with explicit UTF-16 lengths.
+chat_module = 0x14E555C    # kr-1256 sub_9BE620 uses this local chat module.
+
+[values]
+message_abi = 2            # kr-1256 sub_6265D0 is thiscall with title, body, mode and icon.
+modal_abi = 2              # kr-1256 sub_899620 passes the interruption byte before four modal flags.
+notify_abi = 2             # kr-1256 sub_D5EB80 receives the borrowed string in ECX.
+chat_abi = 2               # kr-1256 sub_4DC0D0 accepts color, caption pointer/length, body pointer/length.
+message_size = 1688        # kr-1256 sub_899620 requests 0x698 bytes from the UI allocator.
+reference_offset = 4       # kr-1256 sub_899620 retains the dialog at +4.
+secondary_offset = 0       # kr-1256 sub_899620 releases through the primary object.
+destructor_slot = 4        # kr-1256 sub_899620 invokes the deleting destructor at slot +4.
+release_previous = 0       # kr-1256 sub_899620 tests the old XADD value before deleting.
+ok_offset = 1640           # kr-1256 sub_627630 binds this button to command 257.
+cancel_offset = 1644       # kr-1256 sub_627630 binds this button to command 256.
+command_offset = 1296      # kr-1256 sub_627630 writes button commands at +0x510.
+notification_offset = 36   # kr-1256 sub_899850 owns/replaces its notification at +36.
+chat_view_offset = 68      # kr-1256 sub_4DC0D0 reveals this active chat view.
+# kr-1256 Ui/DlgMessageBox.ui uses the four standard pnlIcon array entries.
+icon_notice = 0
+icon_warning = 1
+icon_question = 2
+icon_error = 3
+
+[[signatures]]
+address = "construct_message"
+bytes = "55 8B EC 6A FF 68 8D 68 33 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 6A FF 68 35 6C 33 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "53 8B DC 83 EC 08 83 E4 F8 83 C4 04 55 8B 6B 04"
+
+[[signatures]]
+address = "set_text"
+bytes = "53 8B DC 83 EC 08 83 E4 F8 83 C4 04 55 8B 6B 04"
+
+[[signatures]]
+address = "notify"
+bytes = "55 8B EC 6A FF 68 35 C8 44 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 6A FF 68 00 35 30 01 64 A1 00 00 00 00"

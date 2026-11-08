@@ -1,0 +1,286 @@
+/* WinUI 3 design tokens (generic.xaml theme resources) as CSS variables.
+   Light is the default; dark applies through [data-theme='dark'] on <html>,
+   which theme.ts resolves from the user's setting or the system theme.
+   The media query only matters before main.ts sets the attribute. */
+
+:root {
+  /* Window base layer: SolidBackgroundFillColorBase, the colour Mica falls back to. */
+  --mica-base: #f3f3f3;
+
+  /* TextFillColor* */
+  --text-primary: rgba(0, 0, 0, 0.8956);
+  --text-secondary: rgba(0, 0, 0, 0.6063);
+  --text-tertiary: rgba(0, 0, 0, 0.4458);
+  --text-disabled: rgba(0, 0, 0, 0.3614);
+
+  /* AccentFillColor* (SystemAccentColor #0078D4 -> light theme accent #005FB8) */
+  --accent: #005fb8;
+  --accent-default: #005fb8;
+  --accent-secondary: rgba(0, 95, 184, 0.9);
+  --accent-tertiary: rgba(0, 95, 184, 0.8);
+  --accent-disabled: rgba(0, 0, 0, 0.2169);
+  --accent-text-primary: #003e92;
+  --accent-text-secondary: #1a3ea3;
+  --accent-text-tertiary: #005fb8;
+
+  /* TextOnAccentFillColor* */
+  --text-on-accent-primary: #ffffff;
+  --text-on-accent-secondary: rgba(255, 255, 255, 0.7);
+  --text-on-accent-disabled: rgba(255, 255, 255, 0.5302);
+
+  /* ControlFillColor* */
+  --ctrl-fill-default: rgba(255, 255, 255, 0.7);
+  --ctrl-fill-secondary: rgba(249, 249, 249, 0.5);
+  --ctrl-fill-tertiary: rgba(249, 249, 249, 0.3);
+  --ctrl-fill-disabled: rgba(249, 249, 249, 0.3);
+  --ctrl-fill-input-active: #ffffff;
+  --ctrl-strong-fill: rgba(0, 0, 0, 0.4458);
+  --ctrl-strong-fill-disabled: rgba(0, 0, 0, 0.3173);
+  --ctrl-solid-fill: #ffffff;
+
+  /* ControlStrokeColor*: the light theme border is darker on the bottom edge. */
+  --ctrl-stroke-default: rgba(0, 0, 0, 0.0578);
+  --ctrl-stroke-secondary: rgba(0, 0, 0, 0.1622);
+  --ctrl-stroke-strong: rgba(0, 0, 0, 0.4458);
+  --ctrl-stroke-strong-disabled: rgba(0, 0, 0, 0.2169);
+  --ctrl-stroke-on-accent-default: rgba(255, 255, 255, 0.08);
+  --ctrl-stroke-on-accent-secondary: rgba(0, 0, 0, 0.4);
+  --ctrl-stroke-on-accent-disabled: rgba(0, 0, 0, 0.2169);
+
+  /* ControlElevationBorderBrush: gradient used as a 1px border-image on controls. */
+  --ctrl-elevation-border: linear-gradient(to bottom, var(--ctrl-stroke-default) 90%, var(--ctrl-stroke-secondary) 100%);
+  --ctrl-elevation-border-accent: linear-gradient(to bottom, var(--ctrl-stroke-on-accent-default) 90%, var(--ctrl-stroke-on-accent-secondary) 100%);
+
+  /* CardBackgroundFillColor* / CardStrokeColor* */
+  --card-bg-default: rgba(255, 255, 255, 0.7);
+  --card-bg-secondary: rgba(246, 246, 246, 0.5);
+  --card-stroke-default: rgba(0, 0, 0, 0.105);
+  --card-stroke-solid: #dedede;
+
+  /* SubtleFillColor* (transparent controls and navigation items) */
+  --subtle-secondary: rgba(0, 0, 0, 0.0373);
+  --subtle-tertiary: rgba(0, 0, 0, 0.0241);
+  --subtle-disabled: transparent;
+
+  /* LayerFillColor* — painted over the Mica base for raised surfaces. */
+  --layer-default: rgba(255, 255, 255, 0.5);
+  --layer-alt: #ffffff;
+  --layer-on-acrylic-default: rgba(255, 255, 255, 0.7);
+
+  /* SolidBackgroundFillColor* — opaque surfaces such as ContentDialog. */
+  --solid-bg-base: #f3f3f3;
+  --solid-bg-secondary: #eeeeee;
+  --solid-bg-tertiary: #f9f9f9;
+  --solid-bg-quarternary: #ffffff;
+
+  /* SurfaceStrokeColor* / DividerStrokeColor* */
+  --stroke-surface-default: rgba(117, 117, 117, 0.4);
+  --stroke-surface-flyout: rgba(0, 0, 0, 0.0578);
+  --stroke-divider: rgba(0, 0, 0, 0.0578);
+
+  /* Acrylic / flyout layers */
+  --flyout-bg: rgba(249, 249, 249, 0.85);
+  --flyout-backdrop: saturate(180%) blur(30px);
+  --smoke: rgba(0, 0, 0, 0.3);
+
+  /* SystemFillColor* — InfoBar severities and status. */
+  --fill-attention: #005fb8;
+  --fill-success: #0f7b0f;
+  --fill-caution: #9d5d00;
+  --fill-critical: #c42b1c;
+  --fill-attention-bg: #f6f6f6;
+  --fill-success-bg: #dff6dd;
+  --fill-caution-bg: #fff4ce;
+  --fill-critical-bg: #fde7e9;
+  --fill-neutral-bg: #f3f3f3;
+
+  /* FocusStrokeColor*: 2px outer ring plus a 1px inner ring. */
+  --focus-outer: rgba(0, 0, 0, 0.8956);
+  --focus-inner: rgba(255, 255, 255, 0.7);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.4458);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+
+  /* Radii */
+  --radius-control: 4px;
+  --radius-overlay: 8px;
+
+  /* Layer elevation shadows (WinUI ThemeShadow equivalents). */
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.04), 0 0 2px rgba(0, 0, 0, 0.06);
+  --shadow-flyout: 0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14);
+  --shadow-dialog: 0 0 8px rgba(0, 0, 0, 0.06), 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 2px rgba(0, 0, 0, 0.12);
+  --shadow-window: 0 0 8px rgba(0, 0, 0, 0.06), 0 32px 64px rgba(0, 0, 0, 0.24);
+
+  /* Motion */
+  --duration-faster: 83ms;
+  --duration-fast: 167ms;
+  --duration-normal: 250ms;
+  --ease-fast-out-slow-in: cubic-bezier(0, 0, 0, 1);
+}
+
+[data-theme='dark'] {
+  --mica-base: #202020;
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.786);
+  --text-tertiary: rgba(255, 255, 255, 0.5442);
+  --text-disabled: rgba(255, 255, 255, 0.3628);
+
+  --accent: #60cdff;
+  --accent-default: #60cdff;
+  --accent-secondary: rgba(96, 205, 255, 0.9);
+  --accent-tertiary: rgba(96, 205, 255, 0.8);
+  --accent-disabled: rgba(255, 255, 255, 0.1581);
+  --accent-text-primary: #99ebff;
+  --accent-text-secondary: #60cdff;
+  --accent-text-tertiary: #31b0ee;
+
+  --text-on-accent-primary: #000000;
+  --text-on-accent-secondary: rgba(0, 0, 0, 0.5);
+  --text-on-accent-disabled: rgba(255, 255, 255, 0.5302);
+
+  --ctrl-fill-default: rgba(255, 255, 255, 0.0605);
+  --ctrl-fill-secondary: rgba(255, 255, 255, 0.0837);
+  --ctrl-fill-tertiary: rgba(255, 255, 255, 0.0326);
+  --ctrl-fill-disabled: rgba(255, 255, 255, 0.0419);
+  --ctrl-fill-input-active: rgba(30, 30, 30, 0.7);
+  --ctrl-strong-fill: rgba(255, 255, 255, 0.5442);
+  --ctrl-strong-fill-disabled: rgba(255, 255, 255, 0.2471);
+  --ctrl-solid-fill: #454545;
+
+  --ctrl-stroke-default: rgba(255, 255, 255, 0.0698);
+  --ctrl-stroke-secondary: rgba(255, 255, 255, 0.093);
+  --ctrl-stroke-strong: rgba(255, 255, 255, 0.5442);
+  --ctrl-stroke-strong-disabled: rgba(255, 255, 255, 0.1581);
+  --ctrl-stroke-on-accent-default: rgba(255, 255, 255, 0.08);
+  --ctrl-stroke-on-accent-secondary: rgba(0, 0, 0, 0.14);
+  --ctrl-stroke-on-accent-disabled: rgba(255, 255, 255, 0.1581);
+
+  /* Dark theme flips the gradient: the lighter edge is on top. */
+  --ctrl-elevation-border: linear-gradient(to bottom, var(--ctrl-stroke-secondary) 90%, var(--ctrl-stroke-default) 100%);
+  --ctrl-elevation-border-accent: linear-gradient(to bottom, rgba(255, 255, 255, 0.0784) 90%, rgba(0, 0, 0, 0.1373) 100%);
+
+  --card-bg-default: rgba(255, 255, 255, 0.0512);
+  --card-bg-secondary: rgba(255, 255, 255, 0.0326);
+  --card-stroke-default: rgba(255, 255, 255, 0.085);
+  --card-stroke-solid: #3d3d3d;
+
+  --subtle-secondary: rgba(255, 255, 255, 0.0605);
+  --subtle-tertiary: rgba(255, 255, 255, 0.0419);
+  --subtle-disabled: transparent;
+
+  --layer-default: rgba(58, 58, 58, 0.3);
+  --layer-alt: rgba(255, 255, 255, 0.0538);
+  --layer-on-acrylic-default: rgba(255, 255, 255, 0.0512);
+
+  --solid-bg-base: #202020;
+  --solid-bg-secondary: #1c1c1c;
+  --solid-bg-tertiary: #282828;
+  --solid-bg-quarternary: #2c2c2c;
+
+  --stroke-surface-default: rgba(117, 117, 117, 0.4);
+  --stroke-surface-flyout: rgba(0, 0, 0, 0.2);
+  --stroke-divider: rgba(255, 255, 255, 0.0837);
+
+  --flyout-bg: rgba(44, 44, 44, 0.85);
+  --flyout-backdrop: saturate(160%) blur(30px);
+  --smoke: rgba(0, 0, 0, 0.3);
+
+  --fill-attention: #60cdff;
+  --fill-success: #6ccb5f;
+  --fill-caution: #fce100;
+  --fill-critical: #ff99a4;
+  --fill-attention-bg: #2b2b2b;
+  --fill-success-bg: #393d1b;
+  --fill-caution-bg: #433519;
+  --fill-critical-bg: #442726;
+  --fill-neutral-bg: #323232;
+
+  --focus-outer: #ffffff;
+  --focus-inner: rgba(0, 0, 0, 0.7);
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.5442);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.6);
+
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.13), 0 0 2px rgba(0, 0, 0, 0.11);
+  --shadow-flyout: 0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.26);
+  --shadow-dialog: 0 0 8px rgba(0, 0, 0, 0.1), 0 14px 28px rgba(0, 0, 0, 0.48), 0 0 2px rgba(0, 0, 0, 0.12);
+  --shadow-window: 0 0 8px rgba(0, 0, 0, 0.1), 0 32px 64px rgba(0, 0, 0, 0.37);
+}
+
+/* Before main.ts resolves the setting, follow the OS so nothing flashes. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --mica-base: #202020;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.786);
+    --text-tertiary: rgba(255, 255, 255, 0.5442);
+    --text-disabled: rgba(255, 255, 255, 0.3628);
+    --accent: #60cdff;
+    --accent-default: #60cdff;
+    --accent-secondary: rgba(96, 205, 255, 0.9);
+    --accent-tertiary: rgba(96, 205, 255, 0.8);
+    --accent-disabled: rgba(255, 255, 255, 0.1581);
+    --accent-text-primary: #99ebff;
+    --accent-text-secondary: #60cdff;
+    --accent-text-tertiary: #31b0ee;
+    --text-on-accent-primary: #000000;
+    --text-on-accent-secondary: rgba(0, 0, 0, 0.5);
+    --text-on-accent-disabled: rgba(255, 255, 255, 0.5302);
+    --ctrl-fill-default: rgba(255, 255, 255, 0.0605);
+    --ctrl-fill-secondary: rgba(255, 255, 255, 0.0837);
+    --ctrl-fill-tertiary: rgba(255, 255, 255, 0.0326);
+    --ctrl-fill-disabled: rgba(255, 255, 255, 0.0419);
+    --ctrl-fill-input-active: rgba(30, 30, 30, 0.7);
+    --ctrl-strong-fill: rgba(255, 255, 255, 0.5442);
+    --ctrl-strong-fill-disabled: rgba(255, 255, 255, 0.2471);
+    --ctrl-solid-fill: #454545;
+    --ctrl-stroke-default: rgba(255, 255, 255, 0.0698);
+    --ctrl-stroke-secondary: rgba(255, 255, 255, 0.093);
+    --ctrl-stroke-strong: rgba(255, 255, 255, 0.5442);
+    --ctrl-stroke-strong-disabled: rgba(255, 255, 255, 0.1581);
+    --ctrl-stroke-on-accent-default: rgba(255, 255, 255, 0.08);
+    --ctrl-stroke-on-accent-secondary: rgba(0, 0, 0, 0.14);
+    --ctrl-stroke-on-accent-disabled: rgba(255, 255, 255, 0.1581);
+    --ctrl-elevation-border: linear-gradient(to bottom, var(--ctrl-stroke-secondary) 90%, var(--ctrl-stroke-default) 100%);
+    --ctrl-elevation-border-accent: linear-gradient(to bottom, rgba(255, 255, 255, 0.0784) 90%, rgba(0, 0, 0, 0.1373) 100%);
+    --card-bg-default: rgba(255, 255, 255, 0.0512);
+    --card-bg-secondary: rgba(255, 255, 255, 0.0326);
+    --card-stroke-default: rgba(255, 255, 255, 0.085);
+    --card-stroke-solid: #3d3d3d;
+    --subtle-secondary: rgba(255, 255, 255, 0.0605);
+    --subtle-tertiary: rgba(255, 255, 255, 0.0419);
+    --subtle-disabled: transparent;
+    --layer-default: rgba(58, 58, 58, 0.3);
+    --layer-alt: rgba(255, 255, 255, 0.0538);
+    --layer-on-acrylic-default: rgba(255, 255, 255, 0.0512);
+    --solid-bg-base: #202020;
+    --solid-bg-secondary: #1c1c1c;
+    --solid-bg-tertiary: #282828;
+    --solid-bg-quarternary: #2c2c2c;
+    --stroke-surface-default: rgba(117, 117, 117, 0.4);
+    --stroke-surface-flyout: rgba(0, 0, 0, 0.2);
+    --stroke-divider: rgba(255, 255, 255, 0.0837);
+    --flyout-bg: rgba(44, 44, 44, 0.85);
+    --flyout-backdrop: saturate(160%) blur(30px);
+    --smoke: rgba(0, 0, 0, 0.3);
+    --fill-attention: #60cdff;
+    --fill-success: #6ccb5f;
+    --fill-caution: #fce100;
+    --fill-critical: #ff99a4;
+    --fill-attention-bg: #2b2b2b;
+    --fill-success-bg: #393d1b;
+    --fill-caution-bg: #433519;
+    --fill-critical-bg: #442726;
+    --fill-neutral-bg: #323232;
+    --focus-outer: #ffffff;
+    --focus-inner: rgba(0, 0, 0, 0.7);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.5442);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.6);
+    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.13), 0 0 2px rgba(0, 0, 0, 0.11);
+    --shadow-flyout: 0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.26);
+    --shadow-dialog: 0 0 8px rgba(0, 0, 0, 0.1), 0 14px 28px rgba(0, 0, 0, 0.48), 0 0 2px rgba(0, 0, 0, 0.12);
+    --shadow-window: 0 0 8px rgba(0, 0, 0, 0.1), 0 32px 64px rgba(0, 0, 0, 0.37);
+  }
+}

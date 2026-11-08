@@ -1,0 +1,46 @@
+# Game definition. Schema: docs/architecture.md section 3 (formalized by roadmap card L2).
+schema = 1
+
+[game]
+levels = "levels/levels.toml"
+id = "bubblefighter"
+status = "enabled"                      # enabled | placeholder
+module = "FantasyTale.Launcher.Games.BubbleFighter.dll"
+hook_host = "nmcogame"                  # native host shim: games/BubbleFighter/native/nmcogame
+accent = "#2D8CFF"
+home_order = 0
+hero_title = "Crazy Shooting Bubble Fighter"
+navigation_entries = ["home", "instances", "multiplayer", "hosting", "store", "downloads", "plugins", "accounts", "settings"]
+rooms_enabled = false
+local_hosting_enabled = false
+default_server = "Bubble Fighter Fantasy"
+default_api_url = "http://bf.wanwanlocksmith.pp.ua:8090"
+
+supports_instances = true
+supports_plugins = true
+store_managed_plugins = ["bubblefighter.fantasy.font-support-cn", "bubblefighter.fantasy.login-fix-cn", "bubblefighter.fantasy.login-fix-kr", "bubblefighter.fantasy.shop-unlock"]
+launcher_login = "required"
+profile_fields = ["level", "lucci", "cash"]
+level_icon = true
+bundled_instances = true
+
+[game.name]
+en = "Bubble Fighter"
+"zh-CN" = "泡泡战士"
+"zh-TW" = "泡泡大亂鬥"
+ko = "버블파이터"
+id = "Crazy Shooter"
+vi = "Bubble Fighter"
+
+[game.media]
+# Paths are relative to this folder. Large media is not stored in git (see .gitignore);
+# the frontend falls back to the accent gradient when the file is missing.
+background_videos = ["media/background.mp4"]
+background_fade = "bottom"
+
+# Branch ids used by build and plugin selectors ("branch:cn").
+[branches]
+kr = { "zh-CN" = "韩服", "zh-TW" = "韓國", en = "Korea" }
+cn = { "zh-CN" = "国服", "zh-TW" = "中國", en = "China" }
+id = { "zh-CN" = "印尼服", "zh-TW" = "印度尼西亞", en = "Indonesia" }
+tw = { "zh-CN" = "台服", "zh-TW" = "台灣", en = "Taiwan, China" }

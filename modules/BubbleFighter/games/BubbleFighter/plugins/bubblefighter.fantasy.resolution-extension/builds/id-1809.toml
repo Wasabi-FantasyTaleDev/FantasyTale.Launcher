@@ -1,0 +1,43 @@
+schema = 1
+build = "id-1809"
+timestamp = 0x54C99FF6
+image_sizes = [0xD82000, 0xD85000]
+preferred_base = 0x400000
+table_rva = 0x999C08
+guard_rva = 0x651C60
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# id-1809 sub_A51C60 remains the native display-mode filter.
+# id-1809 VA 0x64797A iterates the table; VA 0x8872A7 validates saved width and height.
+[[sites]]
+rva = 0x24797A
+expect = "BD 08 9C D9 00"
+target = "begin"
+operand_offset = 1
+[[sites]]
+rva = 0x247980
+expect = "83 7C 24 10 06 0F 87 AF 00 00 00"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x247A40
+expect = "81 FD 40 9C D9 00 0F 8C 34 FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x4872A7
+expect = "B8 0C 9C D9 00"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x4872BB
+expect = "3D 44 9C D9 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x2479A1
+expect = "E8 BA A2 40 00"

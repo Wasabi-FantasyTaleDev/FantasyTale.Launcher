@@ -1,0 +1,43 @@
+schema = 1
+build = "cn-404"
+timestamp = 0x533CFD5F
+image_sizes = [0xCD5000, 0xCD8000]
+preferred_base = 0x400000
+table_rva = 0x9DE530
+guard_rva = 0x66CC30
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# cn-404 sub_A6CC30 remains the native display-mode filter.
+# cn-404 VA 0x6444C1 iterates the table; VA 0x89623C validates saved width and height.
+[[sites]]
+rva = 0x2444C1
+expect = "BD 30 E5 DD 00"
+target = "begin"
+operand_offset = 1
+[[sites]]
+rva = 0x2444C6
+expect = "83 7C 24 10 06 0F 87 80 00 00 00"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x244558
+expect = "81 FD 68 E5 DD 00 0F 8C 62 FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x49623C
+expect = "B8 34 E5 DD 00"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x49624D
+expect = "3D 6C E5 DD 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x2444E3
+expect = "E8 48 87 42 00"

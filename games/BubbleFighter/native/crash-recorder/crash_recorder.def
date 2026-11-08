@@ -1,0 +1,3 @@
+LIBRARY crash_recorder
+EXPORTS
+    fthook_plugin_main

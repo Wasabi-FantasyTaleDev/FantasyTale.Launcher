@@ -1,0 +1,57 @@
+schema = 1
+build = "kr-812"
+timestamp = 0x55376C47
+# The unpacked analysis image adds a dump section; the installed packed image is smaller.
+image_sizes = [0xF0B000, 0xF0E000]
+preferred_base = 0x400000
+table_rva = 0xA68518
+
+# kr-812 sub_ABA920 checks width/height against the selected adapter's D3DDISPLAYMODE vector.
+guard_rva = 0x6BA920
+guard = "8B 81 0C 07 00 00"
+
+# kr-1256 sub_102CD90 accepts aspect ratios below 1.78; sub_5BCE20 uses these minimum dimensions.
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+
+# kr-812 sub_694130 and sub_8E8E30 consume exactly these seven width/height pairs.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+
+# kr-812 sub_694130, 0x696109: menu iterator begins at the first width.
+[[sites]]
+rva = 0x296109
+expect = "BD 18 85 E6 00"
+target = "begin"
+operand_offset = 1
+
+# kr-812 sub_694130, 0x696110: remove the redundant index <= 6 check; the end comparison remains.
+[[sites]]
+rva = 0x296110
+expect = "83 7C 24 10 06 0F 87 AF 00 00 00"
+target = "remove_count_guard"
+
+# kr-812 sub_694130, 0x6961D0: menu iterator advances eight bytes and stops before the table end.
+[[sites]]
+rva = 0x2961D0
+expect = "81 FD 50 85 E6 00"
+target = "end"
+operand_offset = 2
+
+# kr-812 sub_8E8E30, 0x8E92F4: saved resolution validation reads width at [EAX-4], height at [EAX].
+[[sites]]
+rva = 0x4E92F4
+expect = "B8 1C 85 E6 00"
+target = "height_begin"
+operand_offset = 1
+
+# kr-812 sub_8E8E30, 0x8E930C: this height iterator stops at table_end + 4.
+[[sites]]
+rva = 0x4E930C
+expect = "3D 54 85 E6 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x296131
+expect = "E8 EA 47 42 00"

@@ -1,0 +1,3 @@
+LIBRARY resolution_extension
+EXPORTS
+    fthook_plugin_main

@@ -1,0 +1,110 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.legacy-security-compatibility"
+version = "0.1.0"
+game = "bubblefighter"
+kind = "patch"
+runtime = ">=3.0.0 <4.0.0"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Legacy security compatibility"
+"zh-CN" = "旧版安全模块兼容"
+"zh-TW" = "舊版安全模組相容"
+ko = "레거시 보안 모듈 호환성"
+id = "Kompatibilitas modul keamanan lama"
+vi = "Tương thích mô-đun bảo mật cũ"
+
+[plugin.description]
+en = "Skips obsolete native security identity reporting that can call an unavailable module after a server transfer."
+"zh-CN" = "跳过旧版原生安全模块的身份上报，避免切服后调用失效模块导致崩溃。"
+"zh-TW" = "略過舊版原生安全模組的身分回報，避免切服後呼叫失效模組導致崩潰。"
+ko = "서버 이동 후 사용할 수 없는 모듈을 호출할 수 있는 구형 보안 모듈의 사용자 정보 보고를 건너뜁니다."
+id = "Melewati pelaporan identitas keamanan lama yang dapat memanggil modul tidak tersedia setelah pindah server."
+vi = "Bỏ qua báo cáo danh tính của mô-đun bảo mật cũ có thể gọi mô-đun không còn hoạt động sau khi chuyển máy chủ."
+
+[compatibility]
+builds = ["kr-812", "cn-406", "cn-404", "cn-408", "cn-705", "cn-706", "cn-717", "id-400", "id-1809"]
+
+# kr-812 sub_B72F20: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["kr-812"]
+locate = { pattern = "55 8B EC 6A FF 68 F0 10 CA 00 68 F8 04 B5 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 CE 19 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 78 14 E8 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-406 sub_A53E14: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-406"]
+locate = { pattern = "55 8B EC 83 EC 08 C7 45 FC 00 00 00 00 8B 45 08 89 45 F8 8D 4D FC 51 8D 55 F8 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 FC 50 68 02 90 01 E2 E8 C1 12 00 00 83 C4 08 8B E5 5D C2 04 00", offset = 29, match = "unique" }
+expect = "FF 15 F8 DE D2 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-404 sub_B245C0: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-404"]
+locate = { pattern = "55 8B EC 6A FF 68 40 A4 C4 00 68 A8 11 B0 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 8E 15 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 D0 03 E3 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-408 sub_B2D5E0: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-408"]
+locate = { pattern = "55 8B EC 6A FF 68 50 14 C5 00 68 E8 A1 B0 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 8E 15 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 10 66 E3 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-705 sub_AED5E0: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-705"]
+locate = { pattern = "55 8B EC 6A FF 68 60 C7 C0 00 68 B8 A9 AC 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 4E 16 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 E8 6B DD 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-706 sub_AEF790: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-706"]
+locate = { pattern = "55 8B EC 6A FF 68 60 F7 C0 00 68 68 CB AC 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 4E 16 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 08 AC DD 00"
+write = "83 C4 0C B0 01 90"
+
+# cn-717 sub_C43B60: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["cn-717"]
+locate = { pattern = "55 8B EC 6A FF 68 40 2C DC 00 68 88 10 C2 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 CE 19 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 C0 A6 FF 00"
+write = "83 C4 0C B0 01 90"
+
+# id-400 sub_AF91B0: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["id-400"]
+locate = { pattern = "55 8B EC 6A FF 68 30 FF C0 00 68 58 5D AD 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 8E 15 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 E0 0C DE 00"
+write = "83 C4 0C B0 01 90"
+
+# id-1809 sub_B04FA0: operation 19 takes three stdcall arguments and returns success in AL.
+# Balance the original arguments without calling the retired identity-report interface; the error output stays zero.
+[[patches]]
+id = "security-identity-report"
+builds = ["id-1809"]
+locate = { pattern = "55 8B EC 6A FF 68 A0 54 C2 00 68 F8 21 AE 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 C4 F0 53 56 57 89 65 E8 C7 45 E4 00 00 00 00 8B 45 08 89 45 E0 C7 45 FC 00 00 00 00 8D 4D E4 51 8D 55 E0 52 6A 13 ?? ?? ?? ?? ?? ?? 25 FF 00 00 00 83 F8 01 74 11 8B 45 E4 50 68 02 90 01 E2 E8 4E 16 00 00 83 C4 08 C7 45 FC FF FF FF FF EB 10 B8 01 00 00 00 C3 8B 65 E8 C7 45 FC FF FF FF FF 8B 4D F0 64 89 0D 00 00 00 00 5F 5E 5B 8B E5 5D C2 04 00", offset = 68, match = "unique" }
+expect = "FF 15 20 47 DF 00"
+write = "83 C4 0C B0 01 90"

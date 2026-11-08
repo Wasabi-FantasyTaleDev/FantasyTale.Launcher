@@ -1,0 +1,36 @@
+# Placeholder. TODO: the AirRider module (including its hooks) is developed in a private
+# repository and installed as a game module package; nothing else belongs here.
+schema = 1
+
+[game]
+levels = "levels/levels.toml"
+id = "airrider"
+status = "placeholder"
+hook_host = "external"
+home_order = 10
+hero_title = "Crazy Racing Air Rider"
+navigation_entries = ["home", "downloads", "accounts"]
+preparing = false
+accent = "#169DAE"
+
+client_languages = ["zh-CN", "zh-TW", "ko", "en"]
+supports_instances = false
+supports_plugins = true
+launcher_login = "required"
+profile_fields = ["level", "lucci", "cash"]
+level_icon = true
+bundled_instances = true
+
+[game.name]
+en = "Air Rider"
+"zh-CN" = "跑跑飞空艇"
+"zh-TW" = "跑跑飛空艇"
+ko = "에어라이더"
+id = "Air Rider"
+vi = "Air Rider"
+
+[game.media]
+# Large media stays local and is copied beside the application during a build.
+background_videos = ["media/background.mp4"]
+background_audio_tracks = ["media/background.mp3"]
+background_fade = "bottom"

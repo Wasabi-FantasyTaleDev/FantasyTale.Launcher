@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{3E613EAE-D727-473E-B439-FC7A5B446F62}</ProjectGuid>
+    <RootNamespace>nmcogame_tests</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\Native.Configuration.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\Native.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(NativeRoot)..\games\BubbleFighter\native\nmcogame;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="nmcogame_tests.cpp" />
+    <!-- The messenger codec is compiled in directly; the DLL's exports are read from the built file. -->
+    <ClCompile Include="..\..\games\BubbleFighter\native\nmcogame\messenger.cpp" />
+    <ClCompile Include="..\..\games\BubbleFighter\native\nmcogame\friends.cpp" />
+    <ClCompile Include="..\..\games\BubbleFighter\native\nmcogame\friends_client.cpp" />
+    <ClCompile Include="..\..\games\BubbleFighter\native\nmcogame\game_login.cpp" />
+    <ClCompile Include="..\..\games\BubbleFighter\native\nmcogame\json.cpp" />
+    <ClCompile Include="nmcogame_friends_tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="check.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Build order only: the test inspects nmcogame.dll in the shared output folder. -->
+    <ProjectReference Include="..\..\games\BubbleFighter\native\nmcogame\nmcogame.vcxproj">
+      <Project>{8AF86424-39B5-4747-A4E4-89AC4F6EB6AF}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,96 @@
+schema = 1
+
+[build]
+id = "cn-404"
+game = "bubblefighter"
+branch = "cn"
+hidden = true
+build_date = "2014-04-03 15:20:53"
+protocol_version = 404
+release_version = "0.2.46.001"
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "cn-404"
+hosting_adapter = "legacy"
+default_port = 7240
+
+[build.name]
+"en" = "China 2014-04-03"
+"zh-CN" = "国服 2014-04-03"
+"zh-TW" = "中國 2014-04-03"
+"ko" = "중국 2014-04-03"
+"id" = "Tiongkok 2014-04-03"
+"vi" = "Trung Quốc 2014-04-03"
+
+[fingerprint]
+pe_timestamp = 0x533CFD5F
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-404 sub_88B9D0 loads interface version 512; sub_893590 parses these arguments.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-404"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-404"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-404"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-404"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-404"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-404"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-404"]
+sources = []

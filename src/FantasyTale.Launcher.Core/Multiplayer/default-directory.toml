@@ -1,0 +1,6 @@
+schema = 1
+[source]
+id = "fantasy"
+name = "Bubble Fighter Fantasy"
+base_url = "http://bf.600819.xyz:8096/"
+enabled = true

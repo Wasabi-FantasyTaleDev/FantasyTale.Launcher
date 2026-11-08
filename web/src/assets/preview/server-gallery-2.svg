@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#334964"/><stop offset="1" stop-color="#8b8ba4"/></linearGradient><linearGradient id="water" x2="1" y2="1"><stop stop-color="#547f9b"/><stop offset="1" stop-color="#344d75"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h960v720H0z"/>
+  <circle cx="737" cy="146" r="62" fill="#e9e7d4"/>
+  <g fill="#fff" opacity=".6"><circle cx="103" cy="92" r="3"/><circle cx="380" cy="137" r="2"/><circle cx="550" cy="63" r="3"/><circle cx="861" cy="228" r="2"/></g>
+  <path d="m0 396 155-170 200 195 170-143 248 172 187-106v376H0" fill="#586f80"/>
+  <path d="m0 500 197-126 152 125 202-136 203 141 206-128v344H0" fill="#3c5e6c"/>
+  <path d="M0 565q257-132 490-24t470-16v195H0" fill="url(#water)"/>
+  <path d="m244 446 220-110 221 122-221 104z" fill="#c1b69d"/><path d="m244 446 220 116v71L244 516z" fill="#8c8a87"/><path d="m464 562 221-104v71L464 633z" fill="#a9a59a"/>
+  <path d="m355 391 105-91 113 99-110 62z" fill="#a9a290"/><path d="m460 300 113 99v60l-110-60z" fill="#c7bca1"/><path d="m335 396 125-119 132 121-19 16-110-101-108 102z" fill="#536c82"/>
+  <g fill="#f6dc9e"><path d="m477 358 31 17v41l-31-17z"/><path d="m286 480 34 18v36l-34-18z"/><path d="m548 537 34-16v36l-34 16z"/></g>
+  <path d="M0 0h960v720H0z" fill="none" stroke="#fff" stroke-opacity=".15" stroke-width="18"/>
+  <text x="42" y="653" font-family="Segoe UI, sans-serif" font-size="18" letter-spacing="3" fill="white" opacity=".9">LOCAL GALLERY PREVIEW · 02</text>
+</svg>

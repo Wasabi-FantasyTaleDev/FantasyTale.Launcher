@@ -1,0 +1,16 @@
+<Project>
+  <Target Name="ExcludeReferenceSymbolsFromPublication" AfterTargets="ComputeFilesToPublish">
+    <!-- Referenced projects contribute their PDBs independently of the entry project's symbol setting. -->
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="ValidateRepositoryVersion" BeforeTargets="PrepareForBuild">
+    <XmlPeek XmlInputPath="$(MSBuildThisFileDirectory)Directory.Build.props"
+             Query="/Project/PropertyGroup/Version/text()">
+      <Output TaskParameter="Result" PropertyName="_DeclaredRepositoryVersion" />
+    </XmlPeek>
+    <Error Condition="'$(Version)' != '$(_DeclaredRepositoryVersion)'"
+           Text="The build version must match Directory.Build.props. Update that file before building a new release; command-line version overrides are not supported." />
+  </Target>
+</Project>

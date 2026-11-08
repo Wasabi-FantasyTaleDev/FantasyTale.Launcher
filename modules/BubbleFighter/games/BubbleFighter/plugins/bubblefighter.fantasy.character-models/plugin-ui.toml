@@ -1,0 +1,8 @@
+schema = 1
+
+[[pages]]
+id = "models"
+kind = "html"
+path = "settings.html"
+options = ["models"]
+title = { en = "Character models", zh-CN = "角色模型", zh-TW = "角色模型", ko = "캐릭터 모델", id = "Model karakter", vi = "Mô hình nhân vật" }

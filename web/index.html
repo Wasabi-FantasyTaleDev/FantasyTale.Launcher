@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" class="booting">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Fantasy Tale Launcher</title>
+    <link rel="icon" type="image/png" href="/branding/launcher-logo.png" />
+    <style>
+      /* Shown before any script runs, so the window never flashes white. */
+      html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+      #boot {
+        position: fixed; inset: 0; display: grid; place-items: center;
+        background: #fff; color: #1a1a1a; isolation: isolate; transition: opacity 520ms cubic-bezier(0.25, 0.1, 0.25, 1);
+        font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif; z-index: 1000;
+      }
+      @keyframes boot-logo-in { from { opacity: 0; transform: translateY(10px) scale(0.94); } to { opacity: 1; transform: none; } }
+      #boot .boot-content {
+        position: relative; display: grid; justify-items: center;
+        transition: opacity 360ms ease-in-out, transform 520ms cubic-bezier(0.2, 0.65, 0.25, 1);
+      }
+      #boot .boot-logo {
+        width: 128px; height: 128px; object-fit: contain; animation: boot-logo-in 600ms cubic-bezier(0.2, 0.65, 0.25, 1) 80ms both;
+      }
+      /* Keep the real window controls above the startup surface while content initializes. */
+      html.booting .titlebar { z-index: 1001; }
+      html.booting:has(#boot) .titlebar { --text-primary: #1a1a1a; --subtle-secondary: rgba(0, 0, 0, 0.04); --subtle-tertiary: rgba(0, 0, 0, 0.03); }
+      html.booting .shell { opacity: 0; }
+      @media (prefers-reduced-motion: reduce) {
+        #boot .boot-logo { animation-duration: 220ms !important; animation-delay: 0ms; }
+      }
+      @media (forced-colors: active) {
+        #boot, html[data-theme] #boot { background: Canvas; color: CanvasText; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot" aria-busy="true">
+      <div class="boot-content">
+        <img class="boot-logo" src="/branding/launcher-logo.png" width="128" height="128" alt="" />
+      </div>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

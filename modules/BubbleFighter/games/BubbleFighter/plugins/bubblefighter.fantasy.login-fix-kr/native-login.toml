@@ -1,0 +1,43 @@
+schema = 1
+
+[client]
+build = "kr-1256"
+pe_timestamp = 0x69FD90C8
+image_sizes = [0x1B32000, 0x1B36000]
+timeout_ms = 120000
+poll_ms = 100
+
+# kr-1256 sub_882450 performs the original login-stage RTTI and callback transition.
+assign_rva = 0xC2E0
+callback_rva = 0x482450
+app_slot_rva = 0x14E5608
+connection_slot_rva = 0x14E7F48
+dependency_slot_rvas = [0x14E55D4, 0x14E6850, 0x14E56E8]
+stage_offset = 84
+# kr-1256 sub_85E700 assigns the LoginStage primary vtable at off_119D1D0.
+stage_vtable_rva = 0x119D1D0
+startup_offset = 292
+patch_ready_offset = 460
+app_ready_offset = 520
+connected_offset = 326
+identity_offset = 2516
+endpoint_builder_rva = 0x47EA20
+# kr-1256 sub_DABE90 initializes game security; sub_DAC540 pumps its queue every frame.
+ngs_init_rva = 0x9ABE90
+ngs_pump_rva = 0x9AC540
+
+[[signatures]]
+rva = 0xC2E0
+bytes = "53 55 8B 6C 24 10 56 57 8B F9 8B 5F 14 3B EB 77 3C"
+
+[[signatures]]
+rva = 0x482450
+bytes = "55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 64 89 25 00 00 00 00"
+
+[[signatures]]
+rva = 0x45EDB0
+bytes = "55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 64 89 25 00 00 00 00"
+
+[[signatures]]
+rva = 0x47EA20
+bytes = "55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 64 89 25 00 00 00 00"

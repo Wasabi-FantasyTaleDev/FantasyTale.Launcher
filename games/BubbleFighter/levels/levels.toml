@@ -1,0 +1,16 @@
+schema = 1
+# Tables and artwork ship with release packages, not the public source tree.
+optional_assets = true
+names_pending = true
+# TODO: Fill original level names when an authoritative name table is available.
+[source]
+file = "levels.csv"
+skip_lines = 1
+level_column = 0
+exp_column = 1
+[[atlases]]
+file = "rank.png"
+first_level = 1
+columns = 5
+cell_width = 23
+cell_height = 26

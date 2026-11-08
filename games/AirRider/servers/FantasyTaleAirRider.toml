@@ -1,0 +1,7 @@
+schema = 1
+
+[server]
+id = "FantasyTaleAirRider"
+game = "airrider"
+name = "Air Rider Fantasy"
+bundled_instances = true

@@ -1,0 +1,34 @@
+[store]
+id = "fantasy-tale"
+name = "Fantasy Tale"
+output = "./published"
+
+# Configure each client folder once. Later updates only replace files in that folder.
+[[clients]]
+game = "bubblefighter"
+build = "cn-279"
+name = "China 2011"
+directory = "./clients/cn-279"
+exclude = ["logs/*", "*.log", "*.dmp"]
+# label = "Optional update label"
+
+# A client may instead be published as one archive. Point at any member of a
+# complete volume family; the publisher discovers neighboring ZIP, 7z or RAR
+# parts and writes them in order. The password is optional and is copied only
+# into the pinned release manifest, never into the catalog.
+# [[clients]]
+# game = "bubblefighter"
+# build = "kr-812"
+# name = "Korea 2015 archive"
+# archive = "./archives/kr-812.7z.001"
+# archive_root = "BubbleFighter"
+# password = "publisher-password"
+
+# Optional server package; publish a clean distribution, never a live deployment.
+# [[servers]]
+# id = "bubblefighter.server"
+# game = "bubblefighter"
+# builds = ["cn-406", "kr-1256"]
+# version = "2.25.0"
+# name = "Bubble Fighter server"
+# directory = "./server-package"

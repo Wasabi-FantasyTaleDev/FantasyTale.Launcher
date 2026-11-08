@@ -1,0 +1,3 @@
+LIBRARY mid_match_exit
+EXPORTS
+    fthook_plugin_main

@@ -1,0 +1,32 @@
+# File replacement plugins
+
+[Chinese](file-plugins.zh.md)
+
+`kind = "files"` packages run in the launcher, not in the game. They can replace loose UI resources, complete resource archives, fonts or supporting DLLs without injecting a plugin DLL. Editing entries inside BFZ/PKN archives is not implemented; provide a complete replacement file.
+
+Each `[[files]]` row declares relative `source` and `target`, exact `size`, lower-case `sha256` and optional `builds`. Paths use forward slashes and support subdirectories and Unicode names. Empty selectors apply to all compatible builds; other selectors use build IDs, `branch:<name>` or `*`. Traversal, links, device names and launcher session/recovery files are rejected. File plugins cannot contain native entry points. Starting with Launcher 0.1.57 and FtHook 3.7.2, they may declare boolean options referenced by their memory patches through `when`; these gates never conditionally deploy files. Unused or non-boolean file-plugin options are rejected. Launcher 0.1.54 and FtHook 3.7.1 additionally support build-scoped memory patches in the same package, using the existing signature, expected-byte and rollback contract. Only matching builds activate the native patch loader; file-only builds retain their original deployment path.
+
+The launcher verifies content before startup and stages resource replacements and native runtime files in one durable transaction. Colliding destinations, including file/parent conflicts, stop preparation. Resource replacements, native payloads and backups have no fixed file-count or byte ceiling; declared sizes, SHA-256 checks and transaction ownership remain mandatory. By default, confirmed exit restores originals and removes added files. A file plugin may declare `[plugin] restore_files = false` (Launcher 0.1.15 or later): targets already matching its size/SHA-256 are not rewritten, and a completed installation remains after exit or stopped-client recovery. Incomplete application rolls back the whole transaction. Native runtime bindings always remain temporary. External changes preserve journals/backups for explicit recovery. Empty newly created directories may remain.
+
+Optional resource packages reuse folder/ZIP import and store downloads. Import does not enable them. Game/build `client_policy_rules` own activation and version requirements. Package `required_on`, `warn_on` and `require_latest` fields are rejected, including in bundled and store packages. A `require` rule cannot be disabled. A recommended package with localized `warning` text retains the existing disabled-launch confirmation after installation; an explicit disable choice is preserved. Source ownership remains in `game.plugin_sources` and package `update_source`. Cancel and Escape do not authorize execution. The backend checks package ID/version confirmations before acquiring credentials, and the launch service rechecks them under the client lease.
+
+## Chinese authentication component
+
+`bubblefighter.fantasy.login-fix-cn` is downloaded from the store and applies only to `branch:cn`. Its source is declared in `game.plugin_sources`, and require/latest rules name each supported CN build explicitly in `client_policy_rules`, without bundling its payload. Client installation offers it as a required component; launch preparation requires an installed, enabled selection. It replaces `GPKitClt.dll` plus one authentication file:
+
+| Builds | Authentication destination |
+| --- | --- |
+| cn-279, cn-324 | GameWidget.dll |
+| cn-404, cn-406, cn-706, cn-717, cn-735 | sdologinentry.dll |
+
+Both names use the existing managed-ticket forwarding bridge. Plugin ownership suppresses duplicate module deployment, including when the component is explicitly disabled. This component uses the requested warning override rather than a hard toggle lock. Missing package definitions or invalid enabled payloads still block startup.
+
+The GPK stand-in and login forwarder are built from launcher sources and packaged by `tools/package-native.ps1`, which regenerates file hashes/sizes. No retail DLL is redistributed. Future authentication hooks retain this component identity; the current file-only contract does not load an extra hook. File declarations for an unverified client do not verify its launch/login adapter.
+
+## Required installation and latest releases
+
+The installation prompt shows mandatory recommended components checked and locked, including a component already enabled by defaults. Confirming enables it; canceling does not authorize the requested launch. Acknowledgement is recorded per client and typed recommendation rule in `client-policy.seen`. Later explicit disable remains the warning override described above.
+
+A game/build `client_policy_rules` row with `type = "latest"` marks an enabled component for highest-compatible SemVer discovery from `update_source` (a configured store ID), or its original source receipt. Discovery begins before frontend readiness and shares the first store catalog request. With automatic plugin updates enabled, verified downloads run in the background and activate for idle clients. Game launch reads known update state without refreshing a source or waiting for discovery. Unapplied required updates appear as package cards with installed/latest versions and live transfer progress; the user can cancel, wait for activation, or explicitly launch using the intact installed version. Source failures do not block launch. Missing or damaged required payloads still fail local validation, and confirmations cover only the displayed versions for that launch.
+
+The Chinese authentication component enables this policy and binds to `fantasy-tale`. A package update cannot change the profile's typed rules, source ownership or file-retention policy. Local same-name imports remain rejected. Component 1.0.1 declares `restore_files = false` in `file-install.toml` (`schema = 1`). This package-local sidecar leaves the primary manifest readable by older launchers, which can report `minimum_launcher_version = "0.1.15"` instead of an unknown-key error. The sidecar is part of the verified store snapshot; it accepts only `schema` and `restore_files`, and conflicting manifest policies are rejected. In this component: GPK and the build-selected login bridge remain installed after exit. Disabling the component stops subsequent deployment; it does not uninstall a permanent replacement. There is no native hot reload.

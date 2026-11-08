@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.69</Version>
+    <LauncherDeprecatedMaxVersion>0.1.59</LauncherDeprecatedMaxVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Keep source-path-bearing symbols in local build output, not portable distributions. -->
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Authors>Fantasy Tale Studio</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/Wasabi-FantasyTaleDev/FantasyTale.Launcher</RepositoryUrl>
+  </PropertyGroup>
+</Project>

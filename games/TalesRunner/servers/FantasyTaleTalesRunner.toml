@@ -1,0 +1,7 @@
+schema = 1
+
+[server]
+id = "FantasyTaleTalesRunner"
+game = "talesrunner"
+name = "Fantasy Runner"
+bundled_instances = false

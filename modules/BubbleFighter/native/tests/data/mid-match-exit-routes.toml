@@ -1,0 +1,251 @@
+schema = 1
+
+# Addresses are read from each build's own GameStage keyboard consumer.
+# These fixtures model branch inputs; they do not render a dialog or deliver a packet.
+
+# cn-404 sub_617FB0: native keyboard entry and its retained guards.
+[clients.cn-404]
+zero_helpers = [0x7B9560, 0x4A57E0, 0x610A70, 0x4D23C0, 0x4D65F0]
+entry = 0x617FB0
+context_global = 0xE31D08
+room_global = 0xE31E90
+mode_offset = 0x60
+dialog_flag_offset = 0x610
+key_offset = 0x0
+loading_offset = 0x0
+match_helper = 0xA14E00
+input_toggle = 0xA3B800
+property_global = 0xE31D14
+tutorial_entry = 0x618286
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-406 sub_561CF0: native keyboard entry and its retained guards.
+[clients.cn-406]
+zero_helpers = [0x709E40, 0x417380, 0x440930, 0x444690]
+entry = 0x561CF0
+context_global = 0xD2F7EC
+room_global = 0xD2F968
+mode_offset = 0x60
+dialog_flag_offset = 0x500
+key_offset = 0x0
+loading_offset = 0x0
+match_helper = 0x945D20
+input_toggle = 0x974D80
+property_global = 0xD2F7F8
+tutorial_entry = 0x561FC9
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-408 sub_61AFF0: native keyboard entry and its retained guards.
+[clients.cn-408]
+zero_helpers = [0x7BCA00, 0x4A5140, 0x613A10, 0x4D1FA0, 0x4D6180]
+entry = 0x61AFF0
+context_global = 0xE37F48
+room_global = 0xE380D0
+mode_offset = 0x60
+dialog_flag_offset = 0x624
+key_offset = 0x0
+loading_offset = 0x0
+match_helper = 0xA1DDB0
+input_toggle = 0xA445C0
+property_global = 0xE37F54
+tutorial_entry = 0x61B2C6
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-706 sub_5FAB20: native keyboard entry and its retained guards.
+[clients.cn-706]
+zero_helpers = [0x793430, 0x4B1380, 0x5F33D0, 0x4DE6D0, 0x4E2A00]
+entry = 0x5FAB20
+context_global = 0xDDC344
+room_global = 0xDDC5B4
+mode_offset = 0x60
+dialog_flag_offset = 0x64C
+key_offset = 0x0
+loading_offset = 0x0
+match_helper = 0x9E4C70
+input_toggle = 0xA0ABB0
+property_global = 0xDDC354
+tutorial_entry = 0x5FADFD
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-717 sub_6C1780: native keyboard entry and its retained guards.
+[clients.cn-717]
+zero_helpers = [0x88A250, 0x5301E0, 0x6B91B0, 0x55B280, 0x55FCB0]
+entry = 0x6C1780
+context_global = 0xFFB8D4
+room_global = 0xFFBA20
+mode_offset = 0x60
+dialog_flag_offset = 0x748
+key_offset = 0x0
+loading_offset = 0x814
+match_helper = 0xB20B70
+input_toggle = 0xB49A80
+property_global = 0xFFB8DC
+tutorial_entry = 0x6C1A78
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-735 sub_817AF0: native keyboard entry and its retained guards.
+[clients.cn-735]
+zero_helpers = [0x9FDE60, 0x6490F0, 0x4187F0, 0x67B6D0]
+entry = 0x817AF0
+context_global = 0x13476EC
+room_global = 0x1348928
+mode_offset = 0x94
+dialog_flag_offset = 0x5D4
+key_offset = 0x2E0
+loading_offset = 0x6A0
+match_helper = 0x676E40
+input_toggle = 0xCFE620
+property_global = 0x0
+tutorial_entry = 0x817E02
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# cn-774 sub_90EF70: native keyboard entry and its retained guards.
+[clients.cn-774]
+zero_helpers = [0x491A30, 0x47EE50, 0x8C3C00]
+entry = 0x90EF70
+context_global = 0x177B9A4
+room_global = 0x177B9AC
+mode_offset = 0x98
+dialog_flag_offset = 0x900
+key_offset = 0x52C
+loading_offset = 0x9CC
+match_helper = 0x8BF580
+input_toggle = 0xF5A2D0
+property_global = 0x0
+tutorial_entry = 0x90F317
+ready_value = 30
+mode_indirect = true
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+ui_global = 0x177CBDC
+
+# id-400 sub_5D26A0: native keyboard entry and its retained guards.
+[clients.id-400]
+zero_helpers = [0x78CBB0, 0x4A4230, 0x4A8180]
+entry = 0x5D26A0
+context_global = 0xDE2068
+room_global = 0xDE21E8
+mode_offset = 0x60
+dialog_flag_offset = 0x5B0
+key_offset = 0x29C
+loading_offset = 0x0
+match_helper = 0x9DD970
+input_toggle = 0xA01530
+property_global = 0xDE2070
+tutorial_entry = 0x5D26FC
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = true
+
+# id-1809 sub_61B3A0: native keyboard entry and its retained guards.
+[clients.id-1809]
+zero_helpers = [0x7B0FB0, 0x4F8FA0, 0x4FCEF0]
+entry = 0x61B3A0
+context_global = 0xDF5948
+room_global = 0xDF5BBC
+mode_offset = 0x60
+dialog_flag_offset = 0x72C
+key_offset = 0x2A0
+loading_offset = 0x0
+match_helper = 0x9FAE80
+input_toggle = 0xA20610
+property_global = 0xDF5958
+tutorial_entry = 0x61B3FC
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = true
+
+# kr-812 sub_668A60: native keyboard entry and its retained guards.
+[clients.kr-812]
+zero_helpers = [0x806550, 0x4FB590, 0x660CA0, 0x525F20, 0x529D90]
+entry = 0x668A60
+context_global = 0xE82684
+room_global = 0xE827CC
+mode_offset = 0x60
+dialog_flag_offset = 0x788
+key_offset = 0x2A0
+loading_offset = 0x854
+match_helper = 0xA5FD80
+input_toggle = 0xA88C30
+property_global = 0xE8268C
+tutorial_entry = 0x668D0B
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+
+# kr-1256 sub_75F690: native keyboard entry and its retained guards.
+[clients.kr-1256]
+zero_helpers = [0x11511C0, 0x626590, 0x1150F40, 0x703710]
+entry = 0x75F690
+context_global = 0x18E55A0
+room_global = 0x18E55AC
+mode_offset = 0x98
+dialog_flag_offset = 0x98C
+key_offset = 0x5C4
+loading_offset = 0xA58
+match_helper = 0x6FF0E0
+input_toggle = 0x0
+property_global = 0x0
+tutorial_entry = 0x75F775
+ready_value = 29
+mode_indirect = true
+room_indirections = 1
+ordinary_mode = 1
+original_all_modes = false
+ui_global = 0x18E6850
+key_map_global = 0x18E555C
+key_map_query = 0x475180
+tutorial_helper = 0x11511C0
+
+# tw-454 sub_882940: native keyboard entry and its retained guards.
+[clients.tw-454]
+zero_helpers = [0x471110, 0x49F480, 0x470EA0, 0x737850]
+entry = 0x882940
+context_global = 0x163DD80
+room_global = 0x163DEAC
+mode_offset = 0x88
+dialog_flag_offset = 0x7DC
+key_offset = 0x404
+loading_offset = 0x8A8
+match_helper = 0x7330D0
+input_toggle = 0xEFA9D0
+property_global = 0x0
+tutorial_entry = 0x882A64
+ready_value = 30
+mode_indirect = false
+room_indirections = 0
+ordinary_mode = 1
+original_all_modes = false
+ui_global = 0x163F038
+tutorial_helper = 0x471110

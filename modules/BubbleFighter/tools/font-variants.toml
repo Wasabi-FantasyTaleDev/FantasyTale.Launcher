@@ -1,0 +1,51 @@
+schema = 1
+
+[base]
+file = "GB13000.ttf"
+sha256 = "2d372f0568676b0a45a939fc460dd6cf5d269599b6a348f6f429df729f25794f"
+
+# Private source files are read from client Data directories, never committed.
+[[variants]]
+file = "AritaB.ttf"
+sha256 = "738deba7fbdbd25f6ba65bded192d3db83e92b70dfea98814c6dcb2664cc8eef"
+
+[[variants]]
+file = "AritaL.ttf"
+sha256 = "ffbb763feae3975d2e19a629cbc0a928e3f087f8ba5659de9a13a208425a6602"
+
+[[variants]]
+file = "AritaM.ttf"
+sha256 = "b6a6e0f066808e8ea15ac73dc1a1434dd807b679fe55cd8d295c38b832a54c91"
+
+[[variants]]
+file = "AritaSB.ttf"
+sha256 = "34568f18f2dac8fc261844554c9d742f47515c51cf654e380acff8ff68239352"
+
+[[variants]]
+file = "NanumGothic.ttf"
+sha256 = "462d01de0a38afbc40e7caecb54941d14a8f018cf7b4b8e6245f6920b690c9f8"
+builds = ["id-400", "id-1809"]
+
+[[variants]]
+file = "NanumGothicBold.ttf"
+sha256 = "fd53e5049abbafd1ede4ea9a5e2839a6568cf3b462f9760f200ae4545837bad8"
+builds = ["id-400", "id-1809"]
+
+[[variants]]
+file = "NexonBTBold.otf"
+sha256 = "e7bab0c22506c274c5217b2c0775d5a9ce8e86438eac5708cb197e32401a099a"
+
+[[variants]]
+file = "NexonGothicB.otf"
+sha256 = "484f3707b38c427824e83f4f3675c723ff7f36dc2fc0f1ea629e78d9f90135b3"
+fallback = "AritaB.ttf"
+
+[[variants]]
+file = "NexonGothicL.otf"
+sha256 = "bc9e3641d630c224f448dc4301dc48dd582e9a56b6f3c8528932631da4925993"
+fallback = "AritaL.ttf"
+
+[[variants]]
+file = "NexonGothicM.otf"
+sha256 = "9499688803d98d26fa015e36e3a1c770457b15b130226458ff17665621cc6786"
+fallback = "AritaM.ttf"

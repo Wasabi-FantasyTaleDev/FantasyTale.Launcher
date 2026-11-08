@@ -1,0 +1,21 @@
+.bf-native-host{display:contents}
+.bf-window,.bf-form{position:relative;font:13px BFMalgun,sans-serif;font-weight:400;font-synthesis:none;color:#5b5b5b}.bf-window{isolation:isolate}.bf-window .caption{position:absolute;left:32px;right:30px;top:7px;color:white;line-height:16px}.bf-window[data-theme=v2] .caption{text-align:center;left:25px;top:6px}.skin{position:absolute;inset:0;pointer-events:none}.tile{position:absolute;overflow:hidden}.tile img{position:absolute;max-width:none}.control{position:absolute;border:0;padding:0;background:transparent;font:inherit;color:inherit}.control button{font:inherit}.sprite-button{cursor:pointer}.sprite-button .text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;padding-left:14px;pointer-events:none}.bf-label{display:flex;align-items:center;white-space:pre-wrap}.bf-close{position:absolute;right:3px;top:3px;cursor:pointer;border:0;background:transparent;padding:0}.bf-window[data-theme=v1] .bf-close{right:8px;top:8px}.bf-check{cursor:pointer}.bf-check input{opacity:0;position:absolute;inset:0;margin:0;width:100%;height:100%;cursor:pointer}.bf-track input{position:absolute;inset:0;width:100%;margin:0;opacity:0;cursor:pointer}.bf-track{height:31px}.bf-edit{background:#fff;border:1px solid #a7b0b4;border-radius:5px;padding:3px 6px}.bf-edit:focus{outline:1px solid #3397e9}.bf-tabs{position:absolute;left:15px;top:31px;display:flex;gap:3px}.bf-tabs button{font:13px BFMalgun;border:0;padding:7px 10px;background:transparent;color:#8ba5b3;cursor:pointer}.bf-tabs button.active{background:#7ba8bf;color:white;border-radius:4px 4px 0 0}.bf-window[data-theme=v1] .bf-tabs button.active{background:#83939d}.message-copy{display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;position:absolute;color:#444}
+.bf-window .caption{top:8px}.bf-window[data-theme=v2] .caption{top:7px}.track-tick{background:#636c6e;pointer-events:none}.bf-window canvas{image-rendering:auto}.bf-label{line-height:14px}.bf-tabs button{font-weight:400;font-synthesis:none}
+.bf-canvas-text::selection{color:transparent;background:transparent}
+
+
+.bf-window .caption{top:9px}.bf-window[data-theme=v2] .caption{top:8px}
+
+.bf-check input,.bf-track input{z-index:1}
+.sprite-button>.tile,.bf-close>.tile{pointer-events:none}
+.bf-text-tab{border-radius:6px 6px 0 0;overflow:hidden;isolation:isolate}
+.bf-text-tab>span{pointer-events:none}
+.bf-text-tab .bf-tab-active{visibility:hidden}
+.bf-text-tab[aria-selected=true] .bf-tab-active{visibility:visible}
+.bf-text-tab[aria-selected=true] .bf-tab-inactive{visibility:hidden}
+.bf-text-tab[data-theme=v1][aria-selected=true]{background:#85959f;box-shadow:inset 1px 1px 0 #a9b7be}
+.bf-text-tab[data-theme=v2][aria-selected=true]{background:linear-gradient(#81adbf,#75a0b5);box-shadow:inset 1px 1px 1px #b5d8e5,inset -1px 0 #6696ab}
+.bf-text-tab[data-theme=v3]{background:#79a3c7;border:1px solid #426e98}
+.bf-text-tab[data-theme=v3][aria-selected=true]{background:#1b477a;border-color:#0e315d;box-shadow:inset 0 2px 0 #315f8d}
+.bf-text-tab:hover{filter:brightness(1.06)}
+.bf-text-tab:focus-visible{outline:1px solid #fff;outline-offset:-3px}

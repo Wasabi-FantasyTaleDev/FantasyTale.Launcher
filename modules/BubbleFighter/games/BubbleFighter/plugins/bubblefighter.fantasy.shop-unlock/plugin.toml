@@ -1,0 +1,48 @@
+schema = 1
+
+[plugin]
+minimum_launcher_version = "0.1.57"
+id = "bubblefighter.fantasy.shop-unlock"
+aliases = ["bubblefighter.fantasy.kr1256-shop-gates"]
+version = "1.0.1"
+game = "bubblefighter"
+kind = "patch"
+runtime = ">=3.7.2 <4.0.0"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+"en" = "Shop access"
+"zh-CN" = "商店开放"
+"zh-TW" = "商店開放"
+"ko" = "상점 이용"
+"id" = "Akses toko"
+"vi" = "Mở cửa hàng"
+
+[plugin.description]
+"en" = "Fixes shop access in the final Korean client."
+"zh-CN" = "修复韩服最终版本无法进入商店的问题"
+"zh-TW" = "修復韓國最終版本無法進入商店的問題"
+"ko" = "한국 최종 버전에서 상점에 들어갈 수 없는 문제를 수정합니다."
+"id" = "Memperbaiki akses toko pada versi Korea terakhir."
+"vi" = "Sửa lỗi không vào được cửa hàng ở phiên bản Hàn Quốc cuối cùng."
+
+[compatibility]
+builds = ["kr-1256"]
+
+# kr-1256 sub_AA2D20 writes the taskbar shop button's enabled flag during construction.
+[[patches]]
+id = "shop-button"
+builds = ["kr-1256"]
+locate = { rva = 0x006A4CE7 }
+expect = "C6 87 8C 03 00 00 00"
+write = "C6 87 8C 03 00 00 01"
+
+# kr-1256 sub_9328B0 gates the shared feature entry; the jz becomes an unconditional jmp
+# to the same target (0x009328F9 + 6 + 0x193 == 0x009328F9 + 5 + 0x194).
+[[patches]]
+id = "feature-entry"
+builds = ["kr-1256"]
+locate = { rva = 0x005328F9 }
+expect = "0F 84 93 01 00 00"
+write = "E9 94 01 00 00 90"

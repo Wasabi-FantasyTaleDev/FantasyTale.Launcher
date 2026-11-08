@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b9dce8"/><stop offset="1" stop-color="#eff5ed"/></linearGradient><linearGradient id="water" x2="1" y2="1"><stop stop-color="#62aebc"/><stop offset="1" stop-color="#397b9d"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h960v720H0z"/>
+  <circle cx="754" cy="150" r="74" fill="#fff3d6"/>
+  <path d="M0 390 174 215 300 390 480 255 740 420 960 260v460H0" fill="#a1c3b7"/>
+  <path d="m0 457 206-109 177 106 159-94 247 113 171-84v331H0" fill="#6f9e97"/>
+  <path d="M0 540q260-145 492-30t468-5v215H0" fill="url(#water)"/>
+  <path d="m274 397 168-70 140 80-157 79z" fill="#f3e7cd"/><path d="m274 397 151 89v96l-151-87z" fill="#bd9e81"/><path d="m425 486 157-79v96l-157 79z" fill="#d5b797"/>
+  <path d="m346 365 85-92 92 93-90 49z" fill="#d1a06c"/><path d="m431 273 92 93v82l-90-49z" fill="#e4c69e"/>
+  <path d="m328 371 104-121 109 116-20 19-88-97-87 101z" fill="#698f9d"/>
+  <path d="m92 429 66-116 65 116z" fill="#4f8276"/><path d="m690 468 79-157 79 157z" fill="#4f8276"/>
+  <path d="M0 0h960v720H0z" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="18"/>
+  <text x="42" y="653" font-family="Segoe UI, sans-serif" font-size="18" letter-spacing="3" fill="white" opacity=".9">LOCAL GALLERY PREVIEW · 01</text>
+</svg>

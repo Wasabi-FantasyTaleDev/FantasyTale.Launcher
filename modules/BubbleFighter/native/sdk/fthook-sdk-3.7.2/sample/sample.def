@@ -1,0 +1,3 @@
+LIBRARY sample_locator
+EXPORTS
+    fthook_plugin_main

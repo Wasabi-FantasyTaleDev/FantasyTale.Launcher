@@ -1,0 +1,122 @@
+# External client identification evidence. Generated from local client corpus.
+# A row may be used by a build definition or retained for a future build.
+schema = 1
+
+[[versions]]
+id = "cn-279"
+pe_timestamp = 0x4D9ECC57
+signer_certificate_sha256 = "ef566810decb03b7bafa0e56f87b440ddd05ca0dca09f97cee4ba95014207b13"
+signed_at = "2011-04-08T09:35:38Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-324"
+pe_timestamp = 0x505DD60C
+signer_certificate_sha256 = "87a800376d0183101a67abfebd2baafb10d39e628e25a3f9d32adec614cbb8f9"
+signed_at = "2012-09-22T15:16:40Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-406"
+pe_timestamp = 0x51CD5DE5
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2013-06-28T10:02:07Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-404"
+pe_timestamp = 0x533CFD5F
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2014-04-03T06:20:53Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-408"
+pe_timestamp = 0x5383216F
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2014-05-26T11:16:05Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-705"
+pe_timestamp = 0x53DA0A65
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2014-07-31T11:19:07Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-706"
+pe_timestamp = 0x5420DCC3
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2014-09-23T02:41:03Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-717"
+pe_timestamp = 0x5582B5CD
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2015-06-18T13:03:52Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-735"
+pe_timestamp = 0x5767E697
+signer_certificate_sha256 = "1d5722019f78a8b89a6fa8eaf87423ca8c38041f6688eab49bfb26be9ae712e2"
+signed_at = "2016-06-20T12:52:06Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-738"
+pe_timestamp = 0x57B6D7EF
+signer_certificate_sha256 = "1d5722019f78a8b89a6fa8eaf87423ca8c38041f6688eab49bfb26be9ae712e2"
+signed_at = "2016-08-19T09:58:23Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-742"
+pe_timestamp = 0x582C1AC7
+signer_certificate_sha256 = "f6f097416c127a14bc9be596f0f653c8f0ccb147950788065183bdaef1f7fb55"
+signed_at = "2016-11-16T08:38:48Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "cn-774"
+pe_timestamp = 0x5CEF8FF9
+signer_certificate_sha256 = "7d057539ad05fefc3be8ad8c2ff87e89a4ca79f1652ac77c38ee0f192c844577"
+signed_at = "2019-05-30T08:12:03Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "id-400"
+pe_timestamp = 0x52E07057
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2014-01-23T01:40:10Z"
+executable_aliases = ["CrazyShooterU.exe", "CrazyShooter.Unpacked.exe", "CrazyShooter.asInvoker.exe", "CrazyShooter.asInvokerU.exe"]
+
+[[versions]]
+id = "id-1809"
+pe_timestamp = 0x54C99FF6
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2015-01-29T02:51:56Z"
+executable_aliases = ["CrazyShooterU.exe", "CrazyShooter.Unpacked.exe", "CrazyShooter.asInvoker.exe", "CrazyShooter.asInvokerU.exe"]
+
+[[versions]]
+id = "kr-812"
+pe_timestamp = 0x55376C47
+signer_certificate_sha256 = "1711efd6ddc9b3c8ca076e515a526b12d3299110b11198db2c38007066555d1a"
+signed_at = "2015-04-22T09:43:53Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "tw-454"
+pe_timestamp = 0x5C0F4941
+signer_certificate_sha256 = "f6f097416c127a14bc9be596f0f653c8f0ccb147950788065183bdaef1f7fb55"
+signed_at = "2018-12-11T05:22:30Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]
+
+[[versions]]
+id = "kr-1256"
+pe_timestamp = 0x69FD90C8
+signer_certificate_sha256 = "ea732c7c9f96e0a1234f05381ef6842d01bcedf19bfc944805606c4cd3b3606b"
+signed_at = "2026-05-08T07:31:01Z"
+executable_aliases = ["BubbleFighterU.exe", "BubbleFighter.Unpacked.exe", "BubbleFighter.asInvoker.exe", "BubbleFighter.asInvokerU.exe", "unpacked_BubbleFighter.exe", "unpacked_BubbleFighter.repaired.exe"]

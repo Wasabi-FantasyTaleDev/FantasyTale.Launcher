@@ -1,0 +1,99 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "cn-717"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2015-06-18 22:03:52"
+protocol_version = 717
+release_version = "0.2.61.001"
+executable = "BubbleFighter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "cn-717"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7150
+
+[build.name]
+"en" = "China 2015-06-18"
+"zh-CN" = "国服 2015-06-18"
+"zh-TW" = "中國 2015-06-18"
+"ko" = "중국 2015-06-18"
+"id" = "Tiongkok 2015-06-18"
+"vi" = "Trung Quốc 2015-06-18"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x5582B5CD
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-717 sub_9820E0 reads this argument order; cn-717 sub_978F20 requests the version-512 bridge.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-717"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-717"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-717"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-717"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-717"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-717"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-717"]
+sources = []

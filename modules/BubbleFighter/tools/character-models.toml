@@ -1,0 +1,183 @@
+# Verified native generations and preferred sources. New client adaptation edits this data.
+schema = 1
+new_source = "cn-774"
+# New selections include source motions only when the destination already owns that action.
+new_animations = true
+new_model_textures = true
+
+[[characters]]
+key = "Dao"
+classic_source = "tw-454"
+[characters.name]
+"en" = "Dao"
+"zh-CN" = "皮蛋"
+"zh-TW" = "藍寶"
+"ko" = "다오"
+"id" = "Dao"
+"vi" = "Dao"
+
+[[characters]]
+key = "Dizni"
+classic_source = "cn-742"
+classic_animations = true
+# Reviewed by the owner as complete head replacements. Conversion is a no-op
+# when a material's exact magenta pixels do not intersect its triangles.
+classic_aperture_builds = ["cn-0-92-1", "cn-774", "tw-454", "kr-1256"]
+classic_apertures = [
+  "Models/Characters/Dizni/Default/Head.msh",
+  "Models/Characters/Dizni/100000/100008/Head.msh",
+  "Models/Characters/Dizni/100000/100041/Head.msh",
+  "Models/Characters/Dizni/100000/100045/Head.msh",
+  "Models/Characters/Dizni/100000/100054/Head.msh",
+  "Models/Characters/Dizni/100100/100101/Head.msh",
+  "Models/Characters/Dizni/100100/100147/Head.msh",
+  "Models/Characters/Dizni/100200/100237/Head.msh",
+  "Models/Characters/Dizni/100300/100314/Head.msh",
+  "Models/Characters/Dizni/100300/100320/Head.msh",
+  "Models/Characters/Dizni/100400/100426/Head.msh",
+  "Models/Characters/Dizni/100400/100433/Head.msh",
+  "Models/Characters/Dizni/100500/100558/Head.msh",
+  "Models/Characters/Dizni/101200/101271/Head.msh",
+  "Models/Characters/Dizni/101500/101542/Head.msh",
+  "Models/Characters/Dizni/101600/101619/Head.msh",
+  "Models/Characters/Dizni/101700/101705/Head.msh",
+  "Models/Characters/Dizni/101800/101875/Head.msh",
+  "Models/Characters/Dizni/101800/101885/Head.msh",
+  "Models/Characters/Dizni/101900/101935/Head.msh",
+  "Models/Characters/Dizni/101900/101939/Head.msh",
+  "Models/Characters/Dizni/101900/101944/Head.msh",
+  "Models/Characters/Dizni/101900/101964/Head.msh",
+  "Models/Characters/Dizni/101900/101969/Head.msh",
+  "Models/Characters/Dizni/110200/110232/Head.msh",
+  "Models/Characters/Dizni/120100/120101/Head.msh",
+]
+[characters.name]
+"en" = "Dizni"
+"zh-CN" = "黑妞"
+"zh-TW" = "痞子妹"
+"ko" = "디지니"
+"id" = "Dizni"
+"vi" = "Dizni"
+
+[[characters]]
+key = "Bazzi"
+classic_source = "tw-454"
+[characters.name]
+"en" = "Bazzi"
+"zh-CN" = "宝宝"
+"zh-TW" = "睏寶"
+"ko" = "배찌"
+"id" = "Bazzi"
+"vi" = "Bazzi"
+
+[[characters]]
+key = "LXMarid"
+classic_source = "cn-742"
+[characters.name]
+"en" = "Luxury Marid"
+"zh-CN" = "蓝妹妹"
+"zh-TW" = "優雅小蜜桃"
+"ko" = "럭셔리 마리드"
+"id" = "Luxury Marid"
+"vi" = "Luxury Marid"
+
+[[characters]]
+key = "Leo"
+classic_source = "cn-717"
+# cn-717 BodyD includes the legs; later clients split them into a separate slot.
+classic_integrated_legs = true
+[characters.name]
+"en" = "Leo"
+"zh-CN" = "雷欧"
+"zh-TW" = "雷歐"
+"ko" = "레오"
+"id" = "Leo"
+"vi" = "Leo"
+
+[[characters]]
+key = "Lavi"
+classic_source = "cn-717"
+classic_integrated_legs = true
+[characters.name]
+"en" = "Lavi"
+"zh-CN" = "拉比"
+"zh-TW" = "花花"
+"ko" = "라비"
+"id" = "Ravi"
+"vi" = "Lavi"
+
+[[native]]
+build = "kr-812"
+new = []
+
+[[native]]
+build = "kr-1256"
+new = ["Dao", "Dizni", "Bazzi", "LXMarid", "Leo", "Lavi"]
+
+[[native]]
+build = "cn-774"
+new = ["Dao", "Dizni", "Bazzi", "LXMarid", "Leo", "Lavi"]
+
+[[native]]
+build = "tw-454"
+new = ["Dizni", "LXMarid", "Leo", "Lavi"]
+
+[[native]]
+build = "cn-742"
+new = ["Leo", "Lavi"]
+
+[[native]]
+build = "cn-717"
+new = []
+
+[[native]]
+build = "cn-279"
+new = []
+
+[[native]]
+build = "cn-324"
+new = []
+
+[[native]]
+build = "cn-406"
+new = []
+
+[[native]]
+build = "cn-404"
+new = []
+
+[[native]]
+build = "cn-0-2-48-001"
+new = []
+
+[[native]]
+build = "cn-0-2-50-004"
+new = []
+
+[[native]]
+build = "cn-706"
+new = []
+
+[[native]]
+build = "cn-0-2-67-004"
+new = ["Lavi"]
+
+[[native]]
+build = "cn-735"
+new = ["Leo", "Lavi"]
+
+[[native]]
+build = "cn-738"
+new = ["Leo", "Lavi"]
+
+[[native]]
+build = "cn-0-92-1"
+new = ["Dao", "Dizni", "Bazzi", "LXMarid", "Leo", "Lavi"]
+
+[[native]]
+build = "id-400"
+new = []
+
+[[native]]
+build = "id-1809"
+new = []

@@ -1,0 +1,49 @@
+schema = 1
+[plugin]
+id = "bubblefighter.fantasy.resolution-extension"
+version = "0.2.6"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.3.3 <4.0.0"
+minimum_launcher_version = "0.1.33"
+update_source = "fantasy-tale"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+name = { en = "Resolution Extension", "zh-CN" = "分辨率扩展", "zh-TW" = "解析度擴充", ko = "해상도 확장", id = "Ekstensi Resolusi", vi = "Mở rộng độ phân giải" }
+description = { en = "Adds supported display modes to the original resolution menu while preserving the game's display checks and saved settings.", "zh-CN" = "为原生分辨率菜单补充显卡支持的显示模式，保留游戏原有的显示检查和设置保存方式。", "zh-TW" = "為原生解析度選單補充顯示卡支援的顯示模式，保留遊戲原有的顯示檢查及設定儲存方式。", ko = "기존 해상도 메뉴에 지원되는 디스플레이 모드를 추가하며 게임의 화면 검사와 설정 저장 방식을 유지합니다.", id = "Menambahkan mode tampilan yang didukung ke menu resolusi asli dengan tetap memakai pemeriksaan dan penyimpanan pengaturan permainan.", vi = "Bổ sung các chế độ hiển thị được hỗ trợ vào menu độ phân giải gốc, giữ nguyên kiểm tra hiển thị và cách lưu cài đặt của trò chơi." }
+
+[compatibility]
+builds = ["kr-812", "cn-404", "cn-406", "cn-706", "cn-717", "cn-735", "id-400", "id-1809"]
+
+[native]
+library = "resolution_extension.dll"
+
+[[options]]
+key = "custom_resolutions"
+type = "string"
+default = ""
+max_length = 4096
+[options.label]
+en = "Additional resolutions"
+"zh-CN" = "扩展分辨率"
+"zh-TW" = "擴充解析度"
+ko = "추가 해상도"
+id = "Resolusi tambahan"
+vi = "Độ phân giải bổ sung"
+[options.description]
+en = "Add one or more width x height entries separated by semicolons. The original choices are always kept."
+"zh-CN" = "使用分号分隔并添加一个或多个 宽 x 高 分辨率，原有分辨率始终保留。"
+"zh-TW" = "使用分號分隔並新增一個或多個 寬 x 高 解析度，原有解析度始終保留。"
+ko = "세미콜론으로 구분한 너비 x 높이 해상도를 추가합니다. 기존 항목은 항상 유지됩니다."
+id = "Tambahkan resolusi lebar x tinggi yang dipisahkan titik koma. Pilihan asli selalu dipertahankan."
+vi = "Thêm các độ phân giải rộng x cao, phân tách bằng dấu chấm phẩy. Các lựa chọn gốc luôn được giữ lại."
+
+# This declaration runs before the staged native writes. The locator waits until every
+# instruction and the original table match, so packed bytes never enter the write phase.
+[[patches]]
+id = "display-modes-ready"
+locate = { locator = "bubblefighter.fantasy.resolution-extension.ready" }
+expect = "8B 81 0C 07 00 00"
+write = "8B 81 0C 07 00 00"
+timing = "unpacked"
+deadline_ms = 30000

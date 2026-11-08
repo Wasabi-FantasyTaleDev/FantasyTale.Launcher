@@ -1,0 +1,265 @@
+/* Launcher-wide rules on top of the WinUI theme tokens. */
+
+/* The window base layer paints the Mica base colour; the .mica-transparent class lets
+   a host-provided transparent backdrop (real Mica) show through instead. */
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--mica-base);
+  /* Keep touch scrolling while preventing accidental pinch and double-tap zoom. */
+  touch-action: pan-x pan-y;
+}
+html.mica-transparent,
+html.mica-transparent body,
+html.mica-transparent #app {
+  background: transparent;
+}
+
+body {
+  font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', system-ui,
+    'Microsoft YaHei UI', 'Microsoft JhengHei UI', 'Malgun Gothic', 'Leelawadee UI', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--text-primary);
+  /* Native apps do not select or drag interface text. Inputs opt back in. */
+  user-select: none;
+  -webkit-user-drag: none;
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+}
+img,
+video {
+  -webkit-user-drag: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* WinUI type ramp (Segoe UI Variable ramp values). */
+.type-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+.type-body {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+.type-body-strong {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.type-subtitle {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.type-title {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+}
+.type-title-large {
+  font-size: 40px;
+  line-height: 52px;
+  font-weight: 600;
+}
+.type-display {
+  font-size: 68px;
+  line-height: 92px;
+  font-weight: 600;
+}
+
+/* Thin overlay scrollbars like WinUI ScrollViewer. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background-clip: padding-box;
+  background-color: color-mix(in srgb, var(--scrollbar-thumb) 45%, transparent);
+}
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+  background-color: color-mix(in srgb, var(--scrollbar-thumb-hover) 60%, transparent);
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: default;
+}
+input,
+select {
+  font-family: inherit;
+}
+
+a {
+  color: var(--accent-text-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-text-secondary);
+  text-decoration: underline;
+}
+
+/* WinUI keyboard focus visual: 2px outer ring, no outline for mouse/touch. */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--focus-outer);
+  outline-offset: 1px;
+  border-radius: var(--radius-control);
+}
+
+::placeholder {
+  color: var(--text-secondary);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--text-on-accent-primary);
+}
+
+/* Routed-page entrance: WinUI EntranceNavigationTransition (slide up + fade). */
+.page-enter-active {
+  transition:
+    opacity var(--duration-normal) var(--ease-fast-out-slow-in),
+    transform var(--duration-normal) var(--ease-fast-out-slow-in);
+}
+.page-leave-active {
+  transition: opacity var(--duration-faster) linear;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.page-leave-to {
+  opacity: 0;
+}
+
+/* Shared tab/detail transition: a quick exit and a soft, short entrance. */
+.content-enter-active {
+  transition: opacity var(--duration-fast) linear, transform var(--duration-normal) var(--ease-fast-out-slow-in);
+}
+.content-leave-active { transition: opacity var(--duration-faster) linear; pointer-events: none; }
+.content-enter-from { opacity: 0; transform: translateY(8px); }
+.content-leave-to { opacity: 0; }
+
+/* Standard page chrome: header block plus a scrolling content column. */
+.page {
+  --page-inset-top: 32px;
+  --page-inset-inline: 36px;
+  --page-inset-bottom: 36px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--page-inset-top) var(--page-inset-inline) 0;
+}
+.page-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-inline: calc(-1 * var(--page-inset-inline));
+}
+.page-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 var(--page-inset-inline) var(--page-inset-bottom);
+}
+.page-scroll > .section-title:first-child { margin-top: 4px; }
+
+.surface { background: var(--card-bg-default); border: 1px solid var(--card-stroke-default); border-radius: 8px; }
+.muted { color: var(--text-secondary); margin: 0; font-size: 12px; line-height: 18px; }
+.form-stack { display: flex; flex-direction: column; gap: 20px; padding-top: 8px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.input-action { display: flex; align-items: center; gap: 8px; }
+.input-action > .w-textbox { flex: 1; min-width: 0; }
+.empty-state { display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; min-height: 360px; padding: 36px; gap: 16px; }
+.empty-state > .fluent-icon { color: var(--text-tertiary); margin-bottom: 8px; }
+.empty-state h2 { font-size: 20px; line-height: 28px; font-weight: 600; margin: 0; }
+.empty-state p { color: var(--text-secondary); max-width: 420px; margin: 0 0 8px; }
+@media (max-width: 1000px) { .page { --page-inset-top: 28px; --page-inset-inline: 28px; --page-inset-bottom: 28px; } }
+@media (max-width: 640px) { .page { --page-inset-top: 24px; --page-inset-inline: 16px; --page-inset-bottom: 24px; } .page-header { flex-wrap: wrap; gap: 16px; } .row-actions { flex-wrap: wrap; } }
+.page-header {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.page-desc {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.section-title {
+  margin: 28px 0 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Shared flyout open/close. */
+.flyout-enter-active {
+  transition:
+    opacity var(--duration-fast) var(--ease-fast-out-slow-in),
+    transform var(--duration-normal) var(--ease-fast-out-slow-in);
+}
+.flyout-leave-active {
+  transition: opacity var(--duration-faster) linear;
+}
+.flyout-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+.flyout-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

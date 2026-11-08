@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- The host builds this project without a RID before publishing a portable renderer. -->
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Warnings are errors in this repo. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Shared/TrustedWebDocument.cs" Link="TrustedWebDocument.cs" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Sdk\FantasyTale.Launcher.Sdk.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2651.64" />
+  </ItemGroup>
+
+  <!-- Ship the overlay page alongside the executable. -->
+  <ItemGroup>
+    <None Include="..\..\ThirdPartyLicenses\Vue.txt;..\..\ThirdPartyLicenses\WebView2*.txt" LinkBase="ThirdPartyLicenses" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="overlay\index.html" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\panel-stack.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\anchors.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\surface-ready.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\locales.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\ui-library\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

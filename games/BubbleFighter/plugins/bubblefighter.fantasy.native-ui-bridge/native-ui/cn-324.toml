@@ -1,0 +1,75 @@
+schema = 1
+build = "cn-324"
+timestamp = 0x505DD60C
+
+[addresses]
+set_text = 0x001810 # cn-324 sub_401810 is the text slot on UiButton and UiButtonOnFrame.
+allocate = 0x4A3160 # cn-324 sub_576670 allocates 376 bytes with cn-324 sub_8A3160.
+construct_message = 0x35C8B0 # cn-324 sub_576670 passes the center in ECX/EDX and five stack arguments.
+position_message = 0x46E7C0 # cn-324 sub_576670 passes 256 twice to cn-324 sub_86E7C0.
+detach_message = 0x46E2B0 # cn-324 sub_86E2B0 removes the parent reference before destruction.
+modal_message = 0x46F200 # cn-324 sub_576670 calls modal slot +212.
+message_vtable = 0x71BD64 # cn-324 sub_75C8B0 installs this primary vtable.
+string_create = 0x001C00 # cn-324 sub_401C00 builds the game's UTF-16 string.
+string_release = 0x080390 # cn-324 sub_480390 releases the game's string.
+application = 0x811B40 # cn-324 sub_75A830 resolves the modal loop's application object.
+ui_context = 0x807DA4 # cn-324 sub_576670 uses this input context before presenting the modal.
+ui_manager = 0x807D94 # cn-324 sub_86F200 reads and restores modal focus through this manager.
+
+[values]
+# cn-324 sub_870090 obtains the dialog parent through cn-324 sub_451DD0 at manager +24.
+ui_root_offset = 24
+# cn-324 sub_87BEE0 publishes the active form; cn-324 sub_86F200 stops for exit or a replacement.
+active_form_offset = 60
+pending_form_offset = 68
+exit_flag_offset = 4
+message_abi = 5
+modal_abi = 3
+center = 0x8000 # cn-324 sub_576670 supplies the default coordinates in ECX and EDX.
+position = 256
+message_size = 376
+# cn-324 sub_75C8B0 retains the dialog at +8 and releases through its +4 base.
+reference_offset = 8
+secondary_offset = 4
+destructor_slot = 0
+release_previous = 1
+# cn-324 sub_75D650 binds the two controls to commands 257 and 256.
+ok_offset = 356
+cancel_offset = 360
+command_offset = 256
+text_slot = 20
+modal_slot = 212
+# cn-324 sub_576670 presents its built-in two-button question with icon 2.
+icon_question = 2
+
+[[signatures]]
+address = "set_text"
+bytes = "83 C1 64 E9 F8 02 00 00"
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 6E 6B 9F 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "position_message"
+bytes = "8B 44 24 04 8B 54 24 08 89 81 3C 01 00 00 89 91"
+
+[[signatures]]
+address = "detach_message"
+bytes = "6A FF 68 F8 D7 9D 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 10 A1 A0 00 50 64 89"
+
+[[signatures]]
+address = "string_create"
+bytes = "8B 54 24 04 56 8B F1 33 C9 66 39 0A 8B C2 74 0C"
+
+[[signatures]]
+address = "string_release"
+bytes = "56 8B 31 83 EE 14 8D 46 08 50 FF 15 00 A3 A5 00"

@@ -1,0 +1,42 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.character-models"
+version = "1.0.4"
+game = "bubblefighter"
+kind = "resources"
+minimum_launcher_version = "0.1.39"
+update_source = "fantasy-tale"
+exclusive_with = ["bubblefighter.fantasy.lxmarid-remaster", "bubblefighter.fantasy.dao-classic-model", "bubblefighter.fantasy.dizni-classic-model"]
+authors = ["Fantasy Tale Studio"]
+
+[compatibility]
+builds = ["*"]
+
+[plugin.name]
+"en" = "Character model switcher"
+"zh-CN" = "新旧角色模型切换"
+"zh-TW" = "新舊角色模型切換"
+"ko" = "캐릭터 신·구 모델 전환"
+"id" = "Pengalih model karakter"
+"vi" = "Chuyển đổi mô hình nhân vật"
+
+[plugin.description]
+"zh-CN" = "安装后可在设置选项中自行切换新版或旧版角色模型。"
+"zh-TW" = "安裝後可在設定選項中自行切換新版或舊版角色模型。"
+"en" = "After installation, switch between new and classic character models in Settings."
+"ko" = "설치 후 설정에서 신규 또는 구형 캐릭터 모델로 전환할 수 있습니다."
+"id" = "Setelah dipasang, pilih model karakter baru atau klasik di Pengaturan."
+"vi" = "Sau khi cài đặt, chuyển đổi mô hình nhân vật mới hoặc cũ trong Cài đặt."
+"th" = "หลังติดตั้ง สามารถสลับโมเดลตัวละครแบบใหม่หรือแบบเก่าได้ในการตั้งค่า"
+
+[resources]
+provider = "character-models"
+manifest = "models.toml"
+
+[[options]]
+key = "models"
+type = "string"
+default = "{}"
+max_length = 65536
+label = { en = "Character models", zh-CN = "角色模型", zh-TW = "角色模型", ko = "캐릭터 모델", id = "Model karakter", vi = "Mô hình nhân vật" }

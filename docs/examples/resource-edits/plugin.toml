@@ -1,0 +1,16 @@
+schema = 1
+[plugin]
+id = "example.translation"
+version = "1.0.0"
+game = "bubblefighter"
+kind = "resources"
+minimum_launcher_version = "0.1.52"
+name = { en = "Example translation", "zh-CN" = "示例语言包" }
+[resources]
+provider = "resource-edits"
+manifest = "edits.toml"
+[[options]]
+key = "rename_buttons"
+type = "bool"
+default = true
+label = { en = "Translate main menu buttons", "zh-CN" = "翻译主菜单按钮" }
