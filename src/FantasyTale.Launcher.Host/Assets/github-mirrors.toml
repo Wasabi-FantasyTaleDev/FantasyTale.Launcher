@@ -1,0 +1,494 @@
+# Mirror directory fallback snapshot; runtime availability is measured on this device.
+country_lookup_url = "https://ipwho.is/"
+country_lookup_timeout_seconds = 5
+probe_url = "https://github.com/Wasabi-FantasyTaleDev/BubbleFighter.Fantasy/releases/download/v0.1.1/bubblefighter-fantasy-win-x64.zip"
+probe_prefix = "504B0304"
+sample_bytes = 65536
+timeout_seconds = 8
+parallelism = 16
+
+directory_url = "https://github.akams.cn/"
+
+[[mirrors]]
+id = "gh-proxy.com"
+name = "gh-proxy.com"
+url = "https://gh-proxy.com/"
+
+[[mirrors]]
+id = "ghfast.top"
+name = "ghfast.top"
+url = "https://ghfast.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.dpik.top"
+name = "gh.dpik.top"
+url = "https://gh.dpik.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.tbap.top"
+name = "github.tbap.top"
+url = "https://github.tbap.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghfile.geekertao.top"
+name = "ghfile.geekertao.top"
+url = "https://ghfile.geekertao.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.net"
+name = "ghproxy.net"
+url = "https://ghproxy.net/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "cdn.gh-proxy.com"
+name = "cdn.gh-proxy.com"
+url = "https://cdn.gh-proxy.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.dpik.top"
+name = "github.dpik.top"
+url = "https://github.dpik.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "j.1lin.dpdns.org"
+name = "j.1lin.dpdns.org"
+url = "https://j.1lin.dpdns.org/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.starrlzy.cn"
+name = "github.starrlzy.cn"
+url = "https://github.starrlzy.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github-proxy.memory-echoes.cn"
+name = "github-proxy.memory-echoes.cn"
+url = "https://github-proxy.memory-echoes.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "git.yylx.win"
+name = "git.yylx.win"
+url = "https://git.yylx.win/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghm.078465.xyz"
+name = "ghm.078465.xyz"
+url = "https://ghm.078465.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.927223.xyz"
+name = "gh.927223.xyz"
+url = "https://gh.927223.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghf.xn--eqrr82bzpe.top"
+name = "ghf.无名氏.top"
+url = "https://ghf.无名氏.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.felicity.ac.cn"
+name = "gh.felicity.ac.cn"
+url = "https://gh.felicity.ac.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.bugdey.us.kg"
+name = "gh.bugdey.us.kg"
+url = "https://gh.bugdey.us.kg/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "cdn.akaere.online"
+name = "cdn.akaere.online"
+url = "https://cdn.akaere.online/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "jiashu.1win.eu.org"
+name = "jiashu.1win.eu.org"
+url = "https://jiashu.1win.eu.org/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "tvv.tw"
+name = "tvv.tw"
+url = "https://tvv.tw/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "j.1win.ggff.net"
+name = "j.1win.ggff.net"
+url = "https://j.1win.ggff.net/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gitproxy.127731.xyz"
+name = "gitproxy.127731.xyz"
+url = "https://gitproxy.127731.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.inkchills.cn"
+name = "gh.inkchills.cn"
+url = "https://gh.inkchills.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.catmak.name"
+name = "gh.catmak.name"
+url = "https://gh.catmak.name/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.b52m.cn"
+name = "gh.b52m.cn"
+url = "https://gh.b52m.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "down.mxw.xx.kg"
+name = "down.mxw.xx.kg"
+url = "https://down.mxw.xx.kg/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "down.mxw.qzz.io"
+name = "down.mxw.qzz.io"
+url = "https://down.mxw.qzz.io/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.mxw.qzz.io"
+name = "github.mxw.qzz.io"
+url = "https://github.mxw.qzz.io/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.acmsz.top"
+name = "gh.acmsz.top"
+url = "https://gh.acmsz.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.jjj.gv.uy"
+name = "gh.jjj.gv.uy"
+url = "https://gh.jjj.gv.uy/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "slink.ltd"
+name = "slink.ltd"
+url = "https://slink.ltd/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.tmby.shop"
+name = "github.tmby.shop"
+url = "https://github.tmby.shop/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghpr.cc"
+name = "ghpr.cc"
+url = "https://ghpr.cc/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.tryxd.cn"
+name = "gh.tryxd.cn"
+url = "https://gh.tryxd.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gitproxy.click"
+name = "gitproxy.click"
+url = "https://gitproxy.click/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.chenc.dev"
+name = "github.chenc.dev"
+url = "https://github.chenc.dev/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.ddlc.top"
+name = "gh.ddlc.top"
+url = "https://gh.ddlc.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gitproxy.mrhjx.cn"
+name = "gitproxy.mrhjx.cn"
+url = "https://gitproxy.mrhjx.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.sixyin.com"
+name = "gh.sixyin.com"
+url = "https://gh.sixyin.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.monlor.com"
+name = "gh.monlor.com"
+url = "https://gh.monlor.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghpxy.hwinzniej.top"
+name = "ghpxy.hwinzniej.top"
+url = "https://ghpxy.hwinzniej.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "git.669966.xyz"
+name = "git.669966.xyz"
+url = "https://git.669966.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.jasonzeng.dev"
+name = "gh.jasonzeng.dev"
+url = "https://gh.jasonzeng.dev/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.geekery.cn"
+name = "github.geekery.cn"
+url = "https://github.geekery.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gp.zkitefly.eu.org"
+name = "gp.zkitefly.eu.org"
+url = "https://gp.zkitefly.eu.org/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "fastgit.cc"
+name = "fastgit.cc"
+url = "https://fastgit.cc/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.1888866.xyz"
+name = "ghproxy.1888866.xyz"
+url = "https://ghproxy.1888866.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghp.arslantu.xyz"
+name = "ghp.arslantu.xyz"
+url = "https://ghp.arslantu.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.ednovas.xyz"
+name = "github.ednovas.xyz"
+url = "https://github.ednovas.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.cxkpro.top"
+name = "ghproxy.cxkpro.top"
+url = "https://ghproxy.cxkpro.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.xxlab.tech"
+name = "github.xxlab.tech"
+url = "https://github.xxlab.tech/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.idayer.com"
+name = "gh.idayer.com"
+url = "https://gh.idayer.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "free.cn.eu.org"
+name = "free.cn.eu.org"
+url = "https://free.cn.eu.org/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.chjina.com"
+name = "gh.chjina.com"
+url = "https://gh.chjina.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghp.keleyaa.com"
+name = "ghp.keleyaa.com"
+url = "https://ghp.keleyaa.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "proxy.yaoyaoling.net"
+name = "proxy.yaoyaoling.net"
+url = "https://proxy.yaoyaoling.net/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.monkeyray.net"
+name = "ghproxy.monkeyray.net"
+url = "https://ghproxy.monkeyray.net/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.noki.icu"
+name = "gh.noki.icu"
+url = "https://gh.noki.icu/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "g.blfrp.cn"
+name = "g.blfrp.cn"
+url = "https://g.blfrp.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "githubdog.com"
+name = "githubdog.com"
+url = "https://githubdog.com/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.meali.top"
+name = "gh.meali.top"
+url = "https://gh.meali.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "777.z321.cc.cd"
+name = "777.z321.cc.cd"
+url = "https://777.z321.cc.cd/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gg.z321.cc.cd"
+name = "gg.z321.cc.cd"
+url = "https://gg.z321.cc.cd/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "g.z321.cc.cd"
+name = "g.z321.cc.cd"
+url = "https://g.z321.cc.cd/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "js.jiangss.shop"
+name = "js.jiangss.shop"
+url = "https://js.jiangss.shop/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gap.andyjin.website"
+name = "gap.andyjin.website"
+url = "https://gap.andyjin.website/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.my-website.ccwu.cc"
+name = "gh.my-website.ccwu.cc"
+url = "https://gh.my-website.ccwu.cc/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.ikgy.top"
+name = "github.ikgy.top"
+url = "https://github.ikgy.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.07150721.xyz"
+name = "gh.07150721.xyz"
+url = "https://gh.07150721.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "cfgh.ikgy.top"
+name = "cfgh.ikgy.top"
+url = "https://cfgh.ikgy.top/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "xsadwsd.kdns.fr"
+name = "xsadwsd.kdns.fr"
+url = "https://xsadwsd.kdns.fr/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.ruan.dpdns.org"
+name = "gh.ruan.dpdns.org"
+url = "https://gh.ruan.dpdns.org/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.felicity.land"
+name = "ghproxy.felicity.land"
+url = "https://ghproxy.felicity.land/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.nswrz.cn"
+name = "github.nswrz.cn"
+url = "https://github.nswrz.cn/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.zhai.edu.pl"
+name = "gh.zhai.edu.pl"
+url = "https://gh.zhai.edu.pl/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "gh.qfmc0721.cc.cd"
+name = "gh.qfmc0721.cc.cd"
+url = "https://gh.qfmc0721.cc.cd/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github-cf.947563.xyz"
+name = "github-cf.947563.xyz"
+url = "https://github-cf.947563.xyz/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "github.gohj99.site"
+name = "github.gohj99.site"
+url = "https://github.gohj99.site/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "githubproxy.gohj99.site"
+name = "githubproxy.gohj99.site"
+url = "https://githubproxy.gohj99.site/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghproxy.icu"
+name = "ghproxy.icu"
+url = "https://ghproxy.icu/"
+
+[[mirrors]]
+directory_snapshot = true
+id = "ghgo.de5.net"
+name = "ghgo.de5.net"
+url = "https://ghgo.de5.net/"

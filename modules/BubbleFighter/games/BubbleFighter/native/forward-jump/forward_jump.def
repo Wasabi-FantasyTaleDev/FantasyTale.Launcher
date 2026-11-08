@@ -1,0 +1,3 @@
+LIBRARY forward_jump
+EXPORTS
+    fthook_plugin_main

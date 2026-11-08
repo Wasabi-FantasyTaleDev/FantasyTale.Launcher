@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\FantasyTale.Launcher.Sdk\FantasyTale.Launcher.Sdk.csproj" />
+    <InternalsVisibleTo Include="FantasyTale.Launcher.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tomlyn" Version="2.10.1" />
+    <EmbeddedResource Include="native-center-names.json" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.native-center-names.json" />
+    <EmbeddedResource Include="gateway-capabilities.json" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.gateway-capabilities.json" />
+    <EmbeddedResource Include="resource-targets.toml" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.resource-targets.toml" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

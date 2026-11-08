@@ -1,0 +1,11 @@
+{
+  "default": "zh-CN",
+  "locales": {
+    "zh-CN": { "status": "ready", "messages": { "dialog.title": "提示", "dialog.confirm": "确定", "dialog.cancel": "取消" } },
+    "zh-TW": { "status": "TODO", "messages": {} },
+    "ko": { "status": "TODO", "messages": {} },
+    "id": { "status": "TODO", "messages": {} },
+    "vi": { "status": "TODO", "messages": {} },
+    "en": { "status": "TODO", "messages": {} }
+  }
+}

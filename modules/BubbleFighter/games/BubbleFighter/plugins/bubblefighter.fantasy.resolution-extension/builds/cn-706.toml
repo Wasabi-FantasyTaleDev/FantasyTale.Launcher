@@ -1,0 +1,43 @@
+schema = 1
+build = "cn-706"
+timestamp = 0x5420DCC3
+image_sizes = [0xC76000, 0xC79000]
+preferred_base = 0x400000
+table_rva = 0x9822A0
+guard_rva = 0x63C4D0
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# cn-706 sub_A3C4D0 remains the native display-mode filter.
+# cn-706 VA 0x628311 iterates the table; VA 0x871B84 validates saved width and height.
+[[sites]]
+rva = 0x228311
+expect = "BD A0 22 D8 00"
+target = "begin"
+operand_offset = 1
+[[sites]]
+rva = 0x228316
+expect = "83 7C 24 10 06 0F 87 80 00 00 00"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x2283A8
+expect = "81 FD D8 22 D8 00 0F 8C 62 FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x471B84
+expect = "B8 A4 22 D8 00"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x471B9B
+expect = "3D DC 22 D8 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x228333
+expect = "E8 98 41 41 00"

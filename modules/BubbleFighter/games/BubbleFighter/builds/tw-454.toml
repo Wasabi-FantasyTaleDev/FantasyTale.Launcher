@@ -1,0 +1,63 @@
+# Client build definition for the Taiwanese 2019 client.
+schema = 1
+
+[build]
+id = "tw-454"
+game = "bubblefighter"
+branch = "tw"
+build_date = "2018-12-11 14:22:30"
+protocol_version = 454
+patch_version = "369"
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "tw-454"
+hosting_adapter = "modern"
+default_port = 7200
+
+[build.name]
+"en" = "Taiwan 2018-12-11"
+"zh-CN" = "台服 2018-12-11"
+"zh-TW" = "台灣 2018-12-11"
+"ko" = "대만 2018-12-11"
+"id" = "Taiwan 2018-12-11"
+"vi" = "Đài Loan 2018-12-11"
+
+[fingerprint]
+pe_timestamp = 0x5C0F4941
+
+[launch]
+native_language = "zh-TW"
+launcher_login = "required"
+# tw-454 imports NMCO_CallNMFunc2; sub_B926B0 and sub_B87190 use the shared messenger envelopes.
+login = "nmco"
+arguments = ["{account}", "/sid=0"]
+
+[plugins]
+default = []
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["tw-454"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["tw-454"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["tw-454"]
+sources = []

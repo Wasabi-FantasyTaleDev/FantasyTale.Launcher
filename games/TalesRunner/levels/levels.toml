@@ -1,0 +1,49 @@
+schema = 1
+# Tables and artwork ship with release packages, not the public source tree.
+optional_assets = true
+# Original role-level identifiers are zero-based. The source omits the initial red chick.
+display_offset = 0
+[source]
+file = "essenlevelinfo.txt"
+encoding = "utf-16le"
+skip_lines = 1
+filter_column = 0
+filter_value = "1"
+level_column = 1
+exp_column = 2
+name_column = 3
+initial_level = 0
+initial_exp = 0
+# The first sheet reserves cells 98..100; ordinary levels continue on the second sheet.
+[[atlases]]
+file = "rankicon.png"
+first_level = 0
+last_level = 97
+columns = 9
+cell_width = 26
+cell_height = 21
+[[atlases]]
+file = "rankicon2.png"
+first_level = 98
+columns = 9
+cell_width = 26
+cell_height = 21
+# Reserved ids stay outside the normal level range when future rows are added.
+[[badges]]
+id = "unknown"
+icon_id = 10001
+name = "?"
+file = "rankicon.png"
+x = 0
+y = 231
+width = 26
+height = 21
+[[badges]]
+id = "piero"
+icon_id = 10000
+name = "Piero"
+file = "rankicon.png"
+x = 26
+y = 231
+width = 26
+height = 21

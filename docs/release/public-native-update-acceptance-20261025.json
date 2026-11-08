@@ -1,0 +1,76 @@
+{
+  "verifiedAtUtc": "2026-10-25T07:14:13.176457+00:00",
+  "platform": "win-x64",
+  "baselineVersion": "0.1.26",
+  "version": "0.1.27",
+  "revision": 1792906304,
+  "manifestSha256": "1f5563bab671a13b82adf6b1b17a24d24490f38e95b189776988505b9a3e1128",
+  "outcome": {
+    "Status": "completed",
+    "SourceIdentity": "3B6ACFFDA2C76D74E8310FD80A2DB0E4764C9F0F960D01C9BE28F3AEC84D652C",
+    "ManifestSha256": "1f5563bab671a13b82adf6b1b17a24d24490f38e95b189776988505b9a3e1128",
+    "Failure": null,
+    "Phase": null,
+    "ErrorCode": null
+  },
+  "installedReceipt": {
+    "SourceId": "launcher",
+    "PackageId": "fantasytale-launcher",
+    "Version": "0.1.27",
+    "ManifestSha256": "1f5563bab671a13b82adf6b1b17a24d24490f38e95b189776988505b9a3e1128",
+    "SourceIdentity": "6FC3544199B8AE8DD64782377CC0AFC62696ECD70A0DDD63182BE716AA50C37D",
+    "Revision": 1792906304
+  },
+  "verifiedFiles": 1008,
+  "verifiedBytes": 389890889,
+  "parentPid": 10456,
+  "childPid": 2952,
+  "sourcePolicyPreserved": true,
+  "independentFilesPreserved": true,
+  "journalAndBackupsCleared": true,
+  "retainedInstallationCacheObjects": 17,
+  "retainedInstallationCacheBytes": 2843948,
+  "obsoleteFrontendAssetsRemoved": true,
+  "verifiedFrontendAssets": 3,
+  "nativeFrontendHealthAcknowledged": true,
+  "visualAcceptance": false,
+  "visualLimitation": "Computer Use kernel assets were unavailable.",
+  "fixtureEntrySeedRemovedByUpdate": true,
+  "fixtureTrigger": "Normal restart bridge request after normal frontend readiness; no simulated health acknowledgement.",
+  "retainedLifecycleEvents": [],
+  "observedStartupSequence": [
+    {
+      "utcSecond": "2026-10-25T06:47:41Z",
+      "pid": 10456,
+      "event": "startup",
+      "version": "0.1.26"
+    },
+    {
+      "utcSecond": "2026-10-25T06:47:48Z",
+      "pid": 10456,
+      "event": "frontend-ready"
+    },
+    {
+      "utcSecond": "2026-10-25T06:48:19Z",
+      "pid": 10456,
+      "event": "restart-requested"
+    },
+    {
+      "utcSecond": "2026-10-25T06:48:23Z",
+      "pid": 10456,
+      "event": "shutdown-completed"
+    },
+    {
+      "utcSecond": "2026-10-25T06:48:27Z",
+      "pid": 2952,
+      "event": "startup",
+      "version": "0.1.27"
+    },
+    {
+      "utcSecond": "2026-10-25T06:48:30Z",
+      "pid": 2952,
+      "event": "frontend-ready"
+    }
+  ],
+  "lifecycleObservationProvenance": "The live JSONL records and matching child executable path were inspected through the command tool before diagnostic log rotation. Sequence timestamps are transcribed from that console observation to one-second precision; early rows are no longer in the bounded local log."
+}

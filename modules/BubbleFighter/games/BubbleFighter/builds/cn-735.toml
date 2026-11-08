@@ -1,0 +1,58 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "cn-735"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2016-06-20 21:52:06"
+# Retain identification while this client family is awaiting adaptation.
+enabled = false
+hidden = true
+protocol_version = 735
+executable = "BubbleFighter.exe"
+messenger = "forward"                # nmcogame.dll mode: standin | forward
+server_profile = "cn-735"                 # BubbleFighter.Fantasy profile id
+default_port = 7160
+
+release_version = "0.2.70.4"
+
+[build.name]
+"en" = "China 2016-06-20"
+"zh-CN" = "国服 2016-06-20"
+"zh-TW" = "中國 2016-06-20"
+"ko" = "중국 2016-06-20"
+"id" = "Tiongkok 2016-06-20"
+"vi" = "Trung Quốc 2016-06-20"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x5767E697
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-735 sub_B18A20 reads this argument order; cn-735 sub_B0F040 requests the version-512 bridge.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-735"]
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-735"]

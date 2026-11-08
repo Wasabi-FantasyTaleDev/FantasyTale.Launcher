@@ -1,0 +1,40 @@
+# Placeholder. TODO: the TalesRunner module (including its patch SDK) is developed in a
+# private repository and installed as a game module package; nothing else belongs here.
+schema = 1
+
+[game]
+levels = "levels/levels.toml"
+id = "talesrunner"
+status = "placeholder"
+hook_host = "external"
+home_order = 20
+navigation_entries = ["home", "downloads", "accounts"]
+preparing = true
+accent = "#9C78B6"
+
+supports_instances = false
+supports_plugins = false
+launcher_login = "required"
+profile_fields = ["level", "exp", "tr", "cash"]
+level_icon = true
+bundled_instances = false
+
+[game.name]
+en = "Tales Runner"
+"zh-CN" = "超级跑跑"
+"zh-TW" = "跑Online"
+ko = "테일즈런너"
+id = "Tales Runner"
+vi = "Tales Runner"
+
+[game.service_notice]
+en = "Fantasy Runner is currently not available in mainland China."
+"zh-CN" = "Fantasy Runner 目前不在中国大陆地区提供服务。"
+"zh-TW" = "Fantasy Runner 目前不在中國大陸地區提供服務。"
+ko = "Fantasy Runner는 현재 중국 본토에서 서비스를 제공하지 않습니다."
+id = "Fantasy Runner saat ini tidak menyediakan layanan di Tiongkok daratan."
+vi = "Fantasy Runner hiện không cung cấp dịch vụ tại Trung Quốc đại lục."
+
+[game.media]
+background_image = "media/cover.jpg"
+background_videos = []

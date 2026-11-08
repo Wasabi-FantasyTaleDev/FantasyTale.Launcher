@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(LauncherModuleProject)" />
+  </ItemGroup>
+  <Target Name="RequireModule" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(LauncherModuleProject)' == ''" Text="Pass the current Launcher game-module project as LauncherModuleProject." />
+  </Target>
+</Project>

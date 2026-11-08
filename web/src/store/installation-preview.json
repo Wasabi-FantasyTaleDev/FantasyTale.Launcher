@@ -1,0 +1,247 @@
+{
+  "bubblefighter": {
+    "cn-279": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-324": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-404": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-406": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-706": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-717": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "cn-774": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-cn",
+        "name": {
+          "en": "Chinese client authentication component",
+          "zh-CN": "国服认证组件",
+          "zh-TW": "中國認證元件",
+          "ko": "중국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Tiongkok",
+          "vi": "Thành phần xác thực máy khách Trung Quốc"
+        },
+        "description": {
+          "en": "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup.",
+          "zh-CN": "游玩国服版本时请务必启用此组件，否则会影响启动。",
+          "zh-TW": "遊玩中國版本時請務必啟用此元件，否則會影響啟動。",
+          "ko": "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다.",
+          "id": "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai.",
+          "vi": "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+        },
+        "required": true
+      }
+    ],
+    "id-1809": [
+      {
+        "id": "bubblefighter.fantasy.font-support-cn",
+        "name": {
+          "en": "Chinese font support",
+          "zh-CN": "中文字体支持",
+          "zh-TW": "中文字體支援",
+          "ko": "중국어 글꼴 지원",
+          "id": "Dukungan font Mandarin",
+          "vi": "Hỗ trợ phông chữ tiếng Trung"
+        },
+        "description": {
+          "en": "Provides Simplified Chinese font support for non-Chinese clients and corrects overly thin text caused by font weights that differ from the original Chinese client settings.",
+          "zh-CN": "对非国服客户端提供简体中文字体支持，并修复字重与国服原设定不同导致的字体过细问题",
+          "zh-TW": "為非中國版本用戶端提供簡體中文字體支援，並修復字重與中國版本原始設定不同導致的字體過細問題",
+          "ko": "중국 이외 지역 클라이언트에 중국어 간체 글꼴을 지원하고, 중국 클라이언트의 원래 설정과 다른 글꼴 굵기로 인해 글자가 지나치게 가늘어지는 문제를 수정합니다.",
+          "id": "Menyediakan dukungan font Mandarin Sederhana untuk klien non-Tiongkok dan memperbaiki teks yang terlalu tipis akibat perbedaan ketebalan font dari pengaturan asli klien Tiongkok.",
+          "vi": "Hỗ trợ phông chữ tiếng Trung giản thể cho máy khách ngoài Trung Quốc và sửa lỗi chữ quá mảnh do độ đậm khác với thiết lập gốc của máy khách Trung Quốc."
+        },
+        "required": false
+      }
+    ],
+    "id-400": [
+      {
+        "id": "bubblefighter.fantasy.font-support-cn",
+        "name": {
+          "en": "Chinese font support",
+          "zh-CN": "中文字体支持",
+          "zh-TW": "中文字體支援",
+          "ko": "중국어 글꼴 지원",
+          "id": "Dukungan font Mandarin",
+          "vi": "Hỗ trợ phông chữ tiếng Trung"
+        },
+        "description": {
+          "en": "Provides Simplified Chinese font support for non-Chinese clients and corrects overly thin text caused by font weights that differ from the original Chinese client settings.",
+          "zh-CN": "对非国服客户端提供简体中文字体支持，并修复字重与国服原设定不同导致的字体过细问题",
+          "zh-TW": "為非中國版本用戶端提供簡體中文字體支援，並修復字重與中國版本原始設定不同導致的字體過細問題",
+          "ko": "중국 이외 지역 클라이언트에 중국어 간체 글꼴을 지원하고, 중국 클라이언트의 원래 설정과 다른 글꼴 굵기로 인해 글자가 지나치게 가늘어지는 문제를 수정합니다.",
+          "id": "Menyediakan dukungan font Mandarin Sederhana untuk klien non-Tiongkok dan memperbaiki teks yang terlalu tipis akibat perbedaan ketebalan font dari pengaturan asli klien Tiongkok.",
+          "vi": "Hỗ trợ phông chữ tiếng Trung giản thể cho máy khách ngoài Trung Quốc và sửa lỗi chữ quá mảnh do độ đậm khác với thiết lập gốc của máy khách Trung Quốc."
+        },
+        "required": false
+      }
+    ],
+    "kr-1256": [
+      {
+        "id": "bubblefighter.fantasy.login-fix-kr",
+        "name": {
+          "en": "Korean client authentication component",
+          "zh-CN": "韩服认证组件",
+          "zh-TW": "韓國認證元件",
+          "ko": "한국 클라이언트 인증 구성 요소",
+          "id": "Komponen autentikasi klien Korea",
+          "vi": "Thành phần xác thực máy khách Hàn Quốc"
+        },
+        "description": {
+          "en": "Required for KR2026 launcher ticket login. Keep this component installed, enabled and up to date.",
+          "zh-CN": "用于韩服 2026 的启动器票据登录，请保持安装、启用并更新至最新版本。",
+          "zh-TW": "用於韓國 2026 的啟動器票據登入，請保持安裝、啟用並更新至最新版本。",
+          "ko": "한국 2026 클라이언트의 런처 티켓 로그인에 필요합니다. 설치 및 활성화하고 최신 버전을 유지하세요.",
+          "id": "Diperlukan untuk login tiket launcher Korea 2026. Tetap pasang, aktifkan, dan perbarui komponen ini.",
+          "vi": "Cần thiết để đăng nhập bằng vé launcher cho bản Hàn Quốc 2026. Hãy cài đặt, bật và cập nhật thành phần này."
+        },
+        "required": true
+      }
+    ],
+    "kr-812": [
+      {
+        "id": "bubblefighter.fantasy.font-support-cn",
+        "name": {
+          "en": "Chinese font support",
+          "zh-CN": "中文字体支持",
+          "zh-TW": "中文字體支援",
+          "ko": "중국어 글꼴 지원",
+          "id": "Dukungan font Mandarin",
+          "vi": "Hỗ trợ phông chữ tiếng Trung"
+        },
+        "description": {
+          "en": "Provides Simplified Chinese font support for non-Chinese clients and corrects overly thin text caused by font weights that differ from the original Chinese client settings.",
+          "zh-CN": "对非国服客户端提供简体中文字体支持，并修复字重与国服原设定不同导致的字体过细问题",
+          "zh-TW": "為非中國版本用戶端提供簡體中文字體支援，並修復字重與中國版本原始設定不同導致的字體過細問題",
+          "ko": "중국 이외 지역 클라이언트에 중국어 간체 글꼴을 지원하고, 중국 클라이언트의 원래 설정과 다른 글꼴 굵기로 인해 글자가 지나치게 가늘어지는 문제를 수정합니다.",
+          "id": "Menyediakan dukungan font Mandarin Sederhana untuk klien non-Tiongkok dan memperbaiki teks yang terlalu tipis akibat perbedaan ketebalan font dari pengaturan asli klien Tiongkok.",
+          "vi": "Hỗ trợ phông chữ tiếng Trung giản thể cho máy khách ngoài Trung Quốc và sửa lỗi chữ quá mảnh do độ đậm khác với thiết lập gốc của máy khách Trung Quốc."
+        },
+        "required": false
+      }
+    ],
+    "tw-454": []
+  }
+}

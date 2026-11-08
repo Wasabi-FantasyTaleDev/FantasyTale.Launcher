@@ -1,0 +1,3 @@
+# Save as launcher-update.toml beside the application. These are the only required settings.
+kind = "alist"
+base_url = "https://files.example.org/"

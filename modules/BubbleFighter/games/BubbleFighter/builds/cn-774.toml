@@ -1,0 +1,87 @@
+# Client build definition for the Chinese 2019 client.
+schema = 1
+
+[build]
+id = "cn-774"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2019-05-30 17:12:03"
+protocol_version = 774
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "cn-774"
+hosting_adapter = "modern"
+default_port = 7190
+release_version = "0.2.98.3"
+
+[build.name]
+"en" = "China 2019-05-30"
+"zh-CN" = "国服 2019-05-30"
+"zh-TW" = "中國 2019-05-30"
+"ko" = "중국 2019-05-30"
+"id" = "Tiongkok 2019-05-30"
+"vi" = "Trung Quốc 2019-05-30"
+
+[fingerprint]
+pe_timestamp = 0x5CEF8FF9
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-774 sub_A22290 parses this order; sub_A129B0 requests the existing 512 bridge interfaces.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-774"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-774"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-774"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-774"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-774"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-774"]
+sources = []

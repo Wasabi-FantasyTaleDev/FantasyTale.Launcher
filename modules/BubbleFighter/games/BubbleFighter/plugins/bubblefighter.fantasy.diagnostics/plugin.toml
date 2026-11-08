@@ -1,0 +1,66 @@
+schema = 1
+[plugin]
+minimum_launcher_version = "0.1.57"
+update_source = "fantasy-tale"
+authors = ["Fantasy Tale Studio"]
+id = "bubblefighter.fantasy.diagnostics"
+aliases = ["bubblefighter.fantasy.crash-recorder"]
+version = "1.2.5"
+game = "bubblefighter"
+kind = "native"
+diagnostics = true
+runtime = ">=3.7.2 <4.0.0"
+name = { en = "Diagnostic mode", "zh-CN" = "诊断模式", "zh-TW" = "診斷模式", ko = "진단 모드", id = "Mode diagnostik", vi = "Chế độ chẩn đoán" }
+description = { "en" = "Collects logs to help developers analyze crashes and fix bugs. Keep it off during normal play; submit collected logs to developers when reporting problems.", "zh-CN" = "开启后可收集相关日志帮助开发者分析崩溃情况和bug修复等，建议日常不要开启，收集日志后可提交给开发者修复问题。", "zh-TW" = "開啟後可收集相關日誌幫助開發者分析崩潰情況和bug修復等，建議日常不要開啟，收集日誌後可提交給開發者修復問題。", "ko" = "충돌 분석과 버그 수정에 필요한 로그를 수집합니다. 평소에는 끄고, 문제 발생 시 수집한 로그를 개발자에게 제출해 주세요.", "id" = "Mengumpulkan log untuk membantu pengembang menganalisis crash dan memperbaiki bug. Matikan saat bermain biasa; kirim log kepada pengembang saat melaporkan masalah.", "vi" = "Thu thập nhật ký giúp nhà phát triển phân tích sự cố và sửa lỗi. Nên tắt khi chơi bình thường; gửi nhật ký cho nhà phát triển khi báo lỗi." }
+[compatibility]
+builds = ["kr-812", "cn-279", "cn-324", "cn-406", "cn-706", "cn-717", "id-400", "id-1809", "kr-1256", "cn-774", "tw-454"]
+[native]
+library = "crash_recorder.dll"
+[[options]]
+key = "enabled"
+type = "bool"
+default = true
+label = { en = "Record exceptions", "zh-CN" = "记录异常", "zh-TW" = "記錄例外", ko = "예외 기록", id = "Rekam pengecualian", vi = "Ghi ngoại lệ" }
+[[options]]
+key = "max_records"
+type = "int"
+default = 128
+min = 1
+max = 128
+label = { en = "Maximum exception records per process", "zh-CN" = "每个进程的异常记录上限", "zh-TW" = "每個程序的例外記錄上限", ko = "프로세스당 최대 예외 기록 수", id = "Jumlah maksimum catatan pengecualian per proses", vi = "Số bản ghi ngoại lệ tối đa cho mỗi tiến trình" }
+[[options]]
+key = "max_kib"
+type = "int"
+default = 1024
+min = 16
+max = 1024
+label = { en = "Maximum diagnostic file size (KiB)", "zh-CN" = "诊断文件大小上限（KiB）", "zh-TW" = "診斷檔案大小上限（KiB）", ko = "최대 진단 파일 크기 (KiB)", id = "Ukuran maksimum berkas diagnostik (KiB)", vi = "Kích thước tệp chẩn đoán tối đa (KiB)" }
+[[options]]
+key = "external_privileged"
+type = "bool"
+default = false
+label = { en = "Include privileged-instruction exceptions outside the main image", "zh-CN" = "记录主程序以外的特权指令异常", "zh-TW" = "記錄主程式以外的特權指令例外", ko = "주 실행 파일 외부의 특권 명령 예외 포함", id = "Sertakan pengecualian instruksi istimewa di luar program utama", vi = "Ghi cả ngoại lệ lệnh đặc quyền ngoài chương trình chính" }
+[[options]]
+key = "write_dump"
+type = "bool"
+default = true
+label = { en = "Save a minidump on the first serious exception", "zh-CN" = "首次严重异常时保存转储文件", "zh-TW" = "首次嚴重例外時儲存傾印檔案", ko = "첫 심각한 예외 발생 시 미니덤프 저장", id = "Simpan minidump saat pengecualian serius pertama", vi = "Lưu minidump khi xảy ra ngoại lệ nghiêm trọng đầu tiên" }
+[[options]]
+key = "max_dump_mib"
+type = "int"
+default = 32
+min = 1
+max = 64
+label = { en = "Maximum dump size (MiB)", "zh-CN" = "转储文件大小上限（MiB）", "zh-TW" = "傾印檔案大小上限（MiB）", ko = "최대 덤프 크기 (MiB)", id = "Ukuran maksimum dump (MiB)", vi = "Kích thước dump tối đa (MiB)" }
+[[options]]
+key = "receive_packets"
+type = "bool"
+default = true
+label = { en = "Trace supported synchronous receive calls", "zh-CN" = "记录受支持的同步接收调用", "zh-TW" = "記錄支援的同步接收呼叫", ko = "지원되는 동기 수신 호출 기록", id = "Rekam panggilan penerimaan sinkron yang didukung", vi = "Ghi các lệnh nhận đồng bộ được hỗ trợ" }
+[[options]]
+key = "max_packet_mib"
+type = "int"
+default = 16
+min = 1
+max = 64
+label = { en = "Maximum receive trace size (MiB)", "zh-CN" = "接收记录大小上限（MiB）", "zh-TW" = "接收記錄大小上限（MiB）", ko = "최대 수신 기록 크기 (MiB)", id = "Ukuran maksimum jejak penerimaan (MiB)", vi = "Kích thước nhật ký nhận tối đa (MiB)" }

@@ -1,0 +1,21 @@
+schema = 1
+
+[[enum_labels]]
+option = "placement"
+value = "native"
+label = { en = "Original Indonesian position", "zh-CN" = "印尼服原生位置", "zh-TW" = "印尼服原生位置", ko = "인도네시아 원본 위치", id = "Posisi asli Indonesia", vi = "Vị trí gốc Indonesia" }
+
+[[enum_labels]]
+option = "placement"
+value = "custom"
+label = { en = "Custom offsets", "zh-CN" = "自定义偏移", "zh-TW" = "自訂偏移", ko = "사용자 지정 위치", id = "Offset khusus", vi = "Độ lệch tùy chỉnh" }
+
+[[enum_labels]]
+option = "font_color"
+value = "white"
+label = {"en" = "White", "zh-CN" = "白色", "zh-TW" = "白色", "ko" = "흰색", "id" = "Putih", "vi" = "Trắng"}
+
+[[enum_labels]]
+option = "font_color"
+value = "yellow"
+label = {"en" = "Yellow", "zh-CN" = "黄色", "zh-TW" = "黃色", "ko" = "노란색", "id" = "Kuning", "vi" = "Vàng"}

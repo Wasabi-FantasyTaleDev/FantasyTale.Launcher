@@ -1,0 +1,82 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "kr-812"
+game = "bubblefighter"
+branch = "kr"
+build_date = "2015-04-22 18:43:53"
+protocol_version = 812
+patch_version = "458"
+executable = "BubbleFighter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "kr-812"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7110
+
+[build.name]
+"en" = "Korea 2015-04-22"
+"zh-CN" = "韩服 2015-04-22"
+"zh-TW" = "韓國 2015-04-22"
+"ko" = "한국 2015-04-22"
+"id" = "Korea 2015-04-22"
+"vi" = "Hàn Quốc 2015-04-22"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x55376C47
+
+[launch]
+native_language = "ko"
+login = "nmco"                    # gamewidget | nmco | hook
+arguments = ["{account}", "/sid=0"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = []
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["kr-812"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.font-support-cn"
+id = "profile-recommend"
+type = "recommend"
+builds = ["kr-812"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["kr-812"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["kr-812"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["kr-812"]
+sources = []

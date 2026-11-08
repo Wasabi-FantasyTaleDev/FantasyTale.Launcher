@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; font: 14px/1.5 "Segoe UI", "Microsoft YaHei UI", sans-serif; --text: #202020; --muted: #606060; --line: #dedede; --surface: #fff; --accent: #0067c0; --error: #b3261e; }
+  @media (prefers-color-scheme: dark) { :root { --text: #f4f4f4; --muted: #b5b5b5; --line: #505050; --surface: #303030; --accent: #60cdff; --error: #ffb4ab; } }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--text); }
+  main { display: flex; flex-direction: column; }
+  p { margin: 0 0 14px; color: var(--muted); }
+  #hint, #entry, #error { flex-shrink: 0; }
+  #rows { display: flex; flex-direction: column; min-height: 0; max-height: 192px; overflow: auto; }
+  .mode-slot { display: grid; grid-template-rows: 1fr; flex-shrink: 0; opacity: 1; transform: translateY(0); transition: grid-template-rows 240ms cubic-bezier(.2,.65,.25,1), opacity 180ms ease, transform 240ms cubic-bezier(.2,.65,.25,1); }
+  .mode-slot.collapsed { grid-template-rows: 0fr; opacity: 0; transform: translateY(-6px); pointer-events: none; }
+  .mode-clip { min-height: 0; overflow: hidden; }
+  .mode { margin: 0 0 8px; display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; min-height: 38px; padding: 0 6px 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); font-variant-numeric: tabular-nums; }
+  .remove { min-width: 32px; padding: 3px 8px; border-color: transparent; font-size: 20px; }
+  button, input { min-height: 34px; border: 1px solid var(--line); border-radius: 5px; color: inherit; background: var(--surface); font: inherit; transition: border-color 160ms ease, background-color 160ms ease, opacity 160ms ease; }
+  button { padding: 5px 12px; cursor: pointer; }
+  button:hover { filter: brightness(.96); }
+  button:disabled { cursor: default; opacity: .5; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  #entry { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) auto; gap: 10px; align-items: start; margin-top: 8px; }
+  label { display: grid; gap: 5px; min-width: 0; }
+  label span { color: var(--muted); font-size: 12px; }
+  input { width: 100%; padding: 5px 10px; }
+  .times { align-self: start; line-height: 34px; color: var(--muted); }
+  #error { min-height: 20px; margin: 8px 0 0; color: var(--error); font-size: 12px; }
+  #empty { margin: 0 0 8px; }
+  #hint { margin: 12px 0 0; font-size: 12px; }
+  #error:empty { display: none; }
+  @media (prefers-reduced-motion: reduce) { button, input, .mode-slot { transition: none; transform: none; } }
+  @media (max-width: 360px) { #entry { grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); } #add { grid-column: 1 / -1; } }
+</style>
+<main id="configuration-content">
+<div id="rows" role="list"></div>
+<div id="empty-state" class="mode-slot"><div class="mode-clip"><p id="empty"></p></div></div>
+<div id="entry">
+  <label><input id="width" type="number" inputmode="numeric" min="1" max="2147483647" step="1" placeholder="1920" disabled><span id="width-label"></span></label>
+  <span class="times" aria-hidden="true">×</span>
+  <label><input id="height" type="number" inputmode="numeric" min="1" max="2147483647" step="1" placeholder="1080" disabled><span id="height-label"></span></label>
+  <button id="add" type="button" disabled></button>
+</div>
+<p id="error" role="status" aria-live="polite"></p>
+<button id="reset" type="button" hidden></button>
+<p id="hint"></p>
+</main>
+<script>
+  const byId = id => document.getElementById(id);
+  const reset = byId('reset');
+  const rows = byId('rows'), width = byId('width'), height = byId('height'), add = byId('add'), error = byId('error');
+  const captions = {
+    en: { reset: 'Clear invalid list', hint: 'Custom resolutions apply on the next game launch.', width: 'Width (px)', height: 'Height (px)', add: 'Add', remove: 'Remove', empty: 'No custom resolutions added.', invalid: 'Enter positive whole numbers for width and height.', duplicate: 'This resolution is already in your list.', limit: 'The list is full. Remove a resolution before adding another.', invalidSaved: 'The saved list contains an invalid entry. Clear it and add resolutions again; only Save applies the changes.' },
+    'zh-CN': { reset: '清空无效清单', hint: '添加自定义分辨率后于下次启动游戏时生效。', width: '宽度（像素）', height: '高度（像素）', add: '添加', remove: '删除', empty: '尚未添加自定义分辨率。', invalid: '请输入有效的宽度和高度，均为正整数。', duplicate: '此分辨率已在清单中。', limit: '清单已满，请先删除一项再添加。', invalidSaved: '已保存的清单包含无效项。可清空后重新添加，点击保存才会应用。' },
+    'zh-TW': { reset: '清空無效清單', hint: '新增自訂解析度後於下次啟動遊戲時生效。', width: '寬度（像素）', height: '高度（像素）', add: '新增', remove: '刪除', empty: '尚未新增自訂解析度。', invalid: '請輸入有效的寬度與高度，均為正整數。', duplicate: '此解析度已在清單中。', limit: '清單已滿，請先刪除一項再新增。', invalidSaved: '已儲存的清單包含無效項目。可清空後重新新增，按儲存才會套用。' },
+    ko: { reset: '잘못된 목록 비우기', hint: '사용자 지정 해상도는 다음 게임 실행부터 적용됩니다.', width: '너비 (px)', height: '높이 (px)', add: '추가', remove: '삭제', empty: '추가한 사용자 지정 해상도가 없습니다.', invalid: '너비와 높이에 양의 정수를 입력하세요.', duplicate: '이미 목록에 있는 해상도입니다.', limit: '목록이 가득 찼습니다. 먼저 항목을 삭제하세요.', invalidSaved: '저장된 목록에 잘못된 항목이 있습니다. 목록을 비우고 다시 추가한 다음 저장하세요.' },
+    id: { reset: 'Kosongkan daftar tidak valid', hint: 'Resolusi khusus berlaku pada peluncuran berikutnya.', width: 'Lebar (px)', height: 'Tinggi (px)', add: 'Tambah', remove: 'Hapus', empty: 'Belum ada resolusi khusus.', invalid: 'Masukkan bilangan bulat positif untuk lebar dan tinggi.', duplicate: 'Resolusi ini sudah ada dalam daftar.', limit: 'Daftar penuh. Hapus satu resolusi terlebih dahulu.', invalidSaved: 'Daftar tersimpan berisi entri tidak valid. Kosongkan lalu tambahkan kembali; perubahan diterapkan setelah Simpan.' },
+    vi: { reset: 'Xóa danh sách không hợp lệ', hint: 'Độ phân giải tùy chỉnh áp dụng ở lần chạy trò chơi tiếp theo.', width: 'Chiều rộng (px)', height: 'Chiều cao (px)', add: 'Thêm', remove: 'Xóa', empty: 'Chưa thêm độ phân giải tùy chỉnh.', invalid: 'Nhập số nguyên dương cho chiều rộng và chiều cao.', duplicate: 'Độ phân giải này đã có trong danh sách.', limit: 'Danh sách đã đầy. Hãy xóa một mục trước.', invalidSaved: 'Danh sách đã lưu có mục không hợp lệ. Xóa danh sách rồi thêm lại; chỉ áp dụng khi Lưu.' }
+  };
+  let strings = captions.en, modes = [], received, maxLength = 4096, ready = false;
+  const dimension = text => /^\d+$/.test(text) && Number(text) > 0 && Number(text) <= 2147483647;
+  const serialize = entries => entries.map(mode => mode[0] + 'x' + mode[1]).join(';');
+  function parse(text) {
+    const result = [];
+    for (const item of text.split(/[;,\r\n]/).map(value => value.trim()).filter(Boolean)) {
+      const match = /^(\d+)\s*[xX]\s*(\d+)$/.exec(item);
+      if (!match || !dimension(match[1]) || !dimension(match[2]) || result.length === 256) return null;
+      result.push([Number(match[1]), Number(match[2])]);
+    }
+    return result;
+  }
+  const rendered = new Map();
+  const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  function render(animate = false) {
+    const motion = animate && !reducedMotion(), keys = new Set(), occurrences = new Map();
+    byId('empty').textContent = strings.empty;
+    const empty = byId('empty-state');
+    empty.classList.toggle('collapsed', modes.length !== 0);
+    empty.setAttribute('aria-hidden', String(modes.length !== 0));
+    empty.inert = modes.length !== 0;
+    for (const [index, mode] of modes.entries()) {
+      const identity = mode[0] + 'x' + mode[1], occurrence = occurrences.get(identity) ?? 0;
+      occurrences.set(identity, occurrence + 1);
+      const key = identity + ':' + occurrence; keys.add(key);
+      let record = rendered.get(key);
+      if (!record) {
+        const slot = document.createElement('div'); slot.className = 'mode-slot'; slot.setAttribute('role', 'listitem');
+        const clip = document.createElement('div'); clip.className = 'mode-clip';
+        const row = document.createElement('div'); row.className = 'mode';
+        const caption = document.createElement('span');
+        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove'; remove.textContent = '×';
+        record = { slot, caption, remove, index, leaving: false, timer: undefined };
+        const entry = record;
+        remove.addEventListener('click', () => {
+          if (!ready || entry.leaving) return;
+          modes.splice(entry.index, 1); error.textContent = ''; render(true); emit();
+        });
+        row.append(caption, remove); clip.append(row); slot.append(clip);
+        if (motion) slot.classList.add('collapsed');
+        rows.append(slot); rendered.set(key, record);
+        if (motion) slot.getBoundingClientRect();
+      }
+      window.clearTimeout(record.timer); record.leaving = false; record.index = index;
+      record.slot.inert = false; record.slot.setAttribute('aria-hidden', 'false'); record.slot.style.order = String(index);
+      record.slot.classList.remove('collapsed');
+      record.caption.textContent = mode[0] + ' × ' + mode[1];
+      record.remove.setAttribute('aria-label', strings.remove + ' ' + mode[0] + ' × ' + mode[1]); record.remove.title = strings.remove;
+      record.remove.disabled = !ready;
+    }
+    for (const [key, record] of rendered) {
+      if (keys.has(key) || record.leaving) continue;
+      const discard = () => { record.slot.remove(); if (rendered.get(key) === record) rendered.delete(key); };
+      if (!motion) { discard(); continue; }
+      record.leaving = true; record.remove.disabled = true; record.slot.inert = true;
+      record.slot.setAttribute('aria-hidden', 'true'); record.slot.classList.add('collapsed');
+      record.timer = window.setTimeout(discard, 260);
+    }
+  }
+  function emit() {
+    const text = serialize(modes);
+    if (new TextEncoder().encode(text).length > maxLength) { error.textContent = strings.limit; return; }
+    received = text;
+    // The launcher owns Save and Cancel; this message only updates its validated draft.
+    parent.postMessage({ type: 'fantasytale:change', schema: 1, values: { custom_resolutions: text } }, '*');
+  }
+  function append() {
+    if (!ready) return;
+    const w = width.value.trim(), h = height.value.trim();
+    if (!dimension(w) || !dimension(h)) { error.textContent = strings.invalid; return; }
+    const mode = [Number(w), Number(h)];
+    if (modes.some(existing => existing[0] === mode[0] && existing[1] === mode[1])) { error.textContent = strings.duplicate; return; }
+    if (modes.length === 256 || new TextEncoder().encode(serialize([...modes, mode])).length > maxLength) { error.textContent = strings.limit; return; }
+    modes.push(mode); error.textContent = ''; width.value = ''; height.value = ''; render(true); emit(); width.focus();
+  }
+  reset.addEventListener('click', () => {
+    modes = []; ready = true; reset.hidden = true; error.textContent = '';
+    width.disabled = height.disabled = add.disabled = false;
+    render(true); emit(); width.focus();
+  });
+  add.addEventListener('click', append);
+  for (const input of [width, height]) input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); append(); } });
+  window.addEventListener('message', event => {
+    if (event.source !== parent || event.data?.type !== 'fantasytale:configuration' || event.data.schema !== 1) return;
+    const message = event.data;
+    if (!Array.isArray(message.options) || !message.values || typeof message.values !== 'object' || Array.isArray(message.values)) return;
+    const option = message.options.find(item => item.key === 'custom_resolutions' && item.type === 'string');
+    if (!option) return;
+    strings = captions[message.language] ?? captions.en;
+    reset.textContent = strings.reset;
+    document.documentElement.lang = message.language ?? 'en';
+    byId('hint').textContent = strings.hint;
+    byId('width-label').textContent = strings.width; byId('height-label').textContent = strings.height; add.textContent = strings.add;
+    maxLength = Number.isInteger(option.maxLength) && option.maxLength > 0 ? Math.min(4096, option.maxLength) : 4096;
+    const text = message.values.custom_resolutions ?? '';
+    if (typeof text !== 'string') return;
+    if (text !== received) {
+      const parsed = parse(text);
+      if (!parsed || new TextEncoder().encode(text).length > maxLength) { error.textContent = strings.invalidSaved; reset.hidden = false; ready = false; width.disabled = height.disabled = add.disabled = true; render(); return; }
+      modes = parsed; received = text; error.textContent = '';
+    }
+    reset.hidden = true;
+    const animate = ready;
+    ready = true; width.disabled = height.disabled = add.disabled = false;
+    render(animate);
+  });
+  if (typeof ResizeObserver !== 'undefined') {
+    const content = byId('configuration-content');
+    new ResizeObserver(() => {
+      parent.postMessage({ type: 'fantasytale:resize', schema: 1, height: Math.ceil(content.getBoundingClientRect().height) }, '*');
+    }).observe(content);
+  }
+  parent.postMessage({ type: 'fantasytale:ready', schema: 1 }, '*');
+</script>
+</html>

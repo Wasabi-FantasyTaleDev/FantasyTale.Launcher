@@ -1,0 +1,68 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FantasyTale.Launcher.ModuleFixture\FantasyTale.Launcher.ModuleFixture.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\FantasyTale.Launcher.TestClient\FantasyTale.Launcher.TestClient.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Updater\FantasyTale.Launcher.Updater.csproj" ReferenceOutputAssembly="false" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <Target Name="CopyModuleFixture" AfterTargets="Build">
+    <!-- The SDK builds this library without the executable test project's RID. Query that same build. -->
+    <MSBuild Projects="..\FantasyTale.Launcher.ModuleFixture\FantasyTale.Launcher.ModuleFixture.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)" RemoveProperties="RuntimeIdentifier;SelfContained">
+      <Output TaskParameter="TargetOutputs" ItemName="ModuleFixtureTarget" />
+    </MSBuild>
+    <PropertyGroup><ModuleFixtureDirectory>@(ModuleFixtureTarget->'%(RootDir)%(Directory)')</ModuleFixtureDirectory></PropertyGroup>
+    <ItemGroup><ModuleFixtureFiles Include="$(ModuleFixtureDirectory)*" /></ItemGroup>
+    <Error Condition="'@(ModuleFixtureFiles)' == ''" Text="The module fixture build output was not found in $(ModuleFixtureDirectory)." />
+    <Copy SourceFiles="@(ModuleFixtureFiles)" DestinationFolder="$(OutDir)module-fixture" />
+  </Target>
+
+  <Target Name="CopyTestClient" AfterTargets="Build">
+    <MSBuild Projects="..\FantasyTale.Launcher.TestClient\FantasyTale.Launcher.TestClient.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="TestClientTarget" />
+    </MSBuild>
+    <PropertyGroup>
+      <TestClientDirectory>@(TestClientTarget->'%(RootDir)%(Directory)')</TestClientDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <TestClientFiles Include="$(TestClientDirectory)*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(TestClientFiles)" DestinationFolder="$(OutDir)test-client" />
+  </Target>
+
+  <Target Name="CopyTestUpdater" AfterTargets="Build">
+    <!-- Process acceptance must exercise this build, including isolated artifacts directories. -->
+    <MSBuild Projects="..\..\src\FantasyTale.Launcher.Updater\FantasyTale.Launcher.Updater.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="TestUpdaterTarget" />
+    </MSBuild>
+    <PropertyGroup><TestUpdaterDirectory>@(TestUpdaterTarget->'%(RootDir)%(Directory)')</TestUpdaterDirectory></PropertyGroup>
+    <ItemGroup><TestUpdaterFiles Include="$(TestUpdaterDirectory)*" /></ItemGroup>
+    <Copy SourceFiles="@(TestUpdaterFiles)" DestinationFolder="$(OutDir)test-updater" />
+  </Target>
+
+  <ItemGroup>
+    <Compile Include="../../src/Shared/TrustedWebDocument.cs" Link="TrustedWebDocument.cs" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Communication\FantasyTale.Launcher.Communication.csproj" />
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Core\FantasyTale.Launcher.Core.csproj" />
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Directory\FantasyTale.Launcher.Directory.csproj" />
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Host\FantasyTale.Launcher.Host.csproj" />
+    <ProjectReference Include="..\..\src\FantasyTale.Launcher.Games.BubbleFighter\FantasyTale.Launcher.Games.BubbleFighter.csproj" />
+  </ItemGroup>
+
+</Project>

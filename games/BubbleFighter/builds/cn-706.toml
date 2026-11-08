@@ -1,0 +1,100 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "cn-706"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2014-09-23 11:41:03"
+protocol_version = 706
+executable = "BubbleFighter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "cn-706"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7220
+
+release_version = "0.2.51.002"
+
+[build.name]
+"en" = "China 2014-09-23"
+"zh-CN" = "国服 2014-09-23"
+"zh-TW" = "中國 2014-09-23"
+"ko" = "중국 2014-09-23"
+"id" = "Tiongkok 2014-09-23"
+"vi" = "Trung Quốc 2014-09-23"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x5420DCC3
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-706 sub_86EE00 reads this argument order; cn-706 sub_867510 requests the version-512 bridge.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-706"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-706"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-706"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-706"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-706"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-706"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-706"]
+sources = []

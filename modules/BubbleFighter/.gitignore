@@ -1,0 +1,22 @@
+bin/
+obj/
+artifacts/
+docs/private/
+.env
+.env.*
+*.local.toml
+*.user
+.vs/
+
+# Built game plugin binaries are produced by the release pipeline.
+games/BubbleFighter/plugins/**/*.dll
+games/BubbleFighter/plugins/**/*.exe
+games/BubbleFighter/plugins/**/*.pdb
+games/BubbleFighter/plugins/**/fonts/*.ttf
+
+# Python packaging verification caches.
+__pycache__/
+
+games/BubbleFighter/plugins/**/fonts/*.otf
+
+games/BubbleFighter/plugins/**/fonts/*.ttc

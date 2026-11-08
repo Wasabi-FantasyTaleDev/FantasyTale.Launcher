@@ -1,0 +1,98 @@
+# Client build definition for the Chinese 2014 0.2.48.001 client.
+schema = 1
+
+[build]
+id = "cn-408"
+game = "bubblefighter"
+branch = "cn"
+hidden = true
+build_date = "2014-05-26 19:16:05"
+protocol_version = 408
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "cn-408"
+hosting_adapter = "legacy"
+default_port = 7250
+release_version = "0.2.48.001"
+
+[build.name]
+"en" = "China 2014-05-26"
+"zh-CN" = "国服 2014-05-26"
+"zh-TW" = "中國 2014-05-26"
+"ko" = "중국 2014-05-26"
+"id" = "Tiongkok 2014-05-26"
+"vi" = "Trung Quốc 2014-05-26"
+
+[fingerprint]
+pe_timestamp = 0x5383216F
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-408 follows the CN2014 gamewidget ticket bridge; its launcher arguments
+# use the same interface contract as cn-404.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-408"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-408"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-408"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-408"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-408"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-408"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-408"]
+sources = []

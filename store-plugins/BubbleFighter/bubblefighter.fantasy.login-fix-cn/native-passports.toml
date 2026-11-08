@@ -1,0 +1,224 @@
+schema = 1
+
+# cn-279 / China 2011: native COW passport assignment and promoted connection continuation.
+# cn-279 sub_6FBE60 creates an empty passport; cn-279 sub_8580A0 sends the selected provider record.
+[[profiles]]
+build = "cn-279"
+pe_timestamp = 0x4D9ECC57
+image_sizes = [0x9C6000, 0x9C8000]
+connection_rva = 0x6BBEE4
+passport_offset = 2252
+string_kind = "cow"
+assign_rva = 0x12D0
+assign_signature = "53568bd98b4c240c8b33578b3983ee14"
+constructor_rva = 0x1570
+constructor_signature = "6aff6888a7920064a100000000505156a1e401aa0033c4508d44240c64a3000000008bf1897424088b54"
+destructor_rva = 0x1510
+destructor_signature = "6aff6888a7920064a100000000505156a1e401aa0033c4508d44240c64a300000000894c2408c7442414"
+
+# cn-279 sub_6F1A70 promotes pending; cn-279 sub_8588F0 requests the provider for the new LoginStage.
+[profiles.resume]
+pending_connection_rva = 0x6BBEE8
+application_rva = 0x6BB4B4
+selected_offset = 254
+connected_offset = 100
+complete_offset = 2240
+
+# cn-324 / China 2012: native Center passport assignment.
+# cn-324 sub_401B10 assigns the native connection string at +2252.
+[[profiles]]
+build = "cn-324"
+pe_timestamp = 0x505DD60C
+image_sizes = [0xa28000, 0xa2b000]
+connection_rva = 0x80FDB4
+passport_offset = 2252
+string_kind = "cow"
+assign_rva = 0x1B10
+assign_signature = "53568bd98b4c240c8b33578b"
+constructor_rva = 0x1C00
+constructor_signature = "8b542404568bf133c966390a"
+destructor_rva = 0x80390
+destructor_signature = "568b3183ee148d46"
+
+# cn-324 sub_705980 promotes pending; cn-324 sub_584580 requests the provider again for the new LoginStage.
+# cn-324 sub_5852D0 sends native login after selection; cn-324 sub_584890 cannot send an empty passport.
+[profiles.resume]
+pending_connection_rva = 0x80FDB8
+application_rva = 0x80EC98
+selected_offset = 270
+connected_offset = 100
+complete_offset = 2240
+
+# cn-406 / China 2013: native Center passport assignment.
+# cn-406 sub_402350 assigns the native connection string at +2392.
+[[profiles]]
+build = "cn-406"
+pe_timestamp = 0x51CD5DE5
+image_sizes = [0xbca000, 0xbcd000]
+connection_rva = 0x932674
+passport_offset = 2392
+string_kind = "modern"
+assign_rva = 0x2350
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-406 sub_71FA20 copies the passport; cn-406 sub_576970 may send login before its provider tick.
+# cn-406 sub_577D00 may resume only when the original Entry's region and feature predicates skip sending.
+[profiles.resume]
+pending_connection_rva = 0x932678
+application_rva = 0x92F9EC
+selected_offset = 422
+connected_offset = 228
+complete_offset = 2380
+region_rva = 0x546B60
+region_signature = "8b0d1c2dd20033c03b4c24040f94c0c3"
+feature_rva = 0x546DA0
+feature_signature = "83ec08568b35909ed20085f6742a8b44"
+automatic_regions = [0, 3]
+automatic_feature = 49
+abort_feature = 67
+abort_flag_rva = 0x92B864
+
+# cn-404 / China 2014 0.2.46.001: native Center passport assignment.
+# cn-404 sub_403C10 assigns the native connection string at +2392.
+[[profiles]]
+build = "cn-404"
+pe_timestamp = 0x533CFD5F
+image_sizes = [0xcd5000, 0xcd8000]
+connection_rva = 0xA34C04
+passport_offset = 2392
+string_kind = "modern"
+assign_rva = 0x3C10
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-408 / China 2014 0.2.48.001: native Center passport assignment.
+# cn-408 sub_403DA0 assigns the native connection string at +2392.
+[[profiles]]
+build = "cn-408"
+pe_timestamp = 0x5383216F
+image_sizes = [0xcd9000, 0xcdc000]
+connection_rva = 0xA3AE54
+passport_offset = 2392
+string_kind = "modern"
+assign_rva = 0x3DA0
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-705 / China 2014 0.2.50.004: native Center passport assignment.
+# cn-705 sub_403DB0 assigns the native connection string at +2392.
+[[profiles]]
+build = "cn-705"
+pe_timestamp = 0x53DA0A65
+image_sizes = [0xc76000, 0xc79000]
+connection_rva = 0x9DC724
+passport_offset = 2392
+string_kind = "modern"
+assign_rva = 0x3DB0
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-706 / China 2014 0.2.51.002: native Center passport assignment.
+# cn-706 sub_403DE0 assigns the native connection string at +2392.
+[[profiles]]
+build = "cn-706"
+pe_timestamp = 0x5420DCC3
+image_sizes = [0xc76000, 0xc79000]
+connection_rva = 0x9E074C
+passport_offset = 2392
+string_kind = "modern"
+assign_rva = 0x3DE0
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-717 / China 2015: native Center passport assignment.
+# cn-717 sub_401410 assigns the native connection string at +2440.
+[[profiles]]
+build = "cn-717"
+pe_timestamp = 0x5582B5CD
+image_sizes = [0x1090000, 0x1093000]
+connection_rva = 0xC0DED4
+passport_offset = 2440
+string_kind = "modern"
+assign_rva = 0x1410
+assign_signature = "538b5c2408558b6c24105657"
+
+# cn-717 sub_8A1DA0 copies the passport; cn-717 sub_6DA0B0 may send before cn-717 sub_6DB7A0.
+# Resume only when the original Entry skipped sending; consume a redundant request after its sender path.
+[profiles.resume]
+pending_connection_rva = 0xC0DED8
+application_rva = 0xBFBA8C
+selected_offset = 550
+connected_offset = 266
+complete_offset = 2428
+region_rva = 0x71E8F0
+region_signature = "8b0dc4c7fe0033c03b4c24040f94c0c3"
+feature_rva = 0x71EDE0
+feature_signature = "83ec08568b352036ff0085f6742a8b44"
+automatic_regions = [0, 3, 4]
+automatic_feature = 1503
+abort_feature = 1203
+abort_flag_rva = 0xBF4F8C
+
+# cn-774 / China 2019: native Center passport assignment before the provider callback.
+# cn-774 sub_A23360 preserves +2492; cn-774 sub_9FAC30 returns without login when that string is empty.
+[[profiles]]
+build = "cn-774"
+pe_timestamp = 0x5CEF8FF9
+# The original image retains its smaller PE size after unpacking; native function signatures remain mandatory.
+image_sizes = [0x1B7E000, 0x1B80000]
+connection_rva = 0x137D9C4
+passport_offset = 2492
+string_kind = "span"
+# cn-774 sub_44E030 assigns (this, wide characters, character count).
+assign_rva = 0x4E030
+assign_signature = "5153558b6c241456578bf98b4f14894c"
+
+# cn-774 sub_BA61D0 copies the passport; cn-774 sub_BA6D70 promotes the replacement connection.
+# cn-774 sub_9FA4A0 sends only with feature 1502; cn-774 sub_9FA7F0 then requests a fresh provider callback.
+[profiles.resume]
+pending_connection_rva = 0x137D9C8
+application_rva = 0x137BA18
+selected_offset = 510
+# cn-774 sub_10469A0 marks successful FD_CONNECT at +310; cn-774 sub_BA26E0 marks login completion at +2480.
+connected_offset = 310
+complete_offset = 2480
+# cn-774 sub_10695D0 accepts its feature identifier in ECX, with no region or early-abort predicate.
+feature_rva = 0xC695D0
+feature_signature = "a114d177018bd185c0750332c0c356578b78048bcf8bf78b"
+feature_calling_convention = "fastcall"
+automatic_feature = 1502
+
+# cn-279 / China 2011: sub_4A78A0 publishes the modal chooser; sub_64C8C0 pairs rows in vector order.
+# cn-279 sub_8868F0 reads caption +336; named buttons use a private copy of drawing slot 3.
+[labels]
+build = "cn-279"
+pe_timestamp = 0x4D9ECC57
+image_sizes = [0x9C8000, 0x9C6000]
+system_rva = 0x6B1DB4
+modal_offset = 8
+chooser_vtable_rva = 0x5F82BC
+chooser_secondary_vtable_rva = 0x5F83A0
+buttons_begin_offset = 356
+buttons_end_offset = 360
+centers_begin_rva = 0x6BBEEC
+centers_end_rva = 0x6BBEF0
+identity_offset = 2328
+button_vtable_rva = 0x5FE554
+button_secondary_vtable_rva = 0x5FE618
+caption_offset = 336
+poll_ms = 100
+# cn-279 UiServerButton primary table spans 48 entries; slot 3 is sub_8868F0.
+# The instance copy retains RTTI and all other native methods, including destruction.
+table_entries = 48
+draw_slot = 3
+renderer_rva = 0x6B4E68
+draw_rva = 0x4868F0
+draw_signature = "6aff681dcd8c0064a1000000005083ec085657a1"
+text_rva = 0x1375B0
+text_signature = "6aff68461e8c0064a1000000005081ec18040000"
+region_rva = 0xF4220
+region_signature = "558beca128d0ab0033c93b45080f94c18ac15dc3"
+
+# cn-279 sub_886A70 and sub_886A00 use these native COW routines for the same caption field.
+assign_rva = 0x12D0
+assign_signature = "53568bd98b4c240c8b33578b3983ee14"
+constructor_rva = 0x1570
+constructor_signature = "6aff6888a7920064a100000000505156a1e401aa0033c4508d44240c64a3000000008bf1897424088b54"
+destructor_rva = 0x1510
+destructor_signature = "6aff6888a7920064a100000000505156a1e401aa0033c4508d44240c64a300000000894c2408c7442414"

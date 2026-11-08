@@ -1,0 +1,103 @@
+schema = 1
+
+[build]
+id = "cn-406"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2013-06-28 19:02:07"
+protocol_version = 406
+release_version = "0.2.35.001"
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "cn-406"
+hosting_adapter = "legacy"
+default_port = 7230
+
+[build.name]
+"en" = "China 2013-06-28"
+"zh-CN" = "国服 2013-06-28"
+"zh-TW" = "中國 2013-06-28"
+"ko" = "중국 2013-06-28"
+"id" = "Tiongkok 2013-06-28"
+"vi" = "Trung Quốc 2013-06-28"
+
+[fingerprint]
+pe_timestamp = 0x51CD5DE5
+
+[launch]
+native_language = "zh-CN"
+launcher_login = "required"
+# cn-406 sub_7CC3E0 loads this module; sub_577D00 consumes its sign-in callback.
+login = "gamewidget-ticket"
+login_module = "sdologinentry.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-406"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-406"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.scene-styles"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-406"]
+sources = []

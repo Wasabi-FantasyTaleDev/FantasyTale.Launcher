@@ -1,0 +1,20 @@
+schema = 1
+
+[plugin]
+minimum_launcher_version = "0.1.57"
+update_source = "fantasy-tale"
+id = "bubblefighter.fantasy.native-style-components"
+aliases = ["bubblefighter.fantasy.overlay-preview"]
+version = "0.1.1"
+game = "bubblefighter"
+kind = "overlay"
+name = { en = "Fantasy Tale Native Style Components", "zh-CN" = "Fantasy Tale 原生风格组件", "zh-TW" = "Fantasy Tale 原生風格元件", ko = "Fantasy Tale 기본 스타일 구성 요소", id = "Komponen Gaya Bawaan Fantasy Tale", vi = "Thành phần phong cách gốc Fantasy Tale" }
+description = { en = "Provides Overlay components styled like the game's native UI.", "zh-CN" = "启用后可提供类似游戏原生UI风格的叠加层组件支持", "zh-TW" = "啟用後可提供類似遊戲原生 UI 風格的疊加層元件支援", ko = "게임 기본 UI 스타일의 오버레이 구성 요소를 제공합니다.", id = "Menyediakan komponen Overlay dengan gaya UI bawaan game.", vi = "Cung cấp thành phần lớp phủ theo phong cách giao diện gốc của trò chơi." }
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[compatibility]
+builds = ["*"]
+
+[overlay]
+entry = "panel.html"

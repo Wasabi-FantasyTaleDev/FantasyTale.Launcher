@@ -1,0 +1,79 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.login-fix-cn"
+aliases = ["bubblefighter.fantasy.cn-auth"]
+version = "1.0.18"
+game = "bubblefighter"
+kind = "files"
+minimum_launcher_version = "0.1.57"
+runtime = ">=3.7.1 <4.0.0"
+update_source = "fantasy-tale"
+# Native passport adaptation and optional legacy Center names belong to this component.
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Chinese client authentication component"
+"zh-CN" = "国服认证组件"
+"zh-TW" = "中國認證元件"
+ko = "중국 클라이언트 인증 구성 요소"
+id = "Komponen autentikasi klien Tiongkok"
+vi = "Thành phần xác thực máy khách Trung Quốc"
+
+[plugin.description]
+en = "Keep this component enabled when playing Chinese client builds; disabling it can prevent startup."
+"zh-CN" = "游玩国服版本时请务必启用此组件，否则会影响启动。"
+"zh-TW" = "遊玩中國版本時請務必啟用此元件，否則會影響啟動。"
+ko = "중국 클라이언트 버전을 플레이할 때 이 구성 요소를 활성화하세요. 비활성화하면 시작에 문제가 발생할 수 있습니다."
+id = "Aktifkan komponen ini saat memainkan klien Tiongkok; menonaktifkannya dapat mengganggu proses mulai."
+vi = "Hãy bật thành phần này khi chơi phiên bản Trung Quốc; tắt thành phần có thể ảnh hưởng đến khởi động."
+
+[plugin.warning]
+en = "The Chinese client authentication component is disabled. This may cause serious problems or prevent the game from starting. Start without this component?"
+"zh-CN" = "国服认证组件 插件没有启用，可能会导致严重后果或游戏无法启动，确定不启用此插件吗？"
+"zh-TW" = "「中國認證元件」模組尚未啟用，可能導致遊戲無法啟動或其他嚴重問題。確定不啟用此模組嗎？"
+ko = "중국 클라이언트 인증 구성 요소가 비활성화되었습니다. 심각한 문제나 게임 시작 실패가 발생할 수 있습니다. 이 구성 요소 없이 시작하시겠습니까?"
+id = "Komponen autentikasi klien Tiongkok dinonaktifkan. Ini dapat menyebabkan masalah serius atau membuat game tidak dapat dimulai. Mulai tanpa komponen ini?"
+vi = "Thành phần xác thực máy khách Trung Quốc chưa được bật. Điều này có thể gây vấn đề nghiêm trọng hoặc khiến trò chơi không khởi động được. Khởi động mà không bật thành phần này?"
+
+[compatibility]
+builds = ["cn-279", "cn-324", "cn-404", "cn-406", "cn-408", "cn-706", "cn-717", "cn-735", "cn-774"]
+
+[[files]]
+source = "gpk_stub.dll"
+target = "GPKitClt.dll"
+size = 84992
+sha256 = "98424747a172d81672d1068c73e6cd49609da007094cbbb7ed3013025a737ae4"
+builds = ["branch:cn"]
+
+# Early Chinese clients load the widget name; later clients load the SDO entry name.
+[[files]]
+source = "login_bridge.dll"
+target = "GameWidget.dll"
+size = 371200
+sha256 = "edb948a5dd9ecf3cbaab53b4523ff00db3b3d20b49435e2dcb985d2105858af2"
+builds = ["cn-279", "cn-324"]
+
+[[files]]
+source = "login_bridge.dll"
+target = "sdologinentry.dll"
+size = 371200
+sha256 = "edb948a5dd9ecf3cbaab53b4523ff00db3b3d20b49435e2dcb985d2105858af2"
+builds = ["cn-404", "cn-406", "cn-408", "cn-706", "cn-717", "cn-735", "cn-774"]
+
+[[files]]
+source = "native-passports.toml"
+target = "native-passports.toml"
+size = 8061
+sha256 = "f2cd6dab2a73767c2ccac65d1c088d38ed4e27663be19bfb7b9a204adec04831"
+builds = ["branch:cn"]
+
+# cn-706 sub_868920 calls the retired updater, initializer and starter at 868BA3/868BD4/868BE1.
+# Continue at cn-706 868C16 with the same stack; shutdown checks module presence in sub_AEE4BC/sub_AEE6EA.
+[[patches]]
+id = "cn2014-retired-security-startup"
+builds = ["cn-706"]
+locate = { pattern = "E8 DA 94 00 00 8B F7 E8 F3 96 00 00 57 E8 4D 9F 00 00 ?? ?? ?? ?? ?? 84 C0 75 28 6A 00 68 4C D6 C9 00 68 68 D6 C9 00 6A 00 FF 15 E8 5A DD 00", offset = 18, match = "unique" }
+expect = "E8 68 C5 FF FF"
+write = "E9 6E 00 00 00"

@@ -1,0 +1,14 @@
+schema = 1
+
+[ui]
+page = "settings.html"
+
+[[enum_labels]]
+option = "font_color"
+value = "white"
+label = { en = "White", "zh-CN" = "白色" }
+
+[[enum_labels]]
+option = "font_color"
+value = "yellow"
+label = { en = "Yellow", "zh-CN" = "黄色" }

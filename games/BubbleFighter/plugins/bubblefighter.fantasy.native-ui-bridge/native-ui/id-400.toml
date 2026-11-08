@@ -1,0 +1,77 @@
+schema = 1
+build = "id-400"
+timestamp = 0x52E07057
+
+# All addresses are RVAs in the unpacked id-400 main image.
+[addresses]
+allocate = 0x5D9140 # id-400 sub_739FF0 allocates 0x310 bytes with this cdecl allocator.
+construct_message = 0x4153E0 # id-400 sub_739FF0 pushes storage/title/body/mode/icon to the stdcall constructor.
+layout_message = 0x416510 # id-400 sub_816510 lays out the owned dialog and reads the icon-free flag at +776.
+modal_message = 0x603370 # id-400 sub_739FF0 calls vtable slot 208 with three flags.
+message_vtable = 0x8BCE0C # id-400 sub_8153E0 assigns the DlgMessageBox primary vtable.
+notify = 0x45A640 # id-400 sub_93E8A0 supplies ECX=-1, MainApp, body, empty sound and two -1 defaults.
+application = 0x9E2250 # id-400 sub_93E8A0 passes this global as MainApp.
+ui_context = 0x9DEF44 # id-400 sub_816510 measures text with this XUI context.
+ui_manager = 0x9DE738 # id-400 sub_A03370 registers modal controls with this UI manager.
+chat = 0x350D60 # id-400 sub_754ED0 supplies module/body in ECX/EDX and caption/color on the stack.
+append_announcement = 0x4669A0 # id-400 sub_85ADB0 appends a deep-copied 76-byte record through id-400 sub_869520.
+clock = 0x97E1E4 # id-400 sub_85ADB0 and id-400 sub_85A0B0 read the native clock pointer here.
+clock_now = 0x5DFC40 # id-400 sub_9DFC40 returns the clock used by the announcement renderer.
+
+[values]
+message_abi = 3 # id-400 sub_739FF0 uses a stdcall constructor and three-flag thiscall modal.
+modal_abi = 3 # id-400 sub_739FF0 supplies three flags to id-400 sub_A03370.
+notify_abi = 3 # id-400 sub_93E8A0 calls the notification owner directly.
+chat_abi = 3 # id-400 sub_754ED0 uses the fastcall borrowed-string chat wrapper.
+message_size = 784 # id-400 sub_739FF0 allocates 0x310 bytes.
+reference_offset = 8 # id-400 sub_739FF0 retains the dialog around its modal call.
+secondary_offset = 4 # id-400 sub_739FF0 releases through the secondary vtable.
+destructor_slot = 0 # id-400 sub_739FF0 invokes the secondary deleting destructor.
+release_previous = 1 # id-400 sub_739FF0 destroys when decrement reaches zero.
+ok_offset = 760 # id-400 sub_8163A0 binds the first button to command 257.
+cancel_offset = 764 # id-400 sub_8163A0 binds the second button to command 256.
+command_offset = 576 # id-400 sub_8163A0 writes commands at each button +576.
+text_slot = 20 # id-400 sub_8163A0 sets control text through vtable slot 20.
+modal_slot = 208 # id-400 sub_739FF0 calls the modal method through slot 208.
+without_icon_offset = 776 # id-400 sub_816510 hides icons when this byte is set.
+notification_offset = 312 # id-400 sub_85A640 owns and replaces MainApp notification at +312.
+chat_offset = 400 # id-400 sub_6525C0 passes MainApp chat module at +400.
+chat_view_offset = 124 # id-400 sub_754A10 consumes the active chat view at module +124.
+announcement_offset = 256 # id-400 sub_85ADB0 owns the notice vector at +256/+260/+264.
+announcement_limit = 7 # id-400 sub_85ADB0 evicts before inserting the eighth notice.
+icon_notice = 0 # id-400 Ui/DlgMessageBox.ui maps pnlIcon array 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # id-400 Ui/DlgMessageBox.ui maps pnlIcon array 1 to MsgBoxIconWarning.png.
+icon_question = 2 # id-400 Ui/DlgMessageBox.ui maps pnlIcon array 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # id-400 Ui/DlgMessageBox.ui maps pnlIcon array 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 CF C4 B7 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 28 44 B7 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 EB 30 B6 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "6A FF 64 A1 00 00 00 00 68 C2 5E B9 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "6A FF 68 C0 18 BA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 52 DA B7 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

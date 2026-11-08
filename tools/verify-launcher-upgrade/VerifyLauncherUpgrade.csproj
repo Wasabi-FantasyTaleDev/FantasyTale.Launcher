@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <Target Name="RequireBaselinePackage" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(BaselinePackage)' == '' or !Exists('$(BaselinePackage)/FantasyTale.Launcher.Core.dll')"
+           Text="Set BaselinePackage to an unchanged older distribution directory." />
+  </Target>
+  <!-- Reference the shipped reader, never the current source project's implementation. -->
+  <ItemGroup>
+    <Reference Include="FantasyTale.Launcher.Core" HintPath="$(BaselinePackage)/FantasyTale.Launcher.Core.dll" />
+    <Reference Include="FantasyTale.Launcher.Downloads" HintPath="$(BaselinePackage)/FantasyTale.Launcher.Downloads.dll" />
+    <Reference Include="FantasyTale.Launcher.Sdk" HintPath="$(BaselinePackage)/FantasyTale.Launcher.Sdk.dll" />
+    <Reference Include="Tomlyn" HintPath="$(BaselinePackage)/Tomlyn.dll" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,155 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.auto-dash"
+version = "0.2.2"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.0.0 <4.0.0"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Auto Dash"
+"zh-CN" = "一键跑步"
+"zh-TW" = "一鍵跑步"
+ko = "간편 대시"
+id = "Lari Otomatis"
+vi = "Chạy tự động"
+
+[plugin.description]
+"zh-CN" = "只需按一次w即可触发跑步效果。"
+"zh-TW" = "只需按一次w即可觸發跑步效果。"
+"en" = "Press W once to start running."
+"ko" = "W 키를 한 번만 누르면 달리기가 시작됩니다."
+"id" = "Tekan W sekali untuk mulai berlari."
+"vi" = "Chỉ cần nhấn W một lần để bắt đầu chạy."
+"th" = "กด W เพียงครั้งเดียวเพื่อเริ่มวิ่ง"
+
+[compatibility]
+builds = ["kr-812", "cn-279", "cn-324", "cn-406", "cn-404", "cn-706", "cn-717", "cn-735", "id-400", "id-1809", "tw-454"]
+# KR1256 already provides native one-press running.
+exclude = ["kr-1256"]
+
+[native]
+library = "auto_dash.dll"
+entry = "fthook_plugin_main"
+
+[[options]]
+key = "auto_dash"
+type = "bool"
+default = true
+[options.label]
+en = "Run with one press"
+"zh-CN" = "单次按键跑步"
+"zh-TW" = "單次按鍵跑步"
+ko = "한 번 눌러 대시"
+id = "Berlari dengan satu tekanan"
+vi = "Chạy bằng một lần nhấn"
+[options.description]
+en = "Changing this setting takes effect on the next game launch."
+"zh-CN" = "修改后下次启动游戏生效。"
+"zh-TW" = "修改後下次啟動遊戲生效。"
+ko = "변경 사항은 다음 게임 실행 시 적용됩니다."
+id = "Perubahan berlaku saat permainan dijalankan kembali."
+vi = "Thay đổi có hiệu lực vào lần khởi chạy trò chơi tiếp theo."
+
+# kr-812 sub_5DBA00 at 0x5DBDF8: bypass only the double-press timer gate.
+# Keep the configured forward-key check and sub_5E1750 movement guards intact.
+[[patches]]
+id = "forward-double-press-gate"
+builds = ["kr-812"]
+when = "auto_dash"
+locate = { pattern = "8B 8F 04 B3 00 00 8D 49 18 E8 8A 3F 48 00 84 C0 ?? ?? 8B 17 8B 82 0C 03 00 00 8B CF FF D0 84 C0 75 26 8B F7 E8 3F 59 00 00 84 C0 74 1B 57 E8 35 4C 00 00 EB 13", offset = 16 }
+expect = "74 23"
+write = "90 90"
+
+# cn-324: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-324"
+builds = ["cn-324"]
+when = "auto_dash"
+locate = { pattern = "E8 77 18 36 00 84 C0 74 3D 8D BE FC A9 00 00 8B CF E8 66 DE 38 00 84 C0 74 20 8B 16 8B 82 A4 02 00 00 8B CE FF D0 84 C0 75 1C E8 7D 5E 00 00 84 C0 74 13 E8 84 50 00 00 EB 0C 68 2C 01 00 00 8B CF E8 86 DD 38 00 8B 0D A4 7D C0 00 6A", offset = 24 }
+expect = "74 20"
+write = "90 90"
+
+# cn-406: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-406"
+builds = ["cn-406"]
+when = "auto_dash"
+locate = { pattern = "6A 26 E8 3A 6B 48 00 84 C0 74 42 8D 8D 3C B4 00 00 E8 3B 7C 45 00 84 C0 74 23 8B 45 00 8B 90 BC 02 00 00 8B CD FF D2 84 C0 75 22 8B F5 E8 CF 69 00 00 84 C0 74 17 E8 66 5A 00 00 EB 10 68 2C 01 00 00 8D 8D 3C B4 00 00 E8 54 7B 45 00 8B 0D 3C", offset = 24 }
+expect = "74 23"
+write = "90 90"
+
+# cn-404: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-404"
+builds = ["cn-404"]
+when = "auto_dash"
+locate = { pattern = "6A 26 E8 EA ED 49 00 84 C0 74 42 8D 8D EC BB 00 00 E8 4B 85 47 00 84 C0 74 23 8B 45 00 8B 90 C8 02 00 00 8B CD FF D2 84 C0 75 22 8B F5 E8 0F 76 00 00 84 C0 74 17 E8 56 5E 00 00 EB 10 68 2C 01 00 00 8D 8D EC BB 00 00 E8 64 84 47 00 8B 0D 0C", offset = 24 }
+expect = "74 23"
+write = "90 90"
+
+# cn-706: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-706"
+builds = ["cn-706"]
+when = "auto_dash"
+locate = { pattern = "6A 26 E8 F3 24 48 00 84 C0 74 41 8D 8F 58 A9 00 00 E8 04 C7 45 00 84 C0 74 22 8B 07 8B 90 D0 02 00 00 8B CF FF D2 84 C0 75 22 8B F7 E8 79 53 00 00 84 C0 74 17 E8 A0 49 00 00 EB 10 68 2C 01 00 00 8D 8F 58 A9 00 00 E8 1E C6 45 00 8B 0D 1C", offset = 24 }
+expect = "74 22"
+write = "90 90"
+
+# cn-717: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-717"
+builds = ["cn-717"]
+when = "auto_dash"
+locate = { pattern = "50 80 7C 24 18 00 74 49 8B 8F 54 B6 00 00 8D 49 10 E8 85 F8 4F 00 84 C0 74 24 8B 07 8B 90 10 03 00 00 8B CF FF D2 84 C0 75 27 8B F7 E8 DA 5F 00 00 84 C0 74 1C 8B CF E8 0F 52 00 00 EB 13 8B 8F 54 B6 00 00 68 2C 01 00 00 8D 49 10 E8 7A F7 4F 00 80 7C 24 1C 00 0F", offset = 24 }
+expect = "74 24"
+write = "90 90"
+
+# cn-735: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-cn-735"
+builds = ["cn-735"]
+when = "auto_dash"
+locate = { pattern = "4E 2C E8 38 F2 57 00 8D 4E 2C 8B D8 E8 4E F2 57 00 3B D8 0F 9C C0 84 C0 74 22 8B 07 8B 90 74 03 00 00 8B CF FF D2 84 C0 75 25 E8 30 73 00 00 84 C0 74 1C 8B CF E8 35 65 00 00 EB 13 8B 8F 28 A5 00 00 68 2C 01 00 00 8D 49 2C E8 60 F2 57 00 A1 28 89 34 01 85", offset = 24 }
+expect = "74 22"
+write = "90 90"
+
+# id-400: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-id-400"
+builds = ["id-400"]
+when = "auto_dash"
+locate = { pattern = "6A 26 E8 77 A7 4A 00 84 C0 74 42 8D 8D 7C BA 00 00 E8 D8 6C 48 00 84 C0 74 23 8B 55 00 8B 82 C0 02 00 00 8B CD FF D0 84 C0 75 22 8B F5 E8 FC 78 00 00 84 C0 74 17 E8 43 5F 00 00 EB 10 68 2C 01 00 00 8D 8D 7C BA 00 00 E8 F1 6B 48 00 0F B6 8D", offset = 24 }
+expect = "74 23"
+write = "90 90"
+
+# id-1809: verified forward double-press timer gate. The surrounding instructions
+# are retained so only this build's original conditional branch can match.
+[[patches]]
+id = "forward-double-press-gate-id-1809"
+builds = ["id-1809"]
+when = "auto_dash"
+locate = { pattern = "00 00 EB 49 80 7C 24 0F 00 74 42 8D 8F 8C A6 00 00 E8 1A 41 45 00 84 C0 74 23 8B 17 8B 82 EC 02 00 00 8B CF FF D0 84 C0 75 23 8B F7 E8 CF 54 00 00 84 C0 74 18 57 E8 A5 49 00 00 EB 10 68 2C 01 00 00 8D 8F 8C A6 00 00 E8 23 40 45 00 80 7C 24", offset = 24 }
+expect = "74 23"
+write = "90 90"
+
+# tw-454 sub_801440: forward key-down reaches the original run checks at 0x801ACC.
+# Skip only the empty/expired double-press timer; preserve vtable +948 and tw-454 sub_80D1C0.
+[[patches]]
+id = "forward-double-press-gate-tw-454"
+builds = ["tw-454"]
+when = "auto_dash"
+locate = { pattern = "8B 48 0C 8D 70 04 C7 46 14 01 00 00 00 85 C9 ?? ?? 8B 06 8B 50 04 3D 60 68 31 01 0F 85 47 08 00 00 A1 E8 05 64 01 2B 46 0C BA 01 00 00 00 85 C9 0F 44 CA 3B C1 7D 24 8B 07 8B CF 8B 80 B4 03 00 00", offset = 15 }
+expect = "74 4A"
+write = "EB 26"

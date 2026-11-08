@@ -1,0 +1,13 @@
+schema = 1
+
+# Native entry initialization reads these sidecars before authenticating the client.
+[plugins."bubblefighter.fantasy.login-fix-cn"]
+required = ["gpk_stub.dll", "login_bridge.dll", "native-passports.toml"]
+deployed = ["gpk_stub.dll", "login_bridge.dll", "native-passports.toml"]
+
+[plugins."bubblefighter.fantasy.login-fix-kr"]
+required = ["kr_auth.dll", "native-login.toml"]
+
+# Font payloads remain private distribution inputs rather than source fixtures.
+[plugins."bubblefighter.fantasy.font-support-cn"]
+required = ["fonts/chinese-korean.ttf"]

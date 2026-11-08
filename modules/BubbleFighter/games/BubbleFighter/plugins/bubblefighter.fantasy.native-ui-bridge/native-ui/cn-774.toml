@@ -1,0 +1,79 @@
+schema = 1
+build = "cn-774"
+timestamp = 0x5CEF8FF9
+
+# All addresses are RVAs in the unpacked cn-774 main image.
+[addresses]
+allocator = 0x137D128 # cn-774 sub_C76760 allocates 0x600 bytes through UI allocator virtual slot +4.
+construct_message = 0x379CB0 # cn-774 sub_C76760 passes storage in ECX and title/body/mode/icon on the stack.
+layout_message = 0x37A980 # cn-774 sub_77A980 measures body and buttons; the constructor vtable selects slot +292.
+modal_message = 0xB54E60 # cn-774 sub_C76760 supplies an interruption byte and flags 0,1,1,0.
+message_vtable = 0x103DC78 # cn-774 sub_779CB0 assigns the primary DlgMessageBox vtable.
+notify = 0x631C00 # cn-774 sub_A31C00 receives body in ECX and wraps defaults for cn-774 sub_A1CAC0.
+application = 0x137BA18 # cn-774 sub_A31C00 passes this global value to the notification owner.
+ui_context = 0x137CC30 # cn-774 sub_77A980 measures native text through this XUI context.
+ui_manager = 0x137CBDC # cn-774 sub_F54E60 reads and restores modal controls through this manager.
+chat = 0x16FBD0 # cn-774 sub_BBC600 supplies caption/color/body/reserved; the callee returns with RET 16.
+append_announcement = 0x62DFD0 # cn-774 sub_A1D9D0 supplies vector/end/record; cn-774 sub_A2DF50 deep-copies both strings.
+clock_now = 0xB40160 # cn-774 sub_F40160 returns the paused or running game clock without arguments.
+
+set_text = 0xB505A0 # cn-774 sub_F505A0 invokes the text callback and copies text when it declines.
+
+[values]
+message_abi = 2 # cn-774 sub_C76760 passes four stack arguments to the thiscall constructor.
+modal_abi = 2 # cn-774 sub_C76760 supplies an interruption byte followed by four flags.
+notify_abi = 2 # cn-774 sub_A31C00 receives the borrowed body in ECX and has no stack arguments.
+chat_abi = 5 # cn-774 sub_BBC600 supplies module in ECX and four stack arguments; the fourth is unused.
+message_size = 1536 # cn-774 sub_C76760 allocates 0x600 bytes before construction.
+reference_offset = 4 # cn-774 sub_C76760 retains the dialog around its modal call.
+secondary_offset = 0 # cn-774 sub_C76760 releases through the primary object.
+destructor_slot = 4 # cn-774 sub_C76760 invokes the primary deleting destructor at slot +4.
+release_previous = 1 # cn-774 sub_C76760 destroys when the decrement reaches zero.
+ok_offset = 1488 # cn-774 sub_77A6B0 binds the first button to command 257.
+cancel_offset = 1492 # cn-774 sub_77A6B0 binds the second button to command 256.
+command_offset = 1144 # cn-774 sub_77A6B0 writes commands at button +1144.
+notification_offset = 412 # cn-774 sub_A1CAC0 owns and replaces the notification at MainApp +412.
+chat_offset = 480 # cn-774 sub_BBC600 takes the chat module from MainApp +480.
+chat_view_offset = 72 # cn-774 sub_56FBD0 inserts into the active chat view at module +72.
+announcement_abi = 2 # cn-774 sub_A1D9D0 calls cn-774 sub_A2DFD0 with vector in ECX and end/record on the stack.
+announcement_layout = 2 # cn-774 sub_A2DF50 copies 68-byte records with strings at +0/+36.
+clock_abi = 2 # cn-774 sub_F40160 reads global clock state without an owner argument.
+announcement_offset = 364 # cn-774 sub_A1D9D0 owns the vector at MainApp +364/+368/+372.
+announcement_duration = 13000 # cn-774 sub_BA69E0 supplies 13000 ms; cn-774 sub_A1BF50 owns lifetime and fade.
+announcement_limit = 7 # cn-774 sub_A1D9D0 evicts before inserting the eighth notice.
+icon_notice = 0 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
+icon_question = 2 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "construct_message"
+bytes = "55 8B EC 6A FF 68 21 09 23 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 6A FF 68 E0 0A 23 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 7A C6 35 01"
+
+[[signatures]]
+address = "notify"
+bytes = "55 8B EC 6A FF 68 80 F7 1C 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 6A FF 68 6B F2 1D 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "55 8B EC 6A FF 68 90 1E 29 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "clock_now"
+bytes = "80 3D D8 E0 77 01 00 74 06 A1 CC E0 77 01 C3 FF"
+
+[[signatures]]
+address = "set_text"
+bytes = "56 8B 74 24 08 57 8B F9 56 8B 07 8B 80 F4 00 00"

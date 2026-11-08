@@ -1,0 +1,231 @@
+{
+  "verifiedAtUtc": "2026-10-25T08:28:33.577670+00:00",
+  "platform": "win-x64",
+  "baselineVersion": "0.1.26",
+  "candidateVersion": "0.1.27",
+  "manifestSha256": "1f5563bab671a13b82adf6b1b17a24d24490f38e95b189776988505b9a3e1128",
+  "outcome": {
+    "Status": "rolled-back",
+    "SourceIdentity": "3B6ACFFDA2C76D74E8310FD80A2DB0E4764C9F0F960D01C9BE28F3AEC84D652C",
+    "ManifestSha256": "1f5563bab671a13b82adf6b1b17a24d24490f38e95b189776988505b9a3e1128",
+    "Failure": "startup",
+    "Phase": "frontend-startup",
+    "ErrorCode": -2146232800
+  },
+  "verifiedBaselineFiles": 1256,
+  "verifiedBaselineBytes": 401632175,
+  "sourcePolicyAndIndependentFileHashesPreserved": true,
+  "independentDataPreserved": true,
+  "uncommittedReceiptRemoved": true,
+  "journalAndBackupsCleared": true,
+  "parentPid": 14124,
+  "terminatedCandidatePid": 21716,
+  "restoredPid": 2204,
+  "fault": {
+    "startUtc": "2026-10-25T08:27:51.5007612Z",
+    "pid": 21716,
+    "killedAtUtc": "2026-10-25T08:27:52.0732224+00:00"
+  },
+  "restoredFrontendHealthy": true,
+  "retainedLifecycleEvents": [
+    {
+      "utc": "2026-10-25T04:27:37.9941468-04:00",
+      "pid": 14124,
+      "name": "startup",
+      "detail": "0.1.26"
+    },
+    {
+      "utc": "2026-10-25T04:27:38.1693746-04:00",
+      "pid": 14124,
+      "name": "architecture",
+      "detail": "X64"
+    },
+    {
+      "utc": "2026-10-25T04:27:38.1741471-04:00",
+      "pid": 14124,
+      "name": "apartment",
+      "detail": "STA"
+    },
+    {
+      "utc": "2026-10-25T04:27:38.8727239-04:00",
+      "pid": 14124,
+      "name": "window-created",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:38.8820009-04:00",
+      "pid": 14124,
+      "name": "window-chrome-attached",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:38.9069596-04:00",
+      "pid": 14124,
+      "name": "window-backdrop-applied",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:38.9108497-04:00",
+      "pid": 14124,
+      "name": "window-shown",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:38.9249585-04:00",
+      "pid": 14124,
+      "name": "window-initialized",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:41.2571123-04:00",
+      "pid": 14124,
+      "name": "bridge-requested",
+      "detail": "window.ready"
+    },
+    {
+      "utc": "2026-10-25T04:27:41.2612107-04:00",
+      "pid": 14124,
+      "name": "frontend-ready",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:41.2618645-04:00",
+      "pid": 14124,
+      "name": "bridge-completed",
+      "detail": "window.ready"
+    },
+    {
+      "utc": "2026-10-25T04:27:45.7807663-04:00",
+      "pid": 14124,
+      "name": "bridge-requested",
+      "detail": "launcherUpdates.restart"
+    },
+    {
+      "utc": "2026-10-25T04:27:48.8148066-04:00",
+      "pid": 14124,
+      "name": "update-close-requested",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:48.8160698-04:00",
+      "pid": 14124,
+      "name": "bridge-completed",
+      "detail": "launcherUpdates.restart"
+    },
+    {
+      "utc": "2026-10-25T04:27:48.8168554-04:00",
+      "pid": 14124,
+      "name": "bridge-elapsed-3036ms",
+      "detail": "launcherUpdates.restart"
+    },
+    {
+      "utc": "2026-10-25T04:27:48.8169947-04:00",
+      "pid": 14124,
+      "name": "close-accepted",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:48.8664422-04:00",
+      "pid": 14124,
+      "name": "window-loop-ended",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:48.9719564-04:00",
+      "pid": 14124,
+      "name": "shutdown-completed",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:51.973016-04:00",
+      "pid": 21716,
+      "name": "startup",
+      "detail": "0.1.27"
+    },
+    {
+      "utc": "2026-10-25T04:27:52.0386703-04:00",
+      "pid": 21716,
+      "name": "architecture",
+      "detail": "X64"
+    },
+    {
+      "utc": "2026-10-25T04:27:52.0413899-04:00",
+      "pid": 21716,
+      "name": "apartment",
+      "detail": "STA"
+    },
+    {
+      "utc": "2026-10-25T04:27:54.1776515-04:00",
+      "pid": 2204,
+      "name": "startup",
+      "detail": "0.1.26"
+    },
+    {
+      "utc": "2026-10-25T04:27:54.2379935-04:00",
+      "pid": 2204,
+      "name": "architecture",
+      "detail": "X64"
+    },
+    {
+      "utc": "2026-10-25T04:27:54.2401307-04:00",
+      "pid": 2204,
+      "name": "apartment",
+      "detail": "STA"
+    },
+    {
+      "utc": "2026-10-25T04:27:54.6881714-04:00",
+      "pid": 2204,
+      "name": "window-created",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:54.6966746-04:00",
+      "pid": 2204,
+      "name": "window-chrome-attached",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:54.7230012-04:00",
+      "pid": 2204,
+      "name": "window-backdrop-applied",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:54.7243912-04:00",
+      "pid": 2204,
+      "name": "window-shown",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:54.7353334-04:00",
+      "pid": 2204,
+      "name": "window-initialized",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:56.8782404-04:00",
+      "pid": 2204,
+      "name": "bridge-requested",
+      "detail": "window.ready"
+    },
+    {
+      "utc": "2026-10-25T04:27:56.8823887-04:00",
+      "pid": 2204,
+      "name": "frontend-ready",
+      "detail": null
+    },
+    {
+      "utc": "2026-10-25T04:27:56.8831465-04:00",
+      "pid": 2204,
+      "name": "bridge-completed",
+      "detail": "window.ready"
+    }
+  ],
+  "lifecycleObservation": "Captured continuously before bounded-log rotation.",
+  "payloadProvenance": "Previously verified public AList payloads reused by hard link; normal source discovery remains live.",
+  "fixtureSeedSha256": "18d996ec5ee561d2d4a41918fcef38dd35287c9f6390154c1d76125461b9bdab",
+  "visualAcceptance": false,
+  "visualLimitation": "No Computer Use screenshot was captured.",
+  "dailyInstallationChanged": false,
+  "gameStarted": false
+}

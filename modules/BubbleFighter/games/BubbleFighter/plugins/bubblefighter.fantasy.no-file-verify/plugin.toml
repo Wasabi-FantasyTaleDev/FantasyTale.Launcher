@@ -1,0 +1,37 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.no-file-verify"
+version = "1.0.0"
+game = "bubblefighter"
+kind = "patch"
+runtime = ">=3.0.0"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+"en" = "Remove file verification"
+"zh-CN" = "移除文件校验"
+"zh-TW" = "移除檔案校驗"
+"ko" = "파일 검증 제거"
+"id" = "Hapus verifikasi file"
+"vi" = "Loại bỏ kiểm tra tệp"
+
+[plugin.description]
+"en" = "Removes checks for modified files. Disabling it may prevent entering the game."
+"zh-CN" = "移除对文件修改的校验，关闭后可能会导致无法进入游戏。"
+"zh-TW" = "移除對檔案修改的校驗，關閉後可能會導致無法進入遊戲。"
+"ko" = "수정된 파일의 검증을 제거합니다. 끄면 게임에 들어가지 못할 수 있습니다."
+"id" = "Menghapus pemeriksaan file yang diubah. Menonaktifkannya dapat menghalangi masuk ke game."
+"vi" = "Loại bỏ kiểm tra tệp đã sửa. Tắt có thể khiến bạn không vào được trò chơi."
+
+[compatibility]
+# The locator anchors on the "MismatchFighterConfig" report string, verified on kr-1256
+# (verdict 0x956D75) and kr-710 (0x956655). Other builds are added after an in-game check.
+builds = ["kr-1256", "kr-710"]
+
+[[patches]]
+id = "md5-verdict"
+locate = { locator = "fthook.config-md5-verdict" }
+expect = "32 C0"   # xor al, al
+write = "B0 01"    # mov al, 1

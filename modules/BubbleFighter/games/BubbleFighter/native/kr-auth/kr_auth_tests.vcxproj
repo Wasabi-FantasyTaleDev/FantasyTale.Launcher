@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><Keyword>Win32Proj</Keyword><ProjectGuid>{30EE2C6C-15F4-4A96-9082-01B1B642C712}</ProjectGuid><RootNamespace>kr_auth_tests</RootNamespace></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\..\..\..\..\..\native\Native.Configuration.props" />
+  <PropertyGroup Label="Configuration"><ConfigurationType>Application</ConfigurationType></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\..\..\..\..\..\native\Native.props" />
+  <Import Project="..\..\..\..\native\integration-output.props" />
+  <ItemDefinitionGroup>
+    <ClCompile><PreprocessorDefinitions>TOML_EXCEPTIONS=0;TOML_ENABLE_FORMATTERS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile>
+    <Link><SubSystem>Console</SubSystem><AdditionalDependencies>user32.lib;advapi32.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup><ClCompile Include="kr_auth_tests.cpp" /><ClInclude Include="login_contract.h" /><None Include="kr_auth.def" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\..\..\..\..\..\native\runtime\fthook.vcxproj"><Project>{CBB749D1-4B9E-48C4-8E22-9E6ACBADB808}</Project></ProjectReference></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

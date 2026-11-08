@@ -1,0 +1,66 @@
+schema = 1
+[plugin]
+id = "bubblefighter.fantasy.numeric-health"
+version = "0.2.11"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.1.0 <4.0.0"
+name = { "en" = "Health value display", "zh-CN" = "血量数值显示", "zh-TW" = "血量數值顯示", "ko" = "체력 수치 표시", "id" = "Tampilan nilai kesehatan", "vi" = "Hiển thị giá trị máu" }
+description = { "en" = "Displays health as a percentage or a numeric value, like the Indonesian CrazyShooter client.", "zh-CN" = "像印尼服 CrazyShooter 一样显示血量百分比或具体数值。", "zh-TW" = "像印尼服 CrazyShooter 一樣顯示血量百分比或具體數值。", "ko" = "인도네시아 CrazyShooter처럼 체력을 백분율 또는 수치로 표시합니다.", "id" = "Menampilkan persentase atau nilai kesehatan seperti klien CrazyShooter Indonesia.", "vi" = "Hiển thị phần trăm hoặc giá trị máu như máy khách CrazyShooter Indonesia." }
+[compatibility]
+builds = ["kr-812"]
+[native]
+library = "numeric_health.dll"
+[[options]]
+key = "placement"
+type = "enum"
+default = "native"
+values = ["native", "custom"]
+label = { en = "Position", "zh-CN" = "显示位置", "zh-TW" = "顯示位置", ko = "표시 위치", id = "Posisi", vi = "Vị trí" }
+description = { en = "Original placement aligns digits above the HP gauge. Horizontal and vertical offsets apply only in custom mode.", "zh-CN" = "原生位置将数字对齐在 HP 圆环右上方。水平和垂直偏移仅在自定义模式下生效。", "zh-TW" = "原生位置將數字對齊在 HP 圓環右上方。水平和垂直偏移僅在自訂模式下生效。", ko = "원본 위치는 HP 표시 위에 숫자를 정렬합니다. 가로 및 세로 위치 설정은 사용자 지정 모드에서만 적용됩니다.", id = "Posisi asli menyelaraskan angka di atas indikator HP. Offset hanya berlaku dalam mode khusus.", vi = "Vị trí gốc căn chữ số phía trên vòng HP. Độ lệch chỉ áp dụng trong chế độ tùy chỉnh." }
+[[options]]
+key = "font_color"
+type = "enum"
+default = "yellow"
+values = ["white", "yellow"]
+label = { en = "Font color", "zh-CN" = "字体颜色", "zh-TW" = "字體顏色", ko = "글꼴 색상", id = "Warna teks", vi = "Màu chữ" }
+description = { en = "Yellow is the default. Choose white if preferred; unavailable yellow resources fall back to white.", "zh-CN" = "默认黄色，也可选择白色；黄色资源不可用时回退为白色。", "zh-TW" = "預設黃色，也可選擇白色；黃色資源不可用時回退為白色。", ko = "기본은 노란색이며 흰색도 선택할 수 있습니다. 노란색 리소스가 없으면 흰색으로 표시합니다.", id = "Kuning adalah bawaan; putih juga dapat dipilih. Sumber daya kuning yang tidak tersedia memakai putih.", vi = "Mặc định màu vàng; cũng có thể chọn màu trắng. Thiếu tài nguyên màu vàng sẽ dùng màu trắng." }
+[[options]]
+key = "raw_health"
+type = "bool"
+default = false
+label = { en = "Show raw HP instead of normalized health", "zh-CN" = "显示实际 HP 而非归一化血量", "zh-TW" = "顯示實際 HP 而非正規化血量", ko = "비율 대신 실제 HP 표시", id = "Tampilkan HP asli, bukan nilai relatif", vi = "Hiển thị HP thực thay vì tỷ lệ" }
+[[options]]
+key = "show_percent"
+type = "bool"
+default = true
+label = { en = "Show percent sign after HP", "zh-CN" = "在 HP 后显示百分号", "zh-TW" = "在 HP 後顯示百分號", ko = "HP 뒤에 백분율 기호 표시", id = "Tampilkan tanda persen setelah HP", vi = "Hiển thị dấu phần trăm sau HP" }
+description = { en = "Uses the supplied percent artwork for normalized health. Hidden when raw HP is selected.", "zh-CN" = "归一化血量使用提供的百分号图片；显示实际 HP 时隐藏。", "zh-TW" = "正規化血量使用提供的百分號圖片；顯示實際 HP 時隱藏。", ko = "체력 비율에는 제공된 백분율 이미지를 사용합니다. 실제 HP에서는 숨깁니다.", id = "Menggunakan gambar persen untuk kesehatan relatif. Disembunyikan pada HP asli.", vi = "Dùng hình dấu phần trăm cho tỷ lệ máu. Ẩn khi hiển thị HP thực." }
+[[options]]
+key = "offset_x"
+type = "int"
+default = 80
+min = -500
+max = 500
+label = { en = "Horizontal offset from the life gauge", "zh-CN" = "相对生命条的水平偏移", "zh-TW" = "相對生命條的水平偏移", ko = "체력 표시 기준 가로 위치", id = "Jarak horizontal dari indikator nyawa", vi = "Độ lệch ngang so với thanh sinh lực" }
+[[options]]
+key = "offset_y"
+type = "int"
+default = -30
+min = -500
+max = 500
+label = { en = "Vertical offset from the life gauge", "zh-CN" = "相对生命条的垂直偏移", "zh-TW" = "相對生命條的垂直偏移", ko = "체력 표시 기준 세로 위치", id = "Jarak vertikal dari indikator nyawa", vi = "Độ lệch dọc so với thanh sinh lực" }
+[[options]]
+key = "trace_timing"
+type = "bool"
+default = false
+label = { en = "Record bounded drawing timing diagnostics", "zh-CN" = "记录有次数上限的绘制时间诊断", "zh-TW" = "記錄有次數上限的繪製時間診斷", ko = "제한된 그리기 시간 진단 기록", id = "Catat diagnostik waktu gambar terbatas", vi = "Ghi chẩn đoán thời gian vẽ có giới hạn" }
+# The locator verifies the render call and maximum-health vtable slot before
+# the staged native call replacement can pass the runtime's shared preflight.
+[[patches]]
+id = "render-prerequisite"
+locate = { locator = "bubblefighter.fantasy.numeric-health.render" }
+expect = "83 EC 08"
+write = "83 EC 08"
+timing = "unpacked"
+deadline_ms = 30000

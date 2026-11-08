@@ -1,0 +1,80 @@
+schema = 1
+build = "cn-735"
+timestamp = 0x5767E697
+
+# All addresses are RVAs in the unpacked cn-735 main image.
+[addresses]
+allocate = 0x8D8E40 # cn-735 sub_98C450 allocates 0x350 bytes through this contextual cdecl wrapper.
+allocator = 0xF41738 # cn-735 sub_98C450 passes this allocator address to cn-735 sub_CD8E40.
+construct_message = 0x6B4680 # cn-735 sub_98C450 pushes storage/title/body/mode/icon to the stdcall constructor.
+layout_message = 0x6B59B0 # cn-735 sub_AB59B0 measures body/buttons and reads the icon-free byte at +840.
+modal_message = 0x8FAE50 # cn-735 sub_98C450 calls slot 232 with flags 0,1,1,0.
+message_vtable = 0xD9BAC4 # cn-735 sub_AB4680 assigns the primary DlgMessageBox vtable.
+notify = 0x1384A0 # cn-735 sub_5384A0 wraps body with default sound/durations and MainApp.
+application = 0xF4898C # cn-735 sub_5384A0 passes this global's value as MainApp.
+ui_context = 0xF41D1C # cn-735 sub_AB59B0 measures native text through this XUI context.
+ui_manager = 0xF41CB8 # cn-735 sub_CFAE50 reads and restores modal controls through this UI manager.
+chat = 0x5A7820 # cn-735 sub_A344A0 supplies module/body in ESI/EDX and caption/color on the stack.
+append_announcement = 0x724780 # cn-735 sub_B14F10 appends a 76-byte record through cn-735 sub_B24780.
+clock = 0xF0E200 # cn-735 sub_B14F10 and cn-735 sub_B14050 use this native clock pointer.
+clock_now = 0x8E0FD0 # cn-735 sub_CE0FD0 reads the announcement clock.
+
+[values]
+allocate_abi = 2 # cn-735 sub_98C450 supplies allocator address, size and a {0,-1,0} stack context.
+message_abi = 3 # cn-735 sub_98C450 supplies five stack arguments; cn-735 sub_AB4680 returns with RET 20.
+modal_abi = 1 # cn-735 sub_98C450 supplies four flags to cn-735 sub_CFAE50.
+notify_abi = 1 # cn-735 sub_5384A0 is the cdecl borrowed-string wrapper for cn-735 sub_B14800.
+chat_abi = 4 # cn-735 sub_A344A0 supplies module/body in ESI/EDX and caption/color on the stack.
+message_size = 848 # cn-735 sub_98C450 allocates 0x350 bytes before construction.
+reference_offset = 4 # cn-735 sub_98C450 retains the dialog around its modal call.
+secondary_offset = 0 # cn-735 sub_98C450 releases through the primary object at +0.
+destructor_slot = 4 # cn-735 sub_98C450 invokes the primary deleting destructor at slot +4.
+release_previous = 1 # cn-735 sub_98C450 destroys when decrement reaches zero.
+ok_offset = 824 # cn-735 sub_AB5840 binds the first button to command 257.
+cancel_offset = 828 # cn-735 sub_AB5840 binds the second button to command 256.
+command_offset = 656 # cn-735 sub_AB5840 writes button commands at +0x290.
+text_slot = 28 # cn-735 sub_AB5840 sets control text through vtable slot +28.
+modal_slot = 232 # cn-735 sub_98C450 invokes the modal method through slot +232.
+without_icon_offset = 840 # cn-735 sub_AB59B0 selects the icon-free layout with this byte.
+notification_offset = 508 # cn-735 sub_B14800 owns and replaces MainApp's notification at +508.
+chat_offset = 676 # cn-735 sub_A344A0 passes MainApp's chat module at +676.
+chat_view_offset = 132 # cn-735 sub_9A7820 consumes the active chat view at module +132.
+announcement_offset = 452 # cn-735 sub_B14F10 owns the notice vector at +452/+456/+460.
+announcement_duration = 13000 # cn-735 sub_A1E160 supplies 13000 ms; cn-735 sub_B14050 has no zero-duration default.
+announcement_limit = 7 # cn-735 sub_B14F10 evicts before inserting the eighth notice.
+icon_notice = 0 # cn-735 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # cn-735 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
+icon_question = 2 # cn-735 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # cn-735 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "allocate"
+bytes = "64 A1 00 00 00 00 6A FF 68 E8 6F F0 00 50 64 89"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 C1 65 F5 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 C8 CB F3 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 13 30 F0 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "6A FF 68 50 34 F6 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 48 CF FD 00 64 A1 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 92 B0 F7 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

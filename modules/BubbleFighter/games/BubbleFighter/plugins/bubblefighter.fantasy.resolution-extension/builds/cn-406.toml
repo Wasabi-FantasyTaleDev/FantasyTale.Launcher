@@ -1,0 +1,63 @@
+schema = 1
+build = "cn-406"
+timestamp = 0x51CD5DE5
+image_sizes = [0xBCA000, 0xBCD000]
+preferred_base = 0x400000
+table_rva = 0x8DF158
+guard_rva = 0x5B71F0
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# cn-406 sub_9B71F0 remains the native display-mode filter.
+# cn-406 VA 0x58A7E0 iterates the table; VA 0x7D5FDC validates saved width and height.
+[[sites]]
+rva = 0x18A7E0
+expect = "BD 58 F1 CD 00"
+target = "begin"
+operand_offset = 1
+
+# cn-406 sub_578B90 loads MainMenuStage2.ui on two exclusive branches.
+# Its 1600x900 root clips cn-406 sub_57AD00 through cn-406 sub_964C40; only extended modes expand it.
+[main_stage]
+screen_pointer_rva = 0x933C20
+screen_size_offset = 24
+control_size_offset = 316
+original_width = 1600
+original_height = 900
+# cn-406 sub_9748A0 reads physical size at screen+24/+28 and divides it by the UI scale for the initial root.
+# cn-406 sub_96BAC0 calls cn-406 sub_9656A0 and cn-406 sub_9656D0 for an automatically sized root.
+loader = { rva = 0x56C170, verify_offset = 7, expect = "64 A1 00 00 00 00 50 64 89 25 00 00 00 00 81 EC 94 00 00 00 53 56 57 8B" }
+set_width = { rva = 0x5656A0, expect = "8B 81 40 01 00 00 8B 54 24 04 50 8B 81 38 01 00 00 52 8B 91 34 01 00 00" }
+set_height = { rva = 0x5656D0, expect = "8B 44 24 04 8B 91 3C 01 00 00 50 8B 81 38 01 00 00 52 8B 91 34 01 00 00" }
+[[main_stage.calls]]
+rva = 0x178CEF
+expect = "E8 7C 34 3F 00"
+[[main_stage.calls]]
+rva = 0x17938A
+expect = "E8 E1 2D 3F 00"
+[[sites]]
+rva = 0x18A7E5
+expect = "83 7C 24 10 06 0F 87 AF 00 00 00"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x18A8A5
+expect = "81 FD 90 F1 CD 00 0F 8C 34 FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x3D5FDC
+expect = "B8 5C F1 CD 00"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x3D5FED
+expect = "3D 94 F1 CD 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x18A806
+expect = "E8 E5 C9 42 00"

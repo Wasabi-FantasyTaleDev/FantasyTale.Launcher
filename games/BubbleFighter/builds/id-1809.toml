@@ -1,0 +1,83 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "id-1809"
+game = "bubblefighter"
+branch = "id"
+build_date = "2015-01-29 11:51:56"
+protocol_version = 1809
+patch_version = "133"
+executable = "CrazyShooter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "id-1809"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7130
+
+[build.name]
+"en" = "Indonesia 2015-01-29"
+"zh-CN" = "印尼服 2015-01-29"
+"zh-TW" = "印度尼西亞 2015-01-29"
+"ko" = "인도네시아 2015-01-29"
+"id" = "Indonesia 2015-01-29"
+"vi" = "Indonesia 2015-01-29"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x54C99FF6
+
+[launch]
+native_language = "id"
+launcher_login = "optional"
+login = "nmco"                    # gamewidget | nmco | hook
+arguments = ["/sid=0"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = []
+
+[overlay]
+theme = "v2"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-1809"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.font-support-cn"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-1809"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.resolution-extension"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-1809"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-1809"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["id-1809"]
+sources = []

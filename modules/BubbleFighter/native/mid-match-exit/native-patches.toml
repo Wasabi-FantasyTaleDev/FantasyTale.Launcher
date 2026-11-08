@@ -1,0 +1,640 @@
+# Native mode restrictions for builds with an existing match-exit dialog.
+# Package these rows with plugin.preview.toml; all writes use the original client route.
+
+# cn-404 sub_617FB0 after cn-404 sub_4A57E0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-404-exit-mode-flags"
+builds = ["cn-404"]
+locate = { rva = 0x218019 }
+expect = "0F 84 43 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-404 sub_617FB0 after cn-404 sub_610A70.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-404-exit-mode-list"
+builds = ["cn-404"]
+locate = { rva = 0x218026 }
+expect = "0F 84 36 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-404 sub_617FB0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-404-exit-mode-101"
+builds = ["cn-404"]
+locate = { rva = 0x218036 }
+expect = "0F 84 2C 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-404 sub_617FB0 after cn-404 sub_4D65F0.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-404-exit-boss-presence"
+builds = ["cn-404"]
+locate = { rva = 0x2180A4 }
+expect = "0F 85 C3 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-404 sub_84A500 after cn-404 sub_4A57E0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-404-exit-confirmed-mode-flags"
+builds = ["cn-404"]
+locate = { rva = 0x44A555 }
+expect = "74 36"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-404 sub_84A500 after cn-404 sub_610A70.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-404-exit-confirmed-mode-list"
+builds = ["cn-404"]
+locate = { rva = 0x44A55E }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_561CF0 after cn-406 sub_417380.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-406-exit-mode-flags"
+builds = ["cn-406"]
+locate = { rva = 0x161D4B }
+expect = "0F 84 4B 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_561CF0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-406-exit-mode-list"
+builds = ["cn-406"]
+locate = { rva = 0x161D66 }
+expect = "0F 85 30 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_561CF0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-406-exit-mode-101"
+builds = ["cn-406"]
+locate = { rva = 0x161D90 }
+expect = "0F 84 87 06 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_561CF0 after cn-406 sub_444690.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-406-exit-boss-presence"
+builds = ["cn-406"]
+locate = { rva = 0x161DE8 }
+expect = "0F 85 C3 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_792F30 after cn-406 sub_417380.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-406-exit-confirmed-mode-flags"
+builds = ["cn-406"]
+locate = { rva = 0x392F85 }
+expect = "74 36"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-406 sub_792F30 after cn-406 sub_55ACD0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-406-exit-confirmed-mode-list"
+builds = ["cn-406"]
+locate = { rva = 0x392F8E }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_61AFF0 after cn-408 sub_4A5140.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-408-exit-mode-flags"
+builds = ["cn-408"]
+locate = { rva = 0x21B059 }
+expect = "0F 84 43 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_61AFF0 after cn-408 sub_613A10.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-408-exit-mode-list"
+builds = ["cn-408"]
+locate = { rva = 0x21B066 }
+expect = "0F 84 36 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_61AFF0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-408-exit-mode-101"
+builds = ["cn-408"]
+locate = { rva = 0x21B076 }
+expect = "0F 84 2C 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_61AFF0 after cn-408 sub_4D6180.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-408-exit-boss-presence"
+builds = ["cn-408"]
+locate = { rva = 0x21B0E4 }
+expect = "0F 85 C3 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_84E9C0 after cn-408 sub_4A5140.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-408-exit-confirmed-mode-flags"
+builds = ["cn-408"]
+locate = { rva = 0x44EA15 }
+expect = "74 36"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-408 sub_84E9C0 after cn-408 sub_613A10.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-408-exit-confirmed-mode-list"
+builds = ["cn-408"]
+locate = { rva = 0x44EA1E }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_5FAB20 after cn-706 sub_4B1380.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-706-exit-mode-flags"
+builds = ["cn-706"]
+locate = { rva = 0x1FAB88 }
+expect = "0F 84 4D 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_5FAB20 after cn-706 sub_5F33D0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-706-exit-mode-list"
+builds = ["cn-706"]
+locate = { rva = 0x1FAB95 }
+expect = "0F 84 40 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_5FAB20.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-706-exit-mode-101"
+builds = ["cn-706"]
+locate = { rva = 0x1FABA5 }
+expect = "0F 84 36 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_5FAB20 after cn-706 sub_4E2A00.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-706-exit-boss-presence"
+builds = ["cn-706"]
+locate = { rva = 0x1FAC13 }
+expect = "0F 85 C5 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_820C30 after cn-706 sub_4B1380.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-706-exit-confirmed-mode-flags"
+builds = ["cn-706"]
+locate = { rva = 0x420C84 }
+expect = "74 36"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-706 sub_820C30 after cn-706 sub_5F33D0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-706-exit-confirmed-mode-list"
+builds = ["cn-706"]
+locate = { rva = 0x420C8D }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-717 sub_6C1780 after cn-717 sub_5301E0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-717-exit-mode-flags"
+builds = ["cn-717"]
+locate = { rva = 0x2C17F3 }
+expect = "0F 84 5D 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-717 sub_6C1780 after cn-717 sub_6B91B0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-717-exit-mode-list"
+builds = ["cn-717"]
+locate = { rva = 0x2C1800 }
+expect = "0F 84 50 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-717 sub_6C1780.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-717-exit-mode-101"
+builds = ["cn-717"]
+locate = { rva = 0x2C1810 }
+expect = "0F 84 46 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-717 sub_6C1780 after cn-717 sub_55FCB0.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-717-exit-boss-presence"
+builds = ["cn-717"]
+locate = { rva = 0x2C1882 }
+expect = "0F 85 D2 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-717 sub_9256B0 after cn-717 sub_B1E8F0.
+# Allow the existing relay leave branch; retain native route selection and its connection guard.
+[[patches]]
+id = "cn-717-exit-confirmed-relay-policy"
+builds = ["cn-717"]
+locate = { rva = 0x525740 }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-735 sub_817AF0 after cn-735 sub_6490F0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-735-exit-mode-flags"
+builds = ["cn-735"]
+locate = { rva = 0x417B6B }
+expect = "0F 84 01 06 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-735 sub_817AF0 after cn-735 sub_4187F0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-735-exit-mode-list"
+builds = ["cn-735"]
+locate = { rva = 0x417B7E }
+expect = "0F 84 EE 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-735 sub_817AF0 after cn-735 sub_67B6D0.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-735-exit-boss-presence"
+builds = ["cn-735"]
+locate = { rva = 0x417BD2 }
+expect = "0F 85 86 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-735 sub_AB9630 after cn-735 sub_6490F0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-735-exit-confirmed-mode-flags"
+builds = ["cn-735"]
+locate = { rva = 0x6B968C }
+expect = "74 40"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-735 sub_AB9630 after cn-735 sub_4187F0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-735-exit-confirmed-mode-list"
+builds = ["cn-735"]
+locate = { rva = 0x6B969B }
+expect = "74 31"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-774 sub_90EF70 after cn-774 sub_491A30.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-774-exit-mode-flags"
+builds = ["cn-774"]
+locate = { rva = 0x50F0AD }
+expect = "0F 84 58 06 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-774 sub_90EF70 after cn-774 sub_47EE50.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "cn-774-exit-mode-list"
+builds = ["cn-774"]
+locate = { rva = 0x50F0BC }
+expect = "0F 84 49 06 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-774 sub_90EF70 after cn-774 sub_8C3C00.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "cn-774-exit-boss-presence"
+builds = ["cn-774"]
+locate = { rva = 0x50F109 }
+expect = "0F 85 EE 05 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-774 sub_77DC20 after cn-774 sub_491A30.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-774-exit-confirmed-mode-flags"
+builds = ["cn-774"]
+locate = { rva = 0x37DC84 }
+expect = "74 73"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# cn-774 sub_77DC20 after cn-774 sub_47EE50.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "cn-774-exit-confirmed-mode-list"
+builds = ["cn-774"]
+locate = { rva = 0x37DC8F }
+expect = "74 68"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# id-400 sub_5D26A0 after id-400 sub_4A8180.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "id-400-exit-boss-presence"
+builds = ["id-400"]
+locate = { rva = 0x1D2A42 }
+expect = "0F 85 B5 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# id-1809 sub_61B3A0 after id-1809 sub_4FCEF0.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "id-1809-exit-boss-presence"
+builds = ["id-1809"]
+locate = { rva = 0x21B744 }
+expect = "0F 85 B7 01 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# id-1809 sub_83B430 after id-1809 sub_9FD090.
+# Allow the existing relay leave branch; retain native route selection and its connection guard.
+[[patches]]
+id = "id-1809-exit-confirmed-relay-policy"
+builds = ["id-1809"]
+locate = { rva = 0x43B4D3 }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-812 sub_668A60 after kr-812 sub_4FB590.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "kr-812-exit-mode-flags"
+builds = ["kr-812"]
+locate = { rva = 0x268AD9 }
+expect = "0F 84 F2 04 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-812 sub_668A60 after kr-812 sub_660CA0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "kr-812-exit-mode-list"
+builds = ["kr-812"]
+locate = { rva = 0x268AE6 }
+expect = "0F 84 E5 04 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-812 sub_668A60.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "kr-812-exit-mode-101"
+builds = ["kr-812"]
+locate = { rva = 0x268AF5 }
+expect = "0F 84 D6 04 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-812 sub_668A60 after kr-812 sub_529D90.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "kr-812-exit-boss-presence"
+builds = ["kr-812"]
+locate = { rva = 0x268B67 }
+expect = "0F 85 50 04 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-812 sub_896B60 after kr-812 sub_A61E70.
+# Allow the existing relay leave branch; retain native route selection and its connection guard.
+[[patches]]
+id = "kr-812-exit-confirmed-relay-policy"
+builds = ["kr-812"]
+locate = { rva = 0x496BF0 }
+expect = "74 2D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-1256 sub_75F690 after kr-1256 sub_626590.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "kr-1256-exit-mode-flags"
+builds = ["kr-1256"]
+locate = { rva = 0x35FB4C }
+expect = "0F 84 6F 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-1256 sub_75F690 after kr-1256 sub_1150F40.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "kr-1256-exit-mode-list"
+builds = ["kr-1256"]
+locate = { rva = 0x35FB5C }
+expect = "0F 84 5F 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-1256 sub_75F690 after kr-1256 sub_703710.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "kr-1256-exit-boss-presence"
+builds = ["kr-1256"]
+locate = { rva = 0x35FBA2 }
+expect = "0F 85 12 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-1256 sub_629350 after kr-1256 sub_626590.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "kr-1256-exit-confirmed-mode-flags"
+builds = ["kr-1256"]
+locate = { rva = 0x2293B3 }
+expect = "74 5D"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# kr-1256 sub_629350 after kr-1256 sub_1150F40.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "kr-1256-exit-confirmed-mode-list"
+builds = ["kr-1256"]
+locate = { rva = 0x2293BE }
+expect = "74 52"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_882940 after tw-454 sub_49F480.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "tw-454-exit-mode-flags"
+builds = ["tw-454"]
+locate = { rva = 0x4830DF }
+expect = "0F 84 79 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_882940 after tw-454 sub_470EA0.
+# Remove only the mode rejection; retain the exit-key, active-context and duplicate-dialog checks.
+[[patches]]
+id = "tw-454-exit-mode-list"
+builds = ["tw-454"]
+locate = { rva = 0x4830EE }
+expect = "0F 84 6A 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_882940 after tw-454 sub_737850.
+# Allow the existing dialog with ChrZombieBoss present; retain the preceding availability check.
+[[patches]]
+id = "tw-454-exit-boss-presence"
+builds = ["tw-454"]
+locate = { rva = 0x48313B }
+expect = "0F 85 0F 02 00 00"
+write = "90 90 90 90 90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_B08FA0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "tw-454-exit-confirmed-mode-flags"
+builds = ["tw-454"]
+locate = { rva = 0x709011 }
+expect = "74 32"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_B08FA0 after tw-454 sub_470DE0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "tw-454-exit-confirmed-mode-list"
+builds = ["tw-454"]
+locate = { rva = 0x70901C }
+expect = "74 27"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000
+
+# tw-454 sub_B08FA0.
+# Remove only the mode rejection; retain the Yes-button, room and connection checks.
+[[patches]]
+id = "tw-454-exit-confirmed-mode-101"
+builds = ["tw-454"]
+locate = { rva = 0x709021 }
+expect = "74 22"
+write = "90 90"
+timing = "unpacked"
+deadline_ms = 30000

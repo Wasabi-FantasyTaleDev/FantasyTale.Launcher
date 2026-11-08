@@ -1,0 +1,13 @@
+# Paths are relative to this configuration file. Files are discovered automatically.
+input = "../../artifacts/launcher-release"
+output = "../../artifacts/launcher-feed"
+platform = "win-x64"
+# Optional display label. This is not a game build version.
+version = ""
+# Omit revision to use the current Unix timestamp; publish at most once per second.
+# revision = 1791439200
+# Optional detached RSA-SHA256 signing. The private key is read only from the
+# named environment variable as base64 PKCS#8; it is never written to output.
+# signature_path = "launcher/win-x64/current.toml.sig"
+# signature_private_key_env = "FT_LAUNCHER_SIGNING_KEY"
+# signature_public_key_path = "launcher/win-x64/current.toml.public-key.txt"

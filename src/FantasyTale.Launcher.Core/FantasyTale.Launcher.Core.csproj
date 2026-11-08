@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\FantasyTale.Launcher.Sdk\FantasyTale.Launcher.Sdk.csproj" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Downloads\FantasyTale.Launcher.Downloads.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tomlyn" Version="2.10.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <None Include="../../native/third_party/7zip/**/*" LinkBase="archive" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Servers/china-networks.txt" />
+    <EmbeddedResource Include="Stores/default-source.toml" />
+    <EmbeddedResource Include="Multiplayer/default-directory.toml" />
+    <InternalsVisibleTo Include="FantasyTale.Launcher.Core.Tests" />
+    <InternalsVisibleTo Include="FantasyTale.Launcher.TestClient" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>

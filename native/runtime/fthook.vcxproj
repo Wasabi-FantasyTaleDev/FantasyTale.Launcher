@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{CBB749D1-4B9E-48C4-8E22-9E6ACBADB808}</ProjectGuid>
+    <RootNamespace>fthook</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\Native.Configuration.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\Native.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <!-- Parse errors are values, not exceptions, so no exception crosses into the game. -->
+      <PreprocessorDefinitions>TOML_EXCEPTIONS=0;TOML_ENABLE_FORMATTERS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\control.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\companion.cpp" />
+    <ClCompile Include="src\image.cpp" />
+    <ClCompile Include="src\locators.cpp" />
+    <ClCompile Include="src\log.cpp" />
+    <ClCompile Include="src\manifest.cpp" />
+    <ClCompile Include="src\memory.cpp" />
+    <ClCompile Include="src\native_plugin.cpp" />
+    <ClCompile Include="src\overlay.cpp" />
+    <ClCompile Include="src\pattern.cpp" />
+    <ClCompile Include="src\semver.cpp" />
+    <ClCompile Include="src\session.cpp" />
+    <ClCompile Include="src\status.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\fthook\engine.h" />
+    <ClInclude Include="include\fthook\control.h" />
+    <ClInclude Include="include\fthook\services.h" />
+    <ClInclude Include="include\fthook\companion.h" />
+    <ClInclude Include="include\fthook\image.h" />
+    <ClInclude Include="include\fthook\log.h" />
+    <ClInclude Include="include\fthook\manifest.h" />
+    <ClInclude Include="include\fthook\memory.h" />
+    <ClInclude Include="include\fthook\native_plugin.h" />
+    <ClInclude Include="include\fthook\plugin_abi.h" />
+    <ClInclude Include="include\fthook\overlay.h" />
+    <ClInclude Include="include\fthook\pattern.h" />
+    <ClInclude Include="include\fthook\semver.h" />
+    <ClInclude Include="include\fthook\session.h" />
+    <ClInclude Include="include\fthook\status.h" />
+    <ClInclude Include="src\toml_util.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

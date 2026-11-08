@@ -1,0 +1,79 @@
+schema = 1
+build = "kr-812"
+timestamp = 0x55376C47
+
+# All addresses are RVAs in the unpacked kr-812 main image.
+[addresses]
+allocate = 0x65A040          # kr-812 sub_A5A040, native allocation used by sub_7B1D80.
+construct_message = 0x492470 # kr-812 sub_896B00 establishes the fastcall constructor arguments.
+layout_message = 0x4935A0    # kr-812 sub_8935A0 measures title/body/buttons and hides icons at +776.
+modal_message = 0x6863C0     # kr-812 sub_7B1D80 invokes primary vtable slot 208.
+message_vtable = 0x9762FC    # kr-812 sub_892470 assigns the DlgMessageBox primary vtable.
+notify = 0x0724B0            # kr-812 sub_4724B0 copies text into the native notification wrapper.
+application = 0xA82828       # kr-812 sub_4724B0 passes this global's value as MainApp.
+ui_context = 0xA7F3C4        # kr-812 sub_8935A0 uses this XUI context to measure text.
+ui_manager = 0xA7EE0C        # kr-812 sub_A863C0 uses the native UI manager for modal presentation.
+chat = 0x3C9360             # kr-812 sub_7C9360 copies caption, ARGB color and body to local chat.
+append_announcement = 0x4EFF90 # kr-812 sub_8E3350 appends a 76-byte record through sub_8EFF90.
+clock = 0xA56264            # kr-812 sub_8E3350 reads the native clock pointer here.
+clock_now = 0x663180        # kr-812 sub_A63180 returns the clock used by the announcement renderer.
+
+[values]
+message_abi = 1            # kr-812 sub_896B00 uses the coordinate-based fastcall constructor.
+modal_abi = 1              # kr-812 sub_7B1D80 passes four flags to the native modal method.
+notify_abi = 1             # kr-812 sub_4724B0 is a cdecl wrapper.
+chat_abi = 1               # kr-812 sub_7C9360 accepts borrowed native strings.
+message_size = 784          # kr-812 sub_7B1D80 allocates 0x310 bytes.
+reference_offset = 8       # kr-812 sub_7B1D80 retains around the modal call.
+secondary_offset = 4       # kr-812 sub_7B1D80 releases through the secondary vtable.
+destructor_slot = 0        # kr-812 sub_7B1D80 invokes the secondary deleting destructor.
+release_previous = 1       # kr-812 sub_7B1D80 destroys when decrement reaches zero.
+ok_offset = 760            # kr-812 sub_893430 binds command 257.
+cancel_offset = 764        # kr-812 sub_893430 binds command 256.
+command_offset = 640       # kr-812 sub_893430 writes each button's command.
+text_slot = 24             # kr-812 sub_893430 sets native control text through slot 24.
+modal_slot = 208           # kr-812 sub_7B1D80 invokes the modal method through slot 208.
+without_icon_offset = 776  # kr-812 sub_8935A0 selects the icon-free layout.
+notification_offset = 424  # kr-812 sub_8E2A80 owns/replaces MainApp's notification.
+center = 32768             # kr-812 sub_896B00 passes 0x8000 for both coordinates.
+chat_offset = 520          # kr-812 sub_8176D0 passes MainApp's chat module to sub_7C9360.
+chat_view_offset = 132     # kr-812 sub_7CD8D0 uses the active chat view.
+announcement_offset = 368 # kr-812 sub_8E3350 owns the notice vector at +368/+372/+376.
+announcement_limit = 7    # kr-812 sub_8E3350 removes the oldest before the eighth notice.
+# kr-812 Ui/DlgMessageBox.ui in Ui/Ui.bfz maps pnlIcon ArrayIndex to these images.
+icon_notice = 0            # MsgBoxIconNotice.png
+icon_warning = 1           # MsgBoxIconWarning.png
+icon_question = 2          # MsgBoxIconQuestion.png
+icon_error = 3             # MsgBoxIconError.png
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 BF 15 BF 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 C8 60 BE 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 2B E6 BC 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "6A FF 68 E0 9A BF 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 20 0F C1 00 64 A1 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 02 B1 C0 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

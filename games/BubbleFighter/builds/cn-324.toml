@@ -1,0 +1,98 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "cn-324"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2012-09-23 00:16:40"
+protocol_version = 324
+release_version = "0.2.25.004"
+executable = "BubbleFighter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "cn-324"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7140
+
+[build.name]
+"en" = "China 2012-09-23"
+"zh-CN" = "国服 2012-09-23"
+"zh-TW" = "中國 2012-09-23"
+"ko" = "중국 2012-09-23"
+"id" = "Tiongkok 2012-09-23"
+"vi" = "Trung Quốc 2012-09-23"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x505DD60C
+
+[launch]
+native_language = "zh-CN"
+requires_elevation = true
+launcher_login = "required"
+login = "gamewidget-ticket"
+login_module = "GameWidget.dll"
+arguments = ["--ip={host}", "--port={port}", "--areaid=6_1", "--groupid=1"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v1"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-324"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-324"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-324"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-324"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-324"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.scene-styles"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-324"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-324"]
+sources = []

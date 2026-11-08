@@ -1,0 +1,21 @@
+LIBRARY nmcogame
+EXPORTS
+    FT_GetLaunchMetadata_v1 = ft_get_launch_metadata
+    FT_GetLaunchId_v1 = ft_get_launch_id
+    FT_ReportBootstrapComplete_v1 = ft_report_bootstrap_complete
+    FT_ReportBootstrapFailure_v1 = ft_report_bootstrap_failure
+    FT_IGW_Initialize_v1 = _ft_igw_initialize@8
+    FT_IGW_GetModule_v1 = _ft_igw_get_module@8
+    FT_IGW_Terminal_v1 = ft_igw_terminal
+    FT_IGW_Diagnostic_v1 = ft_igw_diagnostic
+    NMCO_CallNMFunc = ft_NMCO_CallNMFunc
+    NMCO_CallNMFunc2 = ft_NMCO_CallNMFunc2
+    NMCO_MemoryFree = ft_NMCO_MemoryFree
+    NMCO_SetLocale = ft_NMCO_SetLocale
+    NMCO_SetLocaleAndRegion = ft_NMCO_SetLocaleAndRegion
+    NMCO_SetPatchOption = ft_NMCO_SetPatchOption
+    NMCO_SetUseFriendModuleOption = ft_NMCO_SetUseFriendModuleOption
+    NMCO_SetUseNGMOption = ft_NMCO_SetUseNGMOption
+    NMCO_SetVersionFileUrl = ft_NMCO_SetVersionFileUrl
+    NMCO_SetVersionFileUrlA = ft_NMCO_SetVersionFileUrlA
+    NMCO_SetVersionFileUrlW = ft_NMCO_SetVersionFileUrlW

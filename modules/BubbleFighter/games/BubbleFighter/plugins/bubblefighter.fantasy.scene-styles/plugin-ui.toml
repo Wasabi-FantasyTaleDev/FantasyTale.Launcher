@@ -1,0 +1,8 @@
+schema = 1
+
+[[pages]]
+id = "styles"
+kind = "html"
+path = "settings.html"
+options = ["main_style", "plaza_style", "christmas_bgm", "christmas_npcs", "lomi_outfit", "pini_outfit"]
+title = { "en" = "Scene style selection", "zh-CN" = "场景样式选择", "zh-TW" = "場景樣式選擇", "ko" = "장면 스타일 선택", "id" = "Pilihan gaya adegan", "vi" = "Chọn kiểu cảnh", "th" = "เลือกรูปแบบฉาก" }

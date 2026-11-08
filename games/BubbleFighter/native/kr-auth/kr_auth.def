@@ -1,0 +1,3 @@
+LIBRARY kr_auth
+EXPORTS
+    fthook_plugin_main

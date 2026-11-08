@@ -1,0 +1,269 @@
+# Runtime descriptor data for the numeric-health native plugin.
+#
+# A build is marked supported only after its render ABI, player provenance,
+# resource entry points and controlled in-game draw have all been verified.
+# Research rows preserve measured corpus evidence without enabling an unsafe hook.
+schema = 1
+
+[[builds]]
+id = "kr-812"
+native_style_slot = 22
+native_style_sprite_index = 3079
+sprite_frames_offset = 120
+sprite_texture_offset = 136
+texture_resident_offset = 144
+status = "supported"
+pe_timestamp = 0x55376C47
+image_sizes = [0xF0B000, 0xF0E000]
+preferred_base = 0x400000
+render_call_rva = 0x3DFB55
+render_call_bytes = "E8 56 71 30 00 83 C4 1C"
+original_draw_rva = 0x6E6CB0
+current_health_rva = 0x28200
+health_accessor_abi = "thiscall_f64"
+maximum_health_source = "vtable_f64"
+maximum_entry_rva = 0x90C808
+maximum_health_rva = 0x152060
+maximum_vtable_slot = 356
+hud_anchor_offset = 304
+player_capture = "caller_edi"
+hud_register = "ebp"
+resource_manager_rva = 0xA7F7A4
+resource_string_inline_capacity = 7
+resource_options_size = 88
+construct_options_rva = 0x26D70
+destroy_options_rva = 0x26D10
+load_sprite_rva = 0x6C4D60
+measure_number_rva = 0x6E6A40
+
+[[builds.resource_signatures]]
+rva = 0x6C4D60
+bytes = "6A FF 68 CF 27 BD 00 64"
+[[builds.resource_signatures]]
+rva = 0x26D70
+bytes = "53 56 8B F1 33 DB 8D 4E"
+[[builds.resource_signatures]]
+rva = 0x26D10
+bytes = "56 8B F1 83 7E 4C 08 72"
+[[builds.resource_signatures]]
+rva = 0x6E6A40
+bytes = "83 EC 3C D9 44 24 40 53"
+
+[[builds]]
+id = "cn-279"
+native_style_slot = 21
+native_style_sprite_index = 2822
+sprite_frames_offset = 48
+sprite_texture_offset = 60
+texture_resident_offset = 72
+resource_string_inline_capacity = 7
+resource_options_size = 32
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x71744F
+health_argument_setup_bytes = "8B 03 8D B8 74 01 00 00"
+health_accessor_va = 0x4063E0
+health_accessor_call_va = 0x717457
+health_accessor_call_bytes = "E8 84 EF CE FF"
+health_accessor_abi = "edi_field_f64"
+pe_timestamp = 0x4D9ECC57
+image_sizes = [0x9C8000]
+hud_entry_va = 0x716880
+number_wrapper_va = 0x53AD30
+wrapper_call_va = 0x7175D0
+life_accessor_call_va = 0x7174D1
+life_accessor_call_bytes = "E8 FA F1 CE FF"
+wrapper_call_bytes = "E8 5B 37 E2 FF"
+life_accessor_va = 0x4066D0
+health_field_offset = 372
+maximum_health_field_offset = 5184
+life_field_offset = 4732
+life_divisor = 20
+hud_register = "ebx"
+hud_anchor_offset = 184
+
+[[builds]]
+id = "cn-324"
+native_style_slot = 21
+native_style_sprite_index = 2822
+sprite_frames_offset = 48
+sprite_texture_offset = 60
+texture_resident_offset = 72
+resource_string_inline_capacity = 7
+resource_options_size = 40
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x6D36A1
+health_argument_setup_bytes = "8B 4D 00 8B B5 28 0A 00 00 C7 44 24 14 01 00 00 00"
+health_accessor_va = 0x40FD50
+health_accessor_call_va = 0x6D36B2
+health_accessor_call_bytes = "E8 99 C6 D3 FF"
+health_accessor_abi = "thiscall_f64"
+pe_timestamp = 0x505DD60C
+image_sizes = [0xA2B000]
+hud_entry_va = 0x6D3450
+number_wrapper_va = 0x8F6F50
+wrapper_call_va = 0x6D3C36
+life_accessor_call_va = 0x6D3AB9
+life_accessor_call_bytes = "E8 B2 B2 F7 FF"
+wrapper_call_bytes = "E8 15 33 22 00"
+life_accessor_va = 0x64ED70
+life_divisor = 20
+hud_register = "ebp"
+maximum_vtable_slot = 328
+hud_anchor_offset = 224
+
+[[builds]]
+id = "cn-406"
+native_style_slot = 21
+native_style_sprite_index = 2822
+sprite_frames_offset = 120
+sprite_texture_offset = 136
+texture_resident_offset = 144
+resource_string_inline_capacity = 7
+resource_options_size = 88
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x6E5F12
+health_argument_setup_bytes = "8B 4D 00 8B B5 7C 0A 00 00 C7 44 24 14 01 00 00 00"
+health_accessor_va = 0x41C9F0
+health_accessor_call_va = 0x6E5F23
+health_accessor_call_bytes = "E8 C8 6A D3 FF"
+health_accessor_abi = "thiscall_f64"
+pe_timestamp = 0x51CD5DE5
+image_sizes = [0xBCD000]
+hud_entry_va = 0x6E5BD0
+number_wrapper_va = 0x9CC640
+wrapper_call_va = 0x6E6534
+life_accessor_call_va = 0x6E6361
+life_accessor_call_bytes = "E8 AA 2D F7 FF"
+wrapper_call_bytes = "E8 07 61 2E 00"
+life_accessor_va = 0x659110
+life_divisor = 20
+hud_register = "ebp"
+maximum_vtable_slot = 340
+hud_anchor_offset = 248
+
+[[builds]]
+id = "cn-408"
+native_style_slot = 22
+native_style_sprite_index = 3079
+sprite_frames_offset = 120
+sprite_texture_offset = 136
+texture_resident_offset = 144
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x79557F
+health_argument_setup_bytes = "8B 4D 00 8B B5 7C 0A 00 00 BF 01 00 00 00 89 7C 24 10"
+health_accessor_va = 0x41EFB0
+health_accessor_call_va = 0x795591
+health_accessor_call_bytes = "E8 1A 9A C8 FF"
+health_accessor_abi = "thiscall_f64"
+pe_timestamp = 0x5383216F
+image_sizes = [0xCDC000]
+hud_entry_va = 0x795250
+number_wrapper_va = 0xA9EEF0
+wrapper_call_va = 0x795B86
+life_accessor_call_va = 0x7959C2
+life_accessor_call_bytes = "E8 79 77 D1 FF"
+wrapper_call_bytes = "E8 65 93 30 00"
+life_accessor_va = 0x4AD140
+life_divisor = 20
+hud_register = "ebp"
+maximum_vtable_slot = 348
+hud_anchor_offset = 248
+
+[[builds]]
+id = "cn-404"
+status = "research"
+pe_timestamp = 0x533CFD5F
+image_sizes = [0xCD5000]
+
+[[builds]]
+id = "cn-705"
+native_style_slot = 22
+native_style_sprite_index = 3079
+sprite_frames_offset = 120
+sprite_texture_offset = 136
+texture_resident_offset = 144
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x769F0F
+health_argument_setup_bytes = "8B 7D 00 8B B5 7C 0A 00 00 8B CF C7 44 24 14 01 00 00 00"
+health_accessor_va = 0x41FF40
+health_accessor_call_va = 0x769F22
+health_accessor_call_bytes = "E8 19 60 CB FF"
+health_accessor_abi = "thiscall_f64"
+pe_timestamp = 0x53DA0A65
+image_sizes = [0xC79000]
+hud_entry_va = 0x769BE0
+number_wrapper_va = 0xA65590
+wrapper_call_va = 0x76A51B
+life_accessor_call_va = 0x76A354
+life_accessor_call_bytes = "E8 77 E3 D4 FF"
+wrapper_call_bytes = "E8 70 B0 2F 00"
+life_accessor_va = 0x4B86D0
+maximum_vtable_slot = 352
+life_divisor = 20
+hud_register = "ebp"
+hud_anchor_offset = 248
+
+[[builds]]
+id = "cn-706"
+native_style_slot = 22
+native_style_sprite_index = 3079
+sprite_frames_offset = 120
+sprite_texture_offset = 136
+texture_resident_offset = 144
+status = "research"
+player_capture = "hud_owner"
+health_argument_setup_va = 0x76B44F
+health_argument_setup_bytes = "8B 7D 00 8B B5 BC 0B 00 00 8B CF C7 44 24 14 01 00 00 00"
+health_accessor_va = 0x4205E0
+health_accessor_call_va = 0x76B462
+health_accessor_call_bytes = "E8 79 51 CB FF"
+health_accessor_abi = "thiscall_f64"
+pe_timestamp = 0x5420DCC3
+image_sizes = [0xC79000]
+hud_entry_va = 0x76B120
+number_wrapper_va = 0xA675B0
+wrapper_call_va = 0x76BA5B
+life_accessor_call_va = 0x76B894
+life_accessor_call_bytes = "E8 67 CF D4 FF"
+wrapper_call_bytes = "E8 50 BB 2F 00"
+life_accessor_va = 0x4B8800
+maximum_vtable_slot = 352
+life_divisor = 20
+hud_register = "ebp"
+hud_anchor_offset = 276
+
+[[builds]]
+id = "cn-717"
+status = "research"
+pe_timestamp = 0x5582B5CD
+image_sizes = [0x1090000]
+
+[[builds]]
+id = "cn-735"
+status = "research"
+pe_timestamp = 0x5767E697
+image_sizes = [0x17BB000]
+
+[[builds]]
+id = "cn-738"
+status = "research"
+pe_timestamp = 0x57B6D7EF
+image_sizes = [0x1678000]
+
+[[builds]]
+id = "cn-742"
+status = "research"
+pe_timestamp = 0x582C1AC7
+image_sizes = [0x16FD000]
+
+[[builds]]
+id = "cn-774"
+status = "research"
+pe_timestamp = 0x5CEF8FF9
+image_sizes = [0x1B7E000]
+

@@ -1,0 +1,43 @@
+schema = 1
+build = "cn-717"
+timestamp = 0x5582B5CD
+image_sizes = [0x1090000, 0x1093000]
+preferred_base = 0x400000
+table_rva = 0xBDE9F8
+guard_rva = 0x781A50
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# cn-717 sub_B81A50 remains the native display-mode filter.
+# cn-717 VA 0x6F2288 iterates the table; VA 0x985392 validates saved width and height.
+[[sites]]
+rva = 0x2F2288
+expect = "BD F8 E9 FD 00"
+target = "begin"
+operand_offset = 1
+[[sites]]
+rva = 0x2F2290
+expect = "83 7C 24 10 06 77 79"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x2F2317
+expect = "81 FD 30 EA FD 00 0F 8C 6D FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x585392
+expect = "B8 FC E9 FD 00"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x5853A3
+expect = "3D 34 EA FD 00"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x2F22A9
+expect = "E8 A2 F7 48 00"

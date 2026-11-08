@@ -1,0 +1,75 @@
+schema = 1
+source_build = "kr-812"
+source_timestamp = 0x55376C47
+source_prefix = "Models/Characters/Dao/raccoon2/"
+asset_prefix = "Models/Characters/Dao/Default/raccoon/"
+# Digests cover sorted path, decoded length and SHA-256, separated by tabs and LF.
+timeline_count = 193
+timeline_index_sha256 = "e96ae6c0ee655a60add412b07807d9e88bd173977be9b8a2497553487bd8dc3f"
+asset_count = 19
+asset_index_sha256 = "c7770737794e2da1f50874c2196f9b2ffbd44ffe8c1512c61bc0c7a46b17040c"
+dependency_count = 30
+dependency_index_sha256 = "1ccdb35364e52e374b6a8cf05394d24ee6672d577af01cdb1b51177b6213c77b"
+
+# cn-279 sub_642B40 selects raccoon2 for character type 1; cn-279 sub_54D590 reads its .face timeline.
+[[targets]]
+build = "cn-279"
+timestamp = 0x4D9ECC57
+archive = "Pack/Models0001.pkn"
+create = false
+
+# cn-324 sub_52AC70 selects raccoon2 for head 100184; cn-324 sub_8FD9B0 reads its .face timeline.
+[[targets]]
+build = "cn-324"
+timestamp = 0x505DD60C
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-406 sub_50EB60 selects head 100184; cn-406 sub_9D5F10 loads the expression timeline.
+[[targets]]
+build = "cn-406"
+timestamp = 0x51CD5DE5
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-404 sub_5C31D0 selects head 100184; cn-404 sub_AA7E00 loads the expression timeline.
+[[targets]]
+build = "cn-404"
+timestamp = 0x533CFD5F
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-408 sub_5C59D0 selects head 100184; cn-408 sub_AB0650 loads the expression timeline.
+[[targets]]
+build = "cn-408"
+timestamp = 0x5383216F
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-705 sub_5A83B0 selects head 100184; cn-705 sub_A76740 loads the expression timeline.
+[[targets]]
+build = "cn-705"
+timestamp = 0x53DA0A65
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-706 sub_5A84D0 selects the same raccoon2 resource for head 100184.
+[[targets]]
+build = "cn-706"
+timestamp = 0x5420DCC3
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-717 sub_66A830 selects head 100184; cn-717 sub_BC0C20 loads the expression timeline.
+[[targets]]
+build = "cn-717"
+timestamp = 0x5582B5CD
+archive = "Models/Characters/Dao/raccoon2/raccoon2.bfz"
+create = true
+
+# cn-774 sub_5849F0 selects raccoon2 for head 100184; cn-774 sub_101A940 reads its .face timeline.
+[[targets]]
+build = "cn-774"
+timestamp = 0x5CEF8FF9
+archive = "Packs/ModelsChrPlDao_00003.pkn"
+create = false

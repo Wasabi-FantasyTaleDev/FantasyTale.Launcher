@@ -1,0 +1,59 @@
+{
+  "verifiedAtUtc": "2026-10-24T11:36:24.730842+00:00",
+  "sourceHead": "6da389fe818118e155bbcdfbfa46e2c4324b0f48",
+  "platform": "win-arm64",
+  "version": "0.1.25",
+  "signatureKey": "ephemeral fixture only, private keys discarded",
+  "healthyHandoffSourceOffline": true,
+  "productionPublished": false,
+  "publicSignatureAcceptance": false,
+  "scenarios": [
+    {
+      "scenario": "healthy",
+      "outcome": {
+        "Status": "completed",
+        "SourceIdentity": "2AEA0D0FB7416E54D0A933B520E131AFBEAFE6703CE1A3C7BE8C8C1683AA92D1",
+        "ManifestSha256": "15b261a1a2417989757238c5d20fb778365948724fc006d148c9d6ebedfd8be7",
+        "Failure": null,
+        "Phase": null,
+        "ErrorCode": null
+      },
+      "verifiedFiles": 234,
+      "verifiedBytes": 83639290,
+      "payloadRequests": 1,
+      "frontendReadyPid": 3448,
+      "sourcePolicyAndLocalFilesPreserved": true,
+      "signatureVerified": true,
+      "journalAndBackupsCleared": true,
+      "actualHomeVisuallyObserved": true,
+      "baselineProvenance": "signed manifest"
+    },
+    {
+      "scenario": "rollback",
+      "outcome": {
+        "Status": "rolled-back",
+        "SourceIdentity": "541A5D30B2FE1E3A27308C60AA545C4B7EAF71E9A59EECBA4501330531F29B1B",
+        "ManifestSha256": "6dd83a562f5cd09bd4770d88144d4dfa79754cae523452e7d0b8bedaa5b46c6f",
+        "Failure": "startup",
+        "Phase": "frontend-startup",
+        "ErrorCode": -2146232800
+      },
+      "verifiedFiles": 234,
+      "verifiedBytes": 83639248,
+      "payloadRequests": 1,
+      "frontendReadyPid": 5784,
+      "sourcePolicyAndLocalFilesPreserved": true,
+      "signatureVerified": true,
+      "journalAndBackupsCleared": true,
+      "actualHomeVisuallyObserved": true,
+      "baselineProvenance": "reconstructed from frozen build plus exact isolated work-mode seed"
+    }
+  ],
+  "regression": {
+    "passed": 187,
+    "skipped": 1,
+    "failed": 0,
+    "duration": "3m10s",
+    "skipReason": "Optional public AList test was not configured; the prior separate public x64 transfer receipt remains distinct."
+  }
+}

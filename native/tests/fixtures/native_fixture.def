@@ -1,0 +1,4 @@
+LIBRARY native_fixture
+EXPORTS
+    fthook_plugin_main
+    fixture_api_alive

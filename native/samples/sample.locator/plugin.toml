@@ -1,0 +1,18 @@
+schema = 1
+[plugin]
+id = "sample.locator"
+version = "1.0.0"
+game = "bubblefighter"
+kind = "native"
+runtime = ">=3.1.0 <4.0.0"
+name = { en = "Synthetic locator sample" }
+[compatibility]
+builds = ["synthetic"]
+[native]
+library = "sample_locator.dll"
+[[patches]]
+id = "synthetic-gate"
+locate = { locator = "sample.locator.site", offset = 4 }
+expect = "AA BB"
+write = "90 90"
+timing = "immediate"

@@ -1,0 +1,82 @@
+# Reference material is local study input only; it is never redistributed.
+/reference/
+
+# Large media is shipped with releases, not stored in git.
+games/*/media/*.mp4
+games/*/media/*.webm
+games/*/media/*.mp3
+games/*/media/*.m4a
+games/*/media/*.ogg
+games/*/media/*.wav
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+docs/private/
+TestResults/
+
+# Native
+/native/out/
+/games/*/runtime/
+/games/*/plugins/**/*.dll
+/store-plugins/**/*.dll
+/store-plugins/**/fonts/*.ttf
+/experimental-plugins/**/*.dll
+*.obj
+*.ilk
+*.pdb
+*.exp
+*.iobj
+*.ipdb
+
+# Web
+node_modules/
+web/dist/
+/web/private-assets/
+*.local
+
+# Local configuration and secrets
+*.local.toml
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local visual verification fixture.
+/web/ranks-preview.html
+
+# Python tool caches
+__pycache__/
+*.pyc
+
+/store-plugins/**/fonts/*.otf
+
+/store-plugins/**/fonts/*.ttc
+
+# Local agent and review material.
+/.agent-worktrees/
+/.handoff-context/
+/.claude/
+/ft-shots/
+/WORKSPACE.md
+
+# Local-only client comparison and historical resource investigation.
+/tools/game-ui/extract.py
+/tools/game-ui/extract-v3.py
+/tools/game-ui/inspect-ui-sounds.py
+/modules/BubbleFighter/tools/character-model-verifier/
+/modules/BubbleFighter/tools/pirate-expression-verifier/
+/tools/local/
+/tools/research/
+/modules/BubbleFighter/tools/local/
+/modules/BubbleFighter/tools/research/

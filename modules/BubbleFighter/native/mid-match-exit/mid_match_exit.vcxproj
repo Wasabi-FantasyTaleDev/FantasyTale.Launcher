@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><Keyword>Win32Proj</Keyword><ProjectGuid>{D2A72187-47FA-4B11-AB33-13150C3E72E1}</ProjectGuid></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><WholeProgramOptimization>true</WholeProgramOptimization><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /><Import Project="build.props" />
+  <ItemDefinitionGroup><Link><ModuleDefinitionFile>mid_match_exit.def</ModuleDefinitionFile></Link></ItemDefinitionGroup>
+  <ItemGroup><ClCompile Include="mid_match_exit.cpp" /><ClCompile Include="exit_flow.cpp" /><ClCompile Include="..\common\json.cpp" /><ClCompile Include="..\common\session_state.cpp" /><ClInclude Include="exit_flow.h" /><None Include="mid_match_exit.def" /></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

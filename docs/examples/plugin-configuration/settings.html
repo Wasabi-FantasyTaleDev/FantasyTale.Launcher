@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<style>
+  body { margin: 16px; font: 14px "Segoe UI", sans-serif; color: #202020; }
+  label { display: grid; gap: 8px; }
+  select { padding: 8px 12px; border: 1px solid #c8c8c8; border-radius: 6px; background: white; font: inherit; }
+  output { display: grid; place-items: center; height: 120px; margin-top: 16px; border-radius: 8px; background: #30343b; font-size: 36px; color: white; }
+</style>
+<label><span id="caption"></span><select id="color" disabled></select></label>
+<output id="preview">100</output>
+<script>
+  const color = document.getElementById('color');
+  const caption = document.getElementById('caption');
+  const preview = document.getElementById('preview');
+  let allowed = [];
+  function localized(text, language) {
+    return text?.[language] ?? text?.en ?? Object.values(text ?? {})[0] ?? '';
+  }
+  window.addEventListener('message', event => {
+    if (event.source !== parent) return;
+    const message = event.data;
+    if (message?.type !== 'fantasytale:configuration' || message.schema !== 1) return;
+    const option = message.options.find(item => item.key === 'font_color' && item.type === 'enum');
+    if (!option) return;
+    allowed = option.values;
+    document.documentElement.lang = message.language;
+    caption.textContent = localized(option.label, message.language);
+    color.replaceChildren(...allowed.map(value => {
+      const entry = document.createElement('option');
+      entry.value = value;
+      entry.textContent = localized(option.valueLabels?.[value], message.language) || value;
+      return entry;
+    }));
+    color.value = message.values.font_color ?? option.default;
+    color.disabled = false;
+    preview.style.color = color.value === 'yellow' ? '#ffe24a' : '#ffffff';
+  });
+  color.addEventListener('change', () => {
+    if (!allowed.includes(color.value)) return;
+    preview.style.color = color.value === 'yellow' ? '#ffe24a' : '#ffffff';
+    // Changes remain a draft until the launcher's Save button is pressed.
+    parent.postMessage({ type: 'fantasytale:change', schema: 1, values: { font_color: color.value } }, '*');
+  });
+  parent.postMessage({ type: 'fantasytale:ready', schema: 1 }, '*');
+</script>
+</html>

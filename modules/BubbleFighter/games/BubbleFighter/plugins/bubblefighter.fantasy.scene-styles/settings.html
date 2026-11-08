@@ -1,0 +1,114 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+:root {
+  color-scheme: light;
+  font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --text: #1a1a1a; --secondary: #606060; --border: #e5e5e5; --card: #fff;
+  --radio: #fff; --radio-hover: #f5f5f5; --stroke: #898989; --stroke-hover: #727272;
+  --accent: #005fb8; --accent-hover: #0056a6; --accent-pressed: #0d69bc; --dot: #fff; --focus: #1a1a1a;
+  color: var(--text); background: transparent;
+}
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --text: #f5f5f5; --secondary: #c5c5c5; --border: #383838; --card: #2b2b2b;
+  --radio: #222; --radio-hover: #2c2c2c; --stroke: #a0a0a0; --stroke-hover: #b5b5b5;
+  --accent: #60cdff; --accent-hover: #59bde9; --accent-pressed: #52afd8; --dot: #000; --focus: #fff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 2px 0 8px; background: transparent; }
+p { margin: 0 0 16px; font-size: 13px; color: var(--secondary); line-height: 1.55; }
+.list { display: grid; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 12px 16px; min-height: 72px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.identity { min-width: 0; }
+.name { font-size: 14px; line-height: 20px; font-weight: 400; }
+.native { font-size: 12px; line-height: 18px; color: var(--secondary); margin-top: 4px; }
+.choices { display: flex; align-items: center; column-gap: 20px; row-gap: 4px; flex: none; }
+.choice { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 0; border: 0; border-radius: 2px; background: transparent; box-shadow: none; color: var(--text); font: inherit; font-size: 14px; line-height: 20px; white-space: nowrap; cursor: default; user-select: none; }
+.choice input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.radio-glyph { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--stroke); border-radius: 50%; background: var(--radio); flex: none; transition: background .12s ease, border-color .12s ease; }
+.radio-glyph::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); transform: scale(0); transition: transform .14s cubic-bezier(.2,0,0,1); }
+.choice:hover .radio-glyph { background: var(--radio-hover); border-color: var(--stroke-hover); }
+.choice input:checked + .radio-glyph { background: var(--accent); border-color: var(--accent); }
+.choice input:checked + .radio-glyph::after { transform: scale(1); }
+.choice:hover input:checked + .radio-glyph { background: var(--accent-hover); border-color: var(--accent-hover); }
+.choice:hover input:checked + .radio-glyph::after { transform: scale(1.15); }
+.choice:active input:checked + .radio-glyph { background: var(--accent-pressed); border-color: var(--accent-pressed); }
+.choice:active input:checked + .radio-glyph::after { transform: scale(.8); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+.row.toggle { min-height: 56px; flex-direction: row; align-items: center; gap: 16px; }
+.toggle .name { flex: 1; min-width: 0; }
+.toggle > .choice { flex: none; }
+.switch-glyph { position: relative; width: 40px; height: 20px; border: 1px solid var(--stroke); border-radius: 10px; background: var(--radio); transition: background .12s ease, border-color .12s ease; }
+.switch-glyph::after { content: ''; position: absolute; left: 3px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--stroke); transition: transform .14s ease; }
+.choice:hover .switch-glyph { background: var(--radio-hover); border-color: var(--stroke-hover); }
+.choice input:checked + .switch-glyph { background: var(--accent); border-color: var(--accent); }
+.choice input:checked + .switch-glyph::after { background: var(--dot); transform: translateX(20px); }
+.choice:hover input:checked + .switch-glyph { background: var(--accent-hover); border-color: var(--accent-hover); }
+.choice:active input:checked + .switch-glyph { background: var(--accent-pressed); border-color: var(--accent-pressed); }
+.empty { padding: 28px 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .radio-glyph, .radio-glyph::after, .switch-glyph, .switch-glyph::after { transition: none; } }
+@media (max-width: 520px) { .row { align-items: flex-start; flex-direction: column; gap: 8px; } .choices { align-self: stretch; flex-wrap: wrap; column-gap: 24px; } }
+@media (forced-colors: active) { .radio-glyph { border-color: ButtonText; background: Canvas; forced-color-adjust: none; } .choice input:checked + .radio-glyph { background: Highlight; border-color: Highlight; } .radio-glyph::after { background: HighlightText; } }
+</style></head><body><p id="intro"></p><div id="list" class="list"></div><script>
+// Each setting stores its style identifier, so additional styles do not alter saved choices.
+const messages={"en": {"title": "Scene style selection", "description": "Adjust lobby and plaza styles and Lomi/Pini outfits.", "main": "Lobby", "plaza": "Plaza", "original": "Original", "snow": "Snow", "intro": "With automatic outfits on, setting either scene to Snow selects Christmas for both NPCs. You can then choose another outfit. Changes apply on the next launch.", "christmas_bgm": "Use Christmas BGM with Snow", "christmas_npcs": "Dress Lomi and Pini in Christmas outfits", "christmas": "Christmas", "zombie": "Little zombie", "lomi_outfit": "Lomi outfit", "pini_outfit": "Pini outfit", "default": "Default"}, "zh-CN": {"title": "场景样式选择", "description": "调整大厅和广场的样式和糯米/贝尼的服装", "main": "大厅", "plaza": "广场", "original": "原版", "snow": "下雪", "intro": "自动换装开启时，大厅或广场切到下雪都会为两位NPC选择圣诞服装，之后仍可手动调整。下次启动游戏时生效。", "christmas_bgm": "下雪时使用圣诞BGM", "christmas_npcs": "为糯米和贝尼穿上圣诞服装", "christmas": "圣诞", "zombie": "小僵尸", "lomi_outfit": "糯米的服装", "pini_outfit": "贝尼的服装", "default": "默认"}, "zh-TW": {"title": "場景樣式選擇", "description": "調整大廳和廣場的樣式及糯米/貝尼的服裝", "main": "大廳", "plaza": "廣場", "original": "原版", "snow": "下雪", "intro": "自動換裝開啟時，大廳或廣場切到下雪都會為兩位NPC選擇聖誕服裝，之後仍可手動調整。下次啟動遊戲時生效。", "christmas_bgm": "下雪時使用聖誕BGM", "christmas_npcs": "為糯米和貝尼穿上聖誕服裝", "christmas": "聖誕", "zombie": "小殭屍", "lomi_outfit": "糯米的服裝", "pini_outfit": "貝尼的服裝", "default": "預設"}, "ko": {"title": "장면 스타일 선택", "description": "로비와 광장 스타일 및 로미/피니 의상을 변경합니다.", "main": "로비", "plaza": "광장", "original": "원본", "snow": "눈", "intro": "자동 의상 변경을 켜면 로비나 광장을 눈으로 전환할 때 두 NPC의 크리스마스 의상을 선택합니다. 이후 직접 변경할 수 있습니다. 다음 실행 시 적용됩니다.", "christmas_bgm": "눈 장면에서 크리스마스 BGM 사용", "christmas_npcs": "로미와 피니에게 크리스마스 의상 입히기", "christmas": "크리스마스", "zombie": "꼬마 좀비", "lomi_outfit": "로미 의상", "pini_outfit": "피니 의상", "default": "기본"}, "id": {"title": "Pilihan gaya adegan", "description": "Sesuaikan gaya lobi dan plaza serta kostum Lomi/Pini.", "main": "Lobi", "plaza": "Plaza", "original": "Asli", "snow": "Salju", "intro": "Saat kostum otomatis aktif, mengubah lobi atau plaza ke Salju memilih kostum Natal untuk kedua NPC. Anda masih dapat memilih kostum lain. Berlaku pada peluncuran berikutnya.", "christmas_bgm": "Gunakan BGM Natal saat bersalju", "christmas_npcs": "Pakaikan kostum Natal pada Lomi dan Pini", "christmas": "Natal", "zombie": "Zombi kecil", "lomi_outfit": "Kostum Lomi", "pini_outfit": "Kostum Pini", "default": "Default"}, "vi": {"title": "Chọn kiểu cảnh", "description": "Điều chỉnh kiểu sảnh và quảng trường cùng trang phục Lomi/Pini.", "main": "Sảnh", "plaza": "Quảng trường", "original": "Bản gốc", "snow": "Tuyết", "intro": "Khi bật tự động đổi trang phục, chuyển sảnh hoặc quảng trường sang Tuyết sẽ chọn trang phục Giáng sinh cho cả hai NPC. Bạn vẫn có thể chọn trang phục khác sau đó. Áp dụng khi khởi chạy tiếp theo.", "christmas_bgm": "Dùng BGM Giáng sinh khi có tuyết", "christmas_npcs": "Mặc trang phục Giáng sinh cho Lomi và Pini", "christmas": "Giáng sinh", "zombie": "Thây ma nhỏ", "lomi_outfit": "Trang phục Lomi", "pini_outfit": "Trang phục Pini", "default": "Mặc định"}, "th": {"title": "เลือกรูปแบบฉาก", "description": "ปรับรูปแบบล็อบบี้และลาน รวมถึงชุดของ Lomi/Pini", "main": "ล็อบบี้", "plaza": "ลาน", "original": "แบบเดิม", "snow": "หิมะ", "intro": "เมื่อเปิดเปลี่ยนชุดอัตโนมัติ การเปลี่ยนล็อบบี้หรือลานเป็นหิมะจะเลือกชุดคริสต์มาสให้ NPC ทั้งสอง และยังเลือกชุดอื่นภายหลังได้ มีผลเมื่อเริ่มเกมครั้งถัดไป", "christmas_bgm": "ใช้ BGM คริสต์มาสเมื่อมีหิมะ", "christmas_npcs": "ให้ Lomi และ Pini สวมชุดคริสต์มาส", "christmas": "คริสต์มาส", "zombie": "ซอมบี้ตัวน้อย", "lomi_outfit": "ชุดของ Lomi", "pini_outfit": "ชุดของ Pini", "default": "ค่าเริ่มต้น"}};
+const scenes=[{key:'main_style',label:'main'},{key:'plaza_style',label:'plaza'}];
+const styles=['original','snow'];
+const outfits=[{key:'lomi_outfit',label:'lomi_outfit',styles:['default','original','christmas']},{key:'pini_outfit',label:'pini_outfit',styles:['default','original','christmas','zombie']}];
+const toggles=['christmas_bgm','christmas_npcs'];
+let values={main_style:'original',plaza_style:'original',christmas_bgm:true,christmas_npcs:true,lomi_outfit:'default',pini_outfit:'default'},language='en',lastLayout='';
+const send=message=>parent.postMessage({schema:1,...message},'*');
+function render(){
+ const text=messages[language]||messages.en;
+ document.getElementById('intro').textContent=text.intro;
+ const list=document.getElementById('list');
+ const layout=JSON.stringify([language,scenes,styles]);
+ // Configuration acknowledgements must preserve the focused radio and arrow-key navigation.
+ if(lastLayout===layout){
+  for(const input of list.querySelectorAll('input[type=radio]'))input.checked=values[input.name]===input.value;
+  for(const input of list.querySelectorAll('input[type=checkbox]'))input.checked=values[input.name];
+  return;
+ }
+ lastLayout=layout;list.replaceChildren();
+ function addChoices(scene){
+  const row=document.createElement('div');row.className='row';
+  const name=document.createElement('div');name.className='name';name.textContent=text[scene.label];
+  const choices=document.createElement('div');choices.className='choices';
+  choices.setAttribute('role','radiogroup');choices.setAttribute('aria-label',name.textContent);
+  for(const style of scene.styles||styles){
+   const label=document.createElement('label');label.className='choice';
+   const input=document.createElement('input');input.type='radio';input.name=scene.key;input.value=style;
+   input.checked=values[scene.key]===style;
+   input.onchange=()=>{if(!input.checked)return;values={...values,[scene.key]:style};if(scenes.some(row=>row.key===scene.key)&&style==='snow'&&values.christmas_npcs){values.lomi_outfit='christmas';values.pini_outfit='christmas';}render();send({type:'fantasytale:change',values:{...values}})};
+   const glyph=document.createElement('span');glyph.className='radio-glyph';glyph.setAttribute('aria-hidden','true');
+   const copy=document.createElement('span');copy.textContent=text[style];
+   label.append(input,glyph,copy);choices.append(label);
+  }
+  row.append(name,choices);list.append(row);
+ }
+ for(const scene of scenes)addChoices(scene);
+ for(const key of toggles){
+  const row=document.createElement('div');row.className='row toggle';
+  const name=document.createElement('label');name.className='name';name.textContent=text[key];name.htmlFor=key;
+  const label=document.createElement('label');label.className='choice';
+  const input=document.createElement('input');input.type='checkbox';input.id=key;input.name=key;input.checked=values[key];
+  input.setAttribute('role','switch');input.setAttribute('aria-label',text[key]);
+  input.onchange=()=>{values={...values,[key]:input.checked};if(key==='christmas_npcs'&&input.checked&&scenes.some(scene=>values[scene.key]==='snow')){values.lomi_outfit='christmas';values.pini_outfit='christmas';}render();send({type:'fantasytale:change',values:{...values}})};
+  const glyph=document.createElement('span');glyph.className='switch-glyph';glyph.setAttribute('aria-hidden','true');
+  label.append(input,glyph);row.append(name,label);list.append(row);
+ }
+ for(const outfit of outfits)addChoices(outfit);
+}
+// The host owns persistence and applies its current light/dark theme to this sandboxed page.
+window.addEventListener('message',event=>{
+ if(event.source!==parent||event.data?.schema!==1||event.data.type!=='fantasytale:configuration')return;
+ if(event.data.theme==='light'||event.data.theme==='dark')document.documentElement.dataset.theme=event.data.theme;
+ language=event.data.language;
+ for(const scene of scenes)values[scene.key]=styles.includes(event.data.values?.[scene.key])?event.data.values[scene.key]:'original';
+ for(const key of toggles)values[key]=typeof event.data.values?.[key]==='boolean'?event.data.values[key]:true;
+ for(const outfit of outfits)values[outfit.key]=outfit.styles.includes(event.data.values?.[outfit.key])?event.data.values[outfit.key]:'default';
+ render();
+});
+new ResizeObserver(()=>send({type:'fantasytale:resize',height:document.documentElement.scrollHeight})).observe(document.body);
+send({type:'fantasytale:ready'});
+</script></body></html>

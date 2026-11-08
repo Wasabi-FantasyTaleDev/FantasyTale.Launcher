@@ -1,0 +1,8 @@
+target,key,field,member,action,value,zh-CN,zh-TW,ko,en,comment
+item,1010002,name,,,,大炮,大砲,대포,Cannon,item name per language
+item,1010002,price,,,500,,,,,numbers and ids go in value
+strings,MSG_SHEET,text,,,,来自表格,來自表格,시트에서,From the sheet,
+xml-strings,Ui|MainMenu|BTN_EXIT,text,,,,退出,,,,composite key joined with |
+fighter,1,name,,,,大头,,,Bazzi,horizontal FighterConfig record 1
+ui,pnlMain/btnExit,Text,Ui/MainMenuStage2.ui,,,退出游戏,,,Quit,
+strings,MSG_TODO,text,,,,,,,,template row awaiting translation

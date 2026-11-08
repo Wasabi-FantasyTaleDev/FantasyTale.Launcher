@@ -1,0 +1,25 @@
+schema = 1
+
+[server]
+id = "FantasyTale"
+game = "bubblefighter"
+name = "Bubble Fighter Fantasy"
+api_url = "http://bf.600819.xyz:8090"
+prefer_ip = true
+bundled_instances = true
+icon_asset = "branding/launcher-logo.png"
+
+[presentation.summary_translations]
+zh = "BubbleFighter.Fantasy 项目的官方社区服务器。"
+en = "The official community server of the BubbleFighter.Fantasy project."
+
+[presentation.motd_translations]
+zh = """
+BubbleFighter.Fantasy 项目的官方社区服务器。
+由 Fantasy Tale Studio 运营并提供技术支持。
+这是一个由 Wasabi 发起的非盈利项目，请注意不要上当受骗。
+可进入QQ群交流：681849714"""
+en = """
+The official community server of the BubbleFighter.Fantasy project.
+Operated and supported by Fantasy Tale Studio.
+A non-profit project initiated by Wasabi. Please beware of scams."""

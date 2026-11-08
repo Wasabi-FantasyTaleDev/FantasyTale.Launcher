@@ -1,0 +1,19 @@
+{
+  "checkedAtUtc": "2026-10-25T08:26:34.0819091+00:00",
+  "Id": "bubblefighter.server",
+  "Version": "0.1.1",
+  "ManifestSha256": "858eabbbc34bd5abec8f6dd36218161c0070045ac3c6ab128348f2e0b8c940df",
+  "Repository": "Wasabi-FantasyTaleDev/BubbleFighter.Fantasy",
+  "Tag": "v0.1.1",
+  "Asset": "bubblefighter-fantasy-win-x64.zip",
+  "archiveSha256": "1a7d901bb1253dc2f459e919007a1bf84351c61e28d2d94b92d958887ebf55b8",
+  "archiveBytes": 45069097,
+  "verifiedFiles": 401,
+  "ApiRequests": 1,
+  "ArchiveRequests": 1,
+  "Stage": "completed",
+  "metadataRefresh": "failed",
+  "metadataFailure": "network",
+  "restoredWithoutNetwork": true,
+  "serverStarted": false
+}

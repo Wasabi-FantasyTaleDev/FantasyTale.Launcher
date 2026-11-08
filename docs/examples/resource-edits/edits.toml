@@ -1,0 +1,57 @@
+schema = 1
+# Used when the client language has no value; without it the original text is kept.
+fallback_languages = ["en"]
+
+# Item names and descriptions by logical field. Archive, member, sheet and columns come from the build's defaults.
+[[items]]
+id = 1010001
+name = { "zh-CN" = "泡泡战士", "zh-TW" = "泡泡戰士", ko = "버블파이터", ja = "バブルファイター", en = "Bubble Fighter" }
+description = { "zh-CN" = "第一行\n第二行", vi = "Mô tả tiếng Việt", id = "Deskripsi bahasa Indonesia" }
+
+# A whole new item row on one build only.
+[[items]]
+build = "kr-812"
+action = "add"
+id = 1999001
+name = "Example item"
+set = { itemDesc = "Added by a plugin" }
+
+# String table entries are upserted: patched when the key exists, added otherwise.
+[[strings]]
+key = "MSG_EXAMPLE"
+text = { "zh-CN" = "你好", en = "Hello" }
+
+# TranslatedXmlTable records use a composite key.
+[[strings]]
+target = "xml-strings"
+key = ["Ui", "MainMenu", "BTN_START"]
+text = { "zh-CN" = "开始" }
+
+# Generic edit on a .ui control, gated by a boolean option.
+[[edits]]
+when = "rename_buttons"
+target = "ui"
+member = "Ui/MainMenuStage2.ui"
+action = "patch"
+control = "pnlMain/btnStart"
+set = { Text = { "zh-CN" = "开始游戏" } }
+expect = { Text = "Start" }
+
+# A layout override: this package's own column for a client language, other defaults kept.
+[[targets]]
+build = "cn-406"
+name = "strings"
+languages = { en = { text = "Translated_En" } }
+
+# Many edits of any targets in one CSV sheet with a column per language.
+[[tables]]
+path = "translations.csv"
+
+# Regex: put every item name of this build in brackets, per language.
+[[patterns]]
+build = "kr-812"
+target = "item"
+match = '.*'
+fields = ["name"]
+find = '^(.+)$'
+replace = { "zh-CN" = "【$1】" }

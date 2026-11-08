@@ -1,0 +1,60 @@
+schema = 1
+
+[clients.cn-279]
+route = "companion"
+native_exit_modes = [] # cn-279 sub_7AA7D0 has only the original tutorial exit path.
+pe_timestamp = 0x4D9ECC57
+# Original executable and its unpacked analysis image retain different PE sizes.
+image_sizes = [0x9C6000, 0x9C8000]
+# cn-279 GameStage vtable 0x9C0E5C, slot +148 dispatches cn-279 sub_7AA7D0.
+stage_vtable_rva = 0x5C0E5C
+key_slot_rva = 0x5C0EF0
+handler_rva = 0x3AA7D0
+handler_signature = "6A FF 68 93 E3 8D 00 64 A1 00 00 00 00 50 83 EC 14 53 55 56 57 A1 E4 01"
+# cn-279 sub_7AA7D0 checks both globals and guards its tutorial modal at stage +900.
+context_rva = 0x6BB390
+room_rva = 0x6BB444
+dialog_flag_offset = 900
+
+[clients.cn-324]
+route = "companion"
+# cn-324 sub_576670 already confirms and sends gcpReqLeaveSession for mode 16.
+native_exit_modes = [16]
+pe_timestamp = 0x505DD60C
+image_sizes = [0xA28000, 0xA2B000]
+# cn-324 GameStage vtable 0xAE892C, slot +148 dispatches cn-324 sub_576670.
+stage_vtable_rva = 0x6E892C
+key_slot_rva = 0x6E89C0
+handler_rva = 0x176670
+handler_signature = "6A FF 68 51 15 A1 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 10"
+# cn-324 sub_576670 checks these globals and guards native exit dialogs at stage +948.
+context_rva = 0x80EAA8
+room_rva = 0x80EC1C
+dialog_flag_offset = 948
+
+# These clients retain their native dialog, confirmation callback and leave-session transport.
+# Their mode-gate differences and client evidence are in native-patches.toml.
+[clients.cn-404]
+route = "native"
+[clients.cn-406]
+route = "native"
+[clients.cn-408]
+route = "native"
+[clients.cn-706]
+route = "native"
+[clients.cn-717]
+route = "native"
+[clients.cn-735]
+route = "native"
+[clients.cn-774]
+route = "native"
+[clients.id-400]
+route = "native"
+[clients.id-1809]
+route = "native"
+[clients.kr-812]
+route = "native"
+[clients.kr-1256]
+route = "native"
+[clients.tw-454]
+route = "native"

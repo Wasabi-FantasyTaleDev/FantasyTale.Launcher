@@ -1,0 +1,74 @@
+schema = 1
+build = "cn-279"
+timestamp = 0x4D9ECC57
+
+[addresses]
+set_text = 0x01AA20 # cn-279 sub_41AA20 is the text slot on UiButton and UiButtonOnFrame.
+allocate = 0x0E9D60 # cn-279 sub_7AA7D0 allocates 376 bytes with cn-279 sub_4E9D60.
+construct_message = 0x4A2F10 # cn-279 sub_7AA7D0 passes five stack arguments to cn-279 sub_8A2F10.
+position_message = 0x0A7150 # cn-279 sub_7AA7D0 passes 256 twice to cn-279 sub_4A7150.
+detach_message = 0x0A4B80 # cn-279 sub_4A4B80 removes the parent reference before destruction.
+modal_message = 0x0A78A0 # cn-279 sub_7AA7D0 calls modal slot +212.
+message_vtable = 0x5E69F4 # cn-279 sub_8A2F10 installs this primary vtable.
+string_create = 0x001570 # cn-279 sub_401570 builds the game's UTF-16 string.
+string_release = 0x001510 # cn-279 sub_401510 releases the game's string.
+application = 0x6BC7C0 # cn-279 sub_41B700 resolves the modal loop's application object.
+ui_context = 0x6B1DA4 # cn-279 sub_7AA7D0 uses this input context before presenting the modal.
+ui_manager = 0x6B1DB4 # cn-279 sub_4A78A0 reads and restores modal focus through this manager.
+
+[values]
+# cn-279 sub_4A7FB0 obtains the dialog parent through cn-279 sub_41E0B0 at manager +24.
+ui_root_offset = 24
+# cn-279 sub_4A84C0 publishes the active form; cn-279 sub_4A78A0 stops for exit or a replacement.
+active_form_offset = 56
+pending_form_offset = 64
+exit_flag_offset = 4
+message_abi = 4
+modal_abi = 3
+position = 256
+message_size = 376
+# cn-279 sub_8A2F10 retains the dialog at +8 and releases through its +4 base.
+reference_offset = 8
+secondary_offset = 4
+destructor_slot = 0
+release_previous = 1
+# cn-279 sub_8A2CA0 binds the two controls to commands 257 and 256.
+ok_offset = 356
+cancel_offset = 360
+command_offset = 256
+text_slot = 20
+modal_slot = 212
+# cn-279 sub_7AA7D0 presents its built-in two-button question with icon 2.
+icon_question = 2
+
+[[signatures]]
+address = "set_text"
+bytes = "83 C1 64 E9 A8 68 FE FF"
+
+[[signatures]]
+address = "allocate"
+bytes = "55 8B EC 83 EC 10 83 7D 08 00 75 07 C7 45 08 01"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 AE 85 8D 00 64 A1 00 00 00 00 50 83 EC"
+
+[[signatures]]
+address = "position_message"
+bytes = "8B 44 24 04 8B 54 24 08 89 81 3C 01 00 00 89 91"
+
+[[signatures]]
+address = "detach_message"
+bytes = "6A FF 68 33 4F 8B 00 64 A1 00 00 00 00 50 83 EC"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 68 A8 54 8B 00 64 A1 00 00 00 00 50 83 EC"
+
+[[signatures]]
+address = "string_create"
+bytes = "6A FF 68 88 A7 92 00 64 A1 00 00 00 00 50 51 56"
+
+[[signatures]]
+address = "string_release"
+bytes = "6A FF 68 88 A7 92 00 64 A1 00 00 00 00 50 51 56"

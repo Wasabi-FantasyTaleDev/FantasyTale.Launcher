@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+:root {
+  color-scheme: light;
+  font-family: 'Segoe UI Variable Text', 'Segoe UI Variable', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --text: #1a1a1a; --secondary: #606060; --border: #e5e5e5; --card: #fff;
+  --radio: #fff; --radio-hover: #f5f5f5; --stroke: #898989; --stroke-hover: #727272;
+  --accent: #005fb8; --accent-hover: #0056a6; --accent-pressed: #0d69bc; --dot: #fff; --focus: #1a1a1a;
+  color: var(--text); background: transparent;
+}
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --text: #f5f5f5; --secondary: #c5c5c5; --border: #383838; --card: #2b2b2b;
+  --radio: #222; --radio-hover: #2c2c2c; --stroke: #a0a0a0; --stroke-hover: #b5b5b5;
+  --accent: #60cdff; --accent-hover: #59bde9; --accent-pressed: #52afd8; --dot: #000; --focus: #fff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 2px 0 8px; background: transparent; }
+p { margin: 0 0 16px; font-size: 13px; color: var(--secondary); line-height: 1.55; }
+.list { display: grid; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 12px 16px; min-height: 72px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.identity { min-width: 0; }
+.name { font-size: 14px; line-height: 20px; font-weight: 400; }
+.native { font-size: 12px; line-height: 18px; color: var(--secondary); margin-top: 4px; }
+.choices { display: flex; align-items: center; column-gap: 20px; row-gap: 4px; flex: none; }
+.choice { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 0; border: 0; border-radius: 2px; background: transparent; box-shadow: none; color: var(--text); font: inherit; font-size: 14px; line-height: 20px; white-space: nowrap; cursor: default; user-select: none; }
+.choice input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.radio-glyph { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--stroke); border-radius: 50%; background: var(--radio); flex: none; transition: background .12s ease, border-color .12s ease; }
+.radio-glyph::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); transform: scale(0); transition: transform .14s cubic-bezier(.2,0,0,1); }
+.choice:hover .radio-glyph { background: var(--radio-hover); border-color: var(--stroke-hover); }
+.choice input:checked + .radio-glyph { background: var(--accent); border-color: var(--accent); }
+.choice input:checked + .radio-glyph::after { transform: scale(1); }
+.choice:hover input:checked + .radio-glyph { background: var(--accent-hover); border-color: var(--accent-hover); }
+.choice:hover input:checked + .radio-glyph::after { transform: scale(1.15); }
+.choice:active input:checked + .radio-glyph { background: var(--accent-pressed); border-color: var(--accent-pressed); }
+.choice:active input:checked + .radio-glyph::after { transform: scale(.8); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+.empty { padding: 28px 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .radio-glyph, .radio-glyph::after { transition: none; } }
+@media (max-width: 520px) { .row { align-items: flex-start; flex-direction: column; gap: 8px; } .choices { align-self: stretch; flex-wrap: wrap; column-gap: 24px; } }
+@media (forced-colors: active) { .radio-glyph { border-color: ButtonText; background: Canvas; forced-color-adjust: none; } .choice input:checked + .radio-glyph { background: Highlight; border-color: Highlight; } .radio-glyph::after { background: HighlightText; } }
+</style></head><body><p id="intro"></p><div id="list" class="list"></div><script>
+const messages={
+ en:{intro:'Choose a model for each character. Changes apply the next time you start the game.',original:'Default',new:'New',classic:'Classic',defaultModel:'This client uses ',model:' model by default.',empty:'No supported characters are available for this client.'},
+ 'zh-CN':{intro:'为每个角色选择模型，下次启动游戏时生效。',original:'默认',new:'新版',classic:'旧版',defaultModel:'当前版本默认使用',model:'模型',empty:'此客户端暂无可配置的角色。'},
+ 'zh-TW':{intro:'為每個角色選擇模型，下次啟動遊戲時生效。',original:'預設',new:'新版',classic:'舊版',defaultModel:'目前版本預設使用',model:'模型',empty:'此用戶端目前沒有可設定的角色。'},
+ ko:{intro:'캐릭터별 모델을 선택하세요. 다음 게임 실행 시 적용됩니다.',original:'기본값',new:'신규',classic:'구형',defaultModel:'이 버전은 기본적으로 ',model:' 모델을 사용합니다.',empty:'이 클라이언트에서 설정할 수 있는 캐릭터가 없습니다.'},
+ id:{intro:'Pilih model untuk setiap karakter. Berlaku saat game berikutnya dimulai.',original:'Default',new:'Baru',classic:'Klasik',defaultModel:'Model default versi ini: ',model:'',empty:'Tidak ada karakter yang dapat dikonfigurasi untuk klien ini.'},
+ vi:{intro:'Chọn mô hình cho từng nhân vật. Áp dụng trong lần khởi chạy tiếp theo.',original:'Mặc định',new:'Mới',classic:'Cũ',defaultModel:'Mô hình mặc định của phiên bản này: ',model:'',empty:'Máy khách này chưa có nhân vật có thể cấu hình.'}
+};
+let values={},context={},language='en',lastCharacters='';
+const send=message=>parent.postMessage({schema:1,...message},'*');
+function render(){const text=messages[language]||messages.en;document.getElementById('intro').textContent=text.intro;const list=document.getElementById('list');const characters=context.characters||[];const signature=JSON.stringify([language,characters]);const rebuild=lastCharacters!==signature;lastCharacters=signature;if(rebuild)list.replaceChildren();if(!characters.length){if(rebuild){const p=document.createElement('p');p.className='empty';p.textContent=text.empty;list.append(p)}return}characters.forEach((character,index)=>{let row=list.children[index];if(rebuild){row=document.createElement('div');row.className='row';row.style.animationDelay=`${index*25}ms`;const identity=document.createElement('div');identity.className='identity';const name=document.createElement('div');name.className='name';name.textContent=character.name[language]||character.name.en;const native=document.createElement('div');native.className='native';native.textContent=text.defaultModel+text[character.nativeGeneration]+text.model;identity.append(name,native);const choices=document.createElement('div');choices.className='choices';choices.setAttribute('role','radiogroup');choices.setAttribute('aria-label',name.textContent);for(const choice of character.choices){const label=document.createElement('label');label.className='choice';const input=document.createElement('input');input.type='radio';input.name=character.key;input.value=choice;input.onchange=()=>{values={...values,[character.key]:choice};send({type:'fantasytale:change',values:{models:JSON.stringify(values)}});render()};const glyph=document.createElement('span');glyph.className='radio-glyph';glyph.setAttribute('aria-hidden','true');const copy=document.createElement('span');copy.textContent=text[choice];label.append(input,glyph,copy);choices.append(label)}row.append(identity,choices);list.append(row)}for(const input of row.querySelectorAll('input[type=radio]'))input.checked=input.value===(values[character.key]||'original')})}
+window.addEventListener('message',event=>{if(event.source!==parent||!event.data||event.data.type!=='fantasytale:configuration'||event.data.schema!==1)return;if(event.data.theme==='light'||event.data.theme==='dark')document.documentElement.dataset.theme=event.data.theme;language=event.data.language;context=event.data.context||{};try{values=JSON.parse(event.data.values.models||'{}')}catch{values={}}render()});
+new ResizeObserver(()=>send({type:'fantasytale:resize',height:document.documentElement.scrollHeight})).observe(document.body);send({type:'fantasytale:ready'});
+</script></body></html>

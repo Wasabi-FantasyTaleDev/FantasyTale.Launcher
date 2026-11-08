@@ -1,0 +1,9 @@
+{
+  "name": "@bubble-fighter/game-ui-vue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "peerDependencies": {
+    "vue": "3.5.43"
+  }
+}

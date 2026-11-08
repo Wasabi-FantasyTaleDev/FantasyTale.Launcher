@@ -1,0 +1,10 @@
+schema = 1
+
+[source]
+id = "fantasy-tale"
+name = "Fantasy Tale Archive"
+kind = "alist"
+base_url = "http://archive-cn.600819.xyz:5244/"
+catalog_path = "FantasyTale/source.toml"
+enabled = true
+prefer_ip = true

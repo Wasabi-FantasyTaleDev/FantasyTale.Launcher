@@ -1,0 +1,33 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.pirate-expression-fix"
+version = "1.0.1"
+game = "bubblefighter"
+kind = "resources"
+minimum_launcher_version = "0.1.62"
+authors = ["Fantasy Tale Studio"]
+
+[compatibility]
+builds = ["cn-279", "cn-324", "cn-406", "cn-404", "cn-408", "cn-705", "cn-706", "cn-717", "cn-774"]
+
+[plugin.name]
+"en" = "Pirate expression repair"
+"zh-CN" = "海盗卤蛋表情修复"
+"zh-TW" = "海盜滷蛋表情修復"
+"ko" = "해적 표정 복구"
+"id" = "Perbaikan ekspresi bajak laut"
+"vi" = "Sửa biểu cảm hải tặc"
+
+[plugin.description]
+"zh-CN" = "修复国服海盗NPC卤蛋表情缺失的问题"
+"zh-TW" = "修復中國版本海盜NPC滷蛋表情缺失的問題"
+"en" = "Restores missing facial expressions for the pirate NPC Ludan in Chinese clients."
+"ko" = "중국 클라이언트의 해적 NPC 루단에게 누락된 표정을 복구합니다."
+"id" = "Memulihkan ekspresi wajah NPC bajak laut Ludan yang hilang pada klien Tiongkok."
+"vi" = "Khôi phục biểu cảm bị thiếu của NPC hải tặc Ludan trong bản Trung Quốc."
+"th" = "แก้ไขสีหน้าที่ขาดหายไปของ NPC โจรสลัด Ludan ในไคลเอนต์จีน"
+
+[resources]
+provider = "archive-members"
+manifest = "expressions.toml"

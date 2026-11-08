@@ -1,0 +1,77 @@
+schema = 1
+build = "cn-404"
+timestamp = 0x533CFD5F
+
+# All addresses are RVAs in the unpacked cn-404 main image.
+[addresses]
+allocate = 0x610500 # cn-404 sub_765C10 allocates 0x300 bytes with this cdecl allocator.
+construct_message = 0x445E90 # cn-404 sub_765C10 pushes storage/title/body/mode/icon to the stdcall constructor.
+layout_message = 0x446FC0 # cn-404 sub_846FC0 measures body/buttons and reads the icon-free byte at +760.
+modal_message = 0x639020 # cn-404 sub_765C10 calls slot 208 with flags 0,1,1.
+message_vtable = 0x8FBF04 # cn-404 sub_845E90 assigns the primary DlgMessageBox vtable.
+notify = 0x48FEF0 # cn-404 sub_978400 supplies ECX=-1, MainApp, body, sound and two -1 defaults.
+application = 0xA31F10 # cn-404 sub_978400 passes this global's value as MainApp.
+ui_context = 0xA2E3DC # cn-404 sub_846FC0 measures native text through this XUI context.
+ui_manager = 0xA2DE1C # cn-404 sub_A39020 reads and restores modal controls through this UI manager.
+chat = 0x37C890 # cn-404 sub_683750 calls the thiscall caption/color/body wrapper.
+append_announcement = 0x49C2F0 # cn-404 sub_8903E0 appends a 76-byte record through cn-404 sub_89C2F0.
+clock = 0x9C31E4 # cn-404 sub_8903E0 and cn-404 sub_88F960 use this native clock pointer.
+clock_now = 0x6173C0 # cn-404 sub_A173C0 reads the announcement clock.
+
+[values]
+message_abi = 3 # cn-404 sub_765C10 supplies five stack arguments; cn-404 sub_845E90 returns with RET 20.
+modal_abi = 3 # cn-404 sub_765C10 supplies three flags to cn-404 sub_A39020.
+notify_abi = 3 # cn-404 sub_978400 supplies duration in ECX and five stack arguments to cn-404 sub_88FEF0.
+chat_abi = 1 # cn-404 sub_683750 supplies module in ECX and caption/color/body on the stack.
+message_size = 768 # cn-404 sub_765C10 allocates 0x300 bytes before construction.
+reference_offset = 8 # cn-404 sub_765C10 retains the dialog around its modal call.
+secondary_offset = 4 # cn-404 sub_765C10 releases through the secondary object at +4.
+destructor_slot = 0 # cn-404 sub_765C10 invokes the secondary deleting destructor.
+release_previous = 1 # cn-404 sub_765C10 destroys when decrement reaches zero.
+ok_offset = 744 # cn-404 sub_846E50 binds the first button to command 257.
+cancel_offset = 748 # cn-404 sub_846E50 binds the second button to command 256.
+command_offset = 576 # cn-404 sub_846E50 writes button commands at +0x240.
+text_slot = 20 # cn-404 sub_846E50 sets control text through vtable slot +20.
+modal_slot = 208 # cn-404 sub_765C10 invokes the modal method through slot +208.
+without_icon_offset = 760 # cn-404 sub_846FC0 selects the icon-free layout with this byte.
+notification_offset = 356 # cn-404 sub_88FEF0 owns and replaces MainApp's notification at +356.
+chat_offset = 444 # cn-404 sub_683750 passes MainApp's chat module at +444.
+chat_view_offset = 124 # cn-404 sub_7803E0 consumes the active chat view at module +124.
+announcement_offset = 300 # cn-404 sub_8903E0 owns the notice vector at +300/+304/+308.
+announcement_limit = 7 # cn-404 sub_8903E0 evicts before inserting the eighth notice.
+icon_notice = 0 # cn-404 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # cn-404 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
+icon_question = 2 # cn-404 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # cn-404 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "allocate"
+bytes = "8B 44 24 04 83 EC 10 85 C0 75 05 B8 01 00 00 00"
+
+[[signatures]]
+address = "construct_message"
+bytes = "6A FF 68 DF 13 BB 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 28 68 BA 00 64 A1 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "6A FF 64 A1 00 00 00 00 68 DB 6D B9 00 50 64 89"
+
+[[signatures]]
+address = "notify"
+bytes = "6A FF 64 A1 00 00 00 00 68 82 C2 BC 00 50 64 89"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 83 E4 F8 6A FF 68 20 8A BD 00 64 A1 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "64 A1 00 00 00 00 6A FF 68 72 AE BB 00 50 64 89"
+
+[[signatures]]
+address = "clock_now"
+bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"

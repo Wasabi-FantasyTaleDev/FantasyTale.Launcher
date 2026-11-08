@@ -1,0 +1,75 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.scene-styles"
+version = "1.0.2"
+game = "bubblefighter"
+kind = "resources"
+minimum_launcher_version = "0.1.66"
+update_source = "fantasy-tale"
+authors = ["Fantasy Tale Studio"]
+
+[compatibility]
+builds = ["cn-279", "cn-324", "cn-406"]
+
+[plugin.name]
+"en" = "Scene style selection"
+"zh-CN" = "场景样式选择"
+"zh-TW" = "場景樣式選擇"
+"ko" = "장면 스타일 선택"
+"id" = "Pilihan gaya adegan"
+"vi" = "Chọn kiểu cảnh"
+"th" = "เลือกรูปแบบฉาก"
+
+[plugin.description]
+"en" = "Adjust lobby and plaza styles and Lomi/Pini outfits."
+"zh-CN" = "调整大厅和广场的样式和糯米/贝尼的服装"
+"zh-TW" = "調整大廳和廣場的樣式及糯米/貝尼的服裝"
+"ko" = "로비와 광장 스타일 및 로미/피니 의상을 변경합니다."
+"id" = "Sesuaikan gaya lobi dan plaza serta kostum Lomi/Pini."
+"vi" = "Điều chỉnh kiểu sảnh và quảng trường cùng trang phục Lomi/Pini."
+"th" = "ปรับรูปแบบล็อบบี้และลาน รวมถึงชุดของ Lomi/Pini"
+
+[resources]
+provider = "archive-members"
+manifest = "styles.toml"
+
+[[options]]
+key = "main_style"
+type = "enum"
+default = "original"
+values = ["original", "snow"]
+label = { "en" = "Lobby", "zh-CN" = "大厅", "zh-TW" = "大廳", "ko" = "로비", "id" = "Lobi", "vi" = "Sảnh", "th" = "ล็อบบี้" }
+
+[[options]]
+key = "plaza_style"
+type = "enum"
+default = "original"
+values = ["original", "snow"]
+label = { "en" = "Plaza", "zh-CN" = "广场", "zh-TW" = "廣場", "ko" = "광장", "id" = "Plaza", "vi" = "Quảng trường", "th" = "ลาน" }
+
+[[options]]
+key = "christmas_bgm"
+type = "bool"
+default = true
+label = { "en" = "Use Christmas BGM with Snow", "zh-CN" = "下雪时使用圣诞BGM", "zh-TW" = "下雪時使用聖誕BGM", "ko" = "눈 장면에서 크리스마스 BGM 사용", "id" = "Gunakan BGM Natal saat bersalju", "vi" = "Dùng BGM Giáng sinh khi có tuyết", "th" = "ใช้ BGM คริสต์มาสเมื่อมีหิมะ" }
+
+[[options]]
+key = "christmas_npcs"
+type = "bool"
+default = true
+label = { "en" = "Dress Lomi and Pini in Christmas outfits", "zh-CN" = "为糯米和贝尼穿上圣诞服装", "zh-TW" = "為糯米和貝尼穿上聖誕服裝", "ko" = "로미와 피니에게 크리스마스 의상 입히기", "id" = "Pakaikan kostum Natal pada Lomi dan Pini", "vi" = "Mặc trang phục Giáng sinh cho Lomi và Pini", "th" = "ให้ Lomi และ Pini สวมชุดคริสต์มาส" }
+
+[[options]]
+key = "lomi_outfit"
+type = "enum"
+default = "default"
+values = ["default", "original", "christmas"]
+label = { "en" = "Lomi outfit", "zh-CN" = "糯米的服装", "zh-TW" = "糯米的服裝", "ko" = "로미 의상", "id" = "Kostum Lomi", "vi" = "Trang phục Lomi", "th" = "ชุดของ Lomi" }
+
+[[options]]
+key = "pini_outfit"
+type = "enum"
+default = "default"
+values = ["default", "original", "christmas", "zombie"]
+label = { "en" = "Pini outfit", "zh-CN" = "贝尼的服装", "zh-TW" = "貝尼的服裝", "ko" = "피니 의상", "id" = "Kostum Pini", "vi" = "Trang phục Pini", "th" = "ชุดของ Pini" }

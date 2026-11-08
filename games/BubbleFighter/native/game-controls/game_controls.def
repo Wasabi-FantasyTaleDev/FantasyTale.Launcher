@@ -1,0 +1,3 @@
+LIBRARY game_controls
+EXPORTS
+    fthook_plugin_main

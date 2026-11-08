@@ -1,0 +1,8 @@
+schema = 1
+
+[[pages]]
+id = "resolutions"
+kind = "html"
+path = "settings.html"
+options = ["custom_resolutions"]
+title = { en = "Custom resolutions", "zh-CN" = "自定义分辨率", "zh-TW" = "自訂解析度", ko = "사용자 지정 해상도", id = "Resolusi khusus", vi = "Độ phân giải tùy chỉnh" }

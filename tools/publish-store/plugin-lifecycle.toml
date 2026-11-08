@@ -1,0 +1,25 @@
+# Compose these source-owned retirement records only after the lifecycle-capable
+# launcher is publicly installable. Renamed plugin IDs belong in aliases instead.
+[[deprecated_plugins]]
+id = "bubblefighter.fantasy.lxmarid-remaster"
+game = "bubblefighter"
+name = { en = "Character Remaster", zh-CN = "角色模型重制" }
+reason = { en = "Use the combined Character Models plugin instead.", zh-CN = "请改用统一的新旧角色模型切换插件。" }
+
+[[deprecated_plugins]]
+id = "bubblefighter.fantasy.dao-classic-model"
+game = "bubblefighter"
+name = { en = "Classic Dao Model", zh-CN = "旧版皮蛋模型" }
+reason = { en = "Use the combined Character Models plugin instead.", zh-CN = "请改用统一的新旧角色模型切换插件。" }
+
+[[deprecated_plugins]]
+id = "bubblefighter.fantasy.dizni-classic-model"
+game = "bubblefighter"
+name = { en = "Classic Dizni Model", zh-CN = "旧版黑妞模型" }
+reason = { en = "Use the combined Character Models plugin instead.", zh-CN = "请改用统一的新旧角色模型切换插件。" }
+
+[[deprecated_plugins]]
+id = "bubblefighter.fantasy.legacy-security-compatibility"
+game = "bubblefighter"
+name = { en = "Legacy Security Compatibility", zh-CN = "旧版安全兼容组件" }
+reason = { en = "This component is obsolete and is no longer needed.", zh-CN = "该组件已弃用，无需继续安装。" }

@@ -1,0 +1,51 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.font-weight"
+version = "1.0.4"
+game = "bubblefighter"
+kind = "patch"
+runtime = ">=3.0.0"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+"en" = "Chinese font support"
+"zh-CN" = "中文字体支持"
+"zh-TW" = "中文字體支援"
+"ko" = "중국어 글꼴 지원"
+"id" = "Dukungan font Mandarin"
+"vi" = "Hỗ trợ phông chữ tiếng Trung"
+
+[plugin.description]
+"en" = "Provides Simplified Chinese font support for non-Chinese clients and corrects overly thin text caused by font weights that differ from the original Chinese client settings."
+"zh-CN" = "对非国服客户端提供简体中文字体支持，并修复字重与国服原设定不同导致的字体过细问题"
+"zh-TW" = "為非中國版本用戶端提供簡體中文字體支援，並修復字重與中國版本原始設定不同導致的字體過細問題"
+"ko" = "중국 이외 지역 클라이언트에 중국어 간체 글꼴을 지원하고, 중국 클라이언트의 원래 설정과 다른 글꼴 굵기로 인해 글자가 지나치게 가늘어지는 문제를 수정합니다."
+"id" = "Menyediakan dukungan font Mandarin Sederhana untuk klien non-Tiongkok dan memperbaiki teks yang terlalu tipis akibat perbedaan ketebalan font dari pengaturan asli klien Tiongkok."
+"vi" = "Hỗ trợ phông chữ tiếng Trung giản thể cho máy khách ngoài Trung Quốc và sửa lỗi chữ quá mảnh do độ đậm khác với thiết lập gốc của máy khách Trung Quốc."
+
+[compatibility]
+# Only builds with a unique, verified language-group gate are offered.
+builds = ["id-400", "id-1809", "kr-812"]
+exclude = ["branch:cn"]
+
+[[options]]
+key = "force_bold"
+type = "bool"
+default = true
+[options.label]
+en = "Use bold font weight"
+"zh-CN" = "使用粗体字重"
+"zh-TW" = "使用粗體字重"
+ko = "굵은 글꼴 사용"
+id = "Gunakan huruf tebal"
+vi = "Sử dụng chữ đậm"
+
+# The two NOPs retain the client's existing weight store, without replacing font resources.
+[[patches]]
+id = "language-group-gate"
+when = "force_bold"
+locate = { pattern = "83 3D ?? ?? ?? ?? 02 75 03 89 ?? 3C", offset = 7 }
+expect = "75 03"
+write = "90 90"

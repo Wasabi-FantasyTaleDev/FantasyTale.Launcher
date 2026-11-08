@@ -1,0 +1,315 @@
+schema = 1
+# Tables and artwork ship with release packages, not the public source tree.
+optional_assets = true
+[source]
+file = "levels.csv"
+skip_lines = 1
+level_column = 0
+exp_column = 1
+name_column = 2
+
+[[icons]]
+level = 1
+variant = "default"
+file = "default-001.png"
+
+[[icons]]
+level = 1
+variant = "star"
+file = "star-001.png"
+
+[[icons]]
+level = 2
+variant = "default"
+file = "default-002.png"
+
+[[icons]]
+level = 2
+variant = "star"
+file = "star-002.png"
+
+[[icons]]
+level = 3
+variant = "default"
+file = "default-003.png"
+
+[[icons]]
+level = 3
+variant = "star"
+file = "star-003.png"
+
+[[icons]]
+level = 4
+variant = "default"
+file = "default-004.png"
+
+[[icons]]
+level = 4
+variant = "star"
+file = "star-004.png"
+
+[[icons]]
+level = 5
+variant = "default"
+file = "default-005.png"
+
+[[icons]]
+level = 5
+variant = "star"
+file = "star-005.png"
+
+[[icons]]
+level = 6
+variant = "default"
+file = "default-006.png"
+
+[[icons]]
+level = 6
+variant = "star"
+file = "star-006.png"
+
+[[icons]]
+level = 7
+variant = "default"
+file = "default-007.png"
+
+[[icons]]
+level = 7
+variant = "star"
+file = "star-007.png"
+
+[[icons]]
+level = 8
+variant = "default"
+file = "default-008.png"
+
+[[icons]]
+level = 8
+variant = "star"
+file = "star-008.png"
+
+[[icons]]
+level = 9
+variant = "default"
+file = "default-009.png"
+
+[[icons]]
+level = 9
+variant = "star"
+file = "star-009.png"
+
+[[icons]]
+level = 10
+variant = "default"
+file = "default-010.png"
+
+[[icons]]
+level = 10
+variant = "star"
+file = "star-010.png"
+
+[[icons]]
+level = 11
+variant = "default"
+file = "default-011.png"
+
+[[icons]]
+level = 11
+variant = "star"
+file = "star-011.png"
+
+[[icons]]
+level = 12
+variant = "default"
+file = "default-012.png"
+
+[[icons]]
+level = 12
+variant = "star"
+file = "star-012.png"
+
+[[icons]]
+level = 13
+variant = "default"
+file = "default-013.png"
+
+[[icons]]
+level = 13
+variant = "star"
+file = "star-013.png"
+
+[[icons]]
+level = 14
+variant = "default"
+file = "default-014.png"
+
+[[icons]]
+level = 14
+variant = "star"
+file = "star-014.png"
+
+[[icons]]
+level = 15
+variant = "default"
+file = "default-015.png"
+
+[[icons]]
+level = 15
+variant = "star"
+file = "star-015.png"
+
+[[icons]]
+level = 16
+variant = "default"
+file = "default-016.png"
+
+[[icons]]
+level = 16
+variant = "star"
+file = "star-016.png"
+
+[[icons]]
+level = 17
+variant = "default"
+file = "default-017.png"
+
+[[icons]]
+level = 17
+variant = "star"
+file = "star-017.png"
+
+[[icons]]
+level = 18
+variant = "default"
+file = "default-018.png"
+
+[[icons]]
+level = 18
+variant = "star"
+file = "star-018.png"
+
+[[icons]]
+level = 19
+variant = "default"
+file = "default-019.png"
+
+[[icons]]
+level = 19
+variant = "star"
+file = "star-019.png"
+
+[[icons]]
+level = 20
+variant = "default"
+file = "default-020.png"
+
+[[icons]]
+level = 20
+variant = "star"
+file = "star-020.png"
+
+[[icons]]
+level = 21
+variant = "default"
+file = "default-021.png"
+
+[[icons]]
+level = 21
+variant = "star"
+file = "star-021.png"
+
+[[icons]]
+level = 22
+variant = "default"
+file = "default-022.png"
+
+[[icons]]
+level = 22
+variant = "star"
+file = "star-022.png"
+
+[[icons]]
+level = 23
+variant = "default"
+file = "default-023.png"
+
+[[icons]]
+level = 23
+variant = "star"
+file = "star-023.png"
+
+[[icons]]
+level = 24
+variant = "default"
+file = "default-024.png"
+
+[[icons]]
+level = 24
+variant = "star"
+file = "star-024.png"
+
+[[icons]]
+level = 25
+variant = "default"
+file = "default-025.png"
+
+[[icons]]
+level = 25
+variant = "star"
+file = "star-025.png"
+
+[[icons]]
+level = 26
+variant = "default"
+file = "default-026.png"
+
+[[icons]]
+level = 26
+variant = "star"
+file = "star-026.png"
+
+[[icons]]
+level = 27
+variant = "default"
+file = "default-027.png"
+
+[[icons]]
+level = 27
+variant = "star"
+file = "star-027.png"
+
+[[icons]]
+level = 28
+variant = "default"
+file = "default-028.png"
+
+[[icons]]
+level = 28
+variant = "star"
+file = "star-028.png"
+
+[[icons]]
+level = 29
+variant = "default"
+file = "default-029.png"
+
+[[icons]]
+level = 29
+variant = "star"
+file = "star-029.png"
+
+[[icons]]
+level = 30
+variant = "default"
+file = "default-030.png"
+
+[[icons]]
+level = 30
+variant = "star"
+file = "star-030.png"
+
+[[badges]]
+id = "unranked"
+icon_id = 10001
+name = "Unranked"
+file = "unranked.png"

@@ -1,0 +1,48 @@
+schema = 1
+
+[plugin]
+update_source = "fantasy-tale"
+id = "bubble.fighter.fantasy.nirinsoulink"
+aliases = ["bubblefighter.fantasy.communication"]
+version = "0.2.2"
+game = "bubblefighter"
+kind = "service"
+minimum_launcher_version = "0.1.57"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+name = { "zh-CN" = "Fantasy Tale Nirinsou Link", "zh-TW" = "Fantasy Tale Nirinsou Link", en = "Fantasy Tale Nirinsou Link", ko = "Fantasy Tale Nirinsou Link", id = "Fantasy Tale Nirinsou Link", vi = "Fantasy Tale Nirinsou Link" }
+description = { "zh-CN" = "实现与 Fantasy Tale Launcher 以及相关插件与服务器间的通信，不建议关闭", "zh-TW" = "實現與 Fantasy Tale Launcher 及相關外掛與伺服器間的通訊，不建議關閉", "en" = "Enables communication between Fantasy Tale Launcher, related plugins and servers. Disabling it is not recommended.", "ko" = "Fantasy Tale Launcher, 관련 플러그인 및 서버 간 통신을 지원합니다. 비활성화하지 않는 것을 권장합니다.", "id" = "Menghubungkan Fantasy Tale Launcher, plugin terkait, dan server. Sebaiknya tetap diaktifkan.", "vi" = "Cho phép Fantasy Tale Launcher, các plugin liên quan và máy chủ giao tiếp với nhau. Không nên tắt.", "th" = "รองรับการสื่อสารระหว่าง Fantasy Tale Launcher ปลั๊กอินที่เกี่ยวข้อง และเซิร์ฟเวอร์ ไม่แนะนำให้ปิด" }
+
+[compatibility]
+builds = ["*"]
+
+[service]
+provider = "companion"
+
+[service.messages]
+"ui.notification.show" = 1
+"ui.notification.result" = 1
+
+[[options]]
+key = "heartbeat_interval_ms"
+type = "int"
+default = 20000
+min = 1000
+max = 300000
+label = { "zh-CN" = "心跳间隔（毫秒）", "zh-TW" = "心跳間隔（毫秒）", en = "Heartbeat interval (ms)", ko = "하트비트 간격(ms)", id = "Interval heartbeat (md)", vi = "Khoảng nhịp tim (ms)" }
+
+[[options]]
+key = "request_timeout_ms"
+type = "int"
+default = 10000
+min = 100
+max = 300000
+label = { "zh-CN" = "请求超时（毫秒）", "zh-TW" = "請求逾時（毫秒）", en = "Request timeout (ms)", ko = "요청 제한 시간(ms)", id = "Batas waktu permintaan (md)", vi = "Thời gian chờ yêu cầu (ms)" }
+
+[[options]]
+key = "max_dialogs"
+type = "int"
+default = 4
+min = 1
+max = 16
+label = { "zh-CN" = "同时显示的通知上限", "zh-TW" = "同時顯示的通知上限", en = "Maximum visible notifications", ko = "최대 표시 알림 수", id = "Notifikasi maksimum", vi = "Số thông báo tối đa" }

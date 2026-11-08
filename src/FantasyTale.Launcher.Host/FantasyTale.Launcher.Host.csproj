@@ -1,0 +1,93 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>FantasyTale.Launcher</AssemblyName>
+    <ApplicationIcon>Assets/launcher.ico</ApplicationIcon>
+    <!-- Source-generated P/Invoke (DWM backdrop) needs unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FantasyTale.Launcher.Communication\FantasyTale.Launcher.Communication.csproj" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Core\FantasyTale.Launcher.Core.csproj" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Downloads\FantasyTale.Launcher.Downloads.csproj" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Games.BubbleFighter\FantasyTale.Launcher.Games.BubbleFighter.csproj" />
+    <ProjectReference Include="..\FantasyTale.Launcher.Updater\FantasyTale.Launcher.Updater.csproj" ReferenceOutputAssembly="false" />
+    <!-- Restore the separate Windows renderer without importing its WPF target into the host. -->
+    <ProjectReference Include="..\FantasyTale.Launcher.Overlay\FantasyTale.Launcher.Overlay.csproj"
+                      ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true"
+                      GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained"
+                      AdditionalProperties="EnableWindowsTargeting=true;RuntimeIdentifier=;SelfContained=false" />
+  </ItemGroup>
+
+  <Target Name="CopyOverlay" AfterTargets="Build">
+    <MSBuild Projects="..\FantasyTale.Launcher.Overlay\FantasyTale.Launcher.Overlay.csproj"
+             Targets="Build;GetTargetPath" RemoveProperties="OutDir;RuntimeIdentifier;SelfContained;PublishDir" Properties="Configuration=$(Configuration);EnableWindowsTargeting=true;RuntimeIdentifier=;SelfContained=false">
+      <Output TaskParameter="TargetOutputs" ItemName="OverlayTarget" />
+    </MSBuild>
+    <PropertyGroup><OverlayDirectory>@(OverlayTarget->'%(RootDir)%(Directory)')</OverlayDirectory></PropertyGroup>
+    <ItemGroup>
+      <OverlayFiles Include="$(OverlayDirectory)**/*"
+                    Exclude="$(OverlayDirectory)**/*.pdb;$(OverlayDirectory)**/*.xml;$(OverlayDirectory)OverlayWebData/**;$(OverlayDirectory)win-*/**;$(OverlayDirectory)linux-*/**;$(OverlayDirectory)osx-*/**;$(OverlayDirectory)publish/**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(OverlayFiles)"
+          DestinationFiles="@(OverlayFiles->'$(OutDir)overlay\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishOverlay" AfterTargets="Publish">
+    <!-- The external WPF renderer needs its own matching runtime; the host does not carry WindowsDesktop. -->
+    <PropertyGroup>
+      <OverlayPublishDirectory>$([System.IO.Path]::Combine($([System.IO.Path]::GetFullPath('$(PublishDir)', '$(MSBuildProjectDirectory)')), 'overlay'))/</OverlayPublishDirectory>
+    </PropertyGroup>
+    <MSBuild Projects="..\FantasyTale.Launcher.Overlay\FantasyTale.Launcher.Overlay.csproj" Targets="Restore"
+             RemoveProperties="OutDir;PublishDir" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);EnableWindowsTargeting=true" />
+    <MSBuild Projects="..\FantasyTale.Launcher.Overlay\FantasyTale.Launcher.Overlay.csproj" Targets="Publish"
+             RemoveProperties="OutDir" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);EnableWindowsTargeting=true;PublishDir=$(OverlayPublishDirectory)" />
+  </Target>
+
+  <Target Name="CopyUpdater" AfterTargets="Build">
+    <MSBuild Projects="..\FantasyTale.Launcher.Updater\FantasyTale.Launcher.Updater.csproj" Targets="Build;GetTargetPath" RemoveProperties="OutDir" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="UpdaterTarget" />
+    </MSBuild>
+    <PropertyGroup><UpdaterDirectory>@(UpdaterTarget->'%(RootDir)%(Directory)')</UpdaterDirectory></PropertyGroup>
+    <!-- Shared build output can contain earlier RID builds; those are separate distributions, not helper dependencies. -->
+    <ItemGroup><UpdaterFiles Include="$(UpdaterDirectory)**/*"
+                            Exclude="$(UpdaterDirectory)**/*.pdb;$(UpdaterDirectory)win-*/**;$(UpdaterDirectory)linux-*/**;$(UpdaterDirectory)osx-*/**;$(UpdaterDirectory)publish/**;$(UpdaterDirectory)updater/**;$(UpdaterDirectory)overlay/**" /></ItemGroup>
+    <Copy SourceFiles="@(UpdaterFiles)" DestinationFiles="@(UpdaterFiles->'$(OutDir)updater/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="PublishUpdater" AfterTargets="Publish">
+    <!-- The retained helper runs outside the installation, so a portable host's runtime cannot supply its dependencies. -->
+    <PropertyGroup>
+      <UpdaterPublishDirectory>$([System.IO.Path]::Combine($([System.IO.Path]::GetFullPath('$(PublishDir)', '$(MSBuildProjectDirectory)')), 'updater'))/</UpdaterPublishDirectory>
+    </PropertyGroup>
+    <MSBuild Projects="..\FantasyTale.Launcher.Updater\FantasyTale.Launcher.Updater.csproj" Targets="Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);PublishDir=$(UpdaterPublishDirectory)" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Photino.NET" Version="4.0.16" />
+  </ItemGroup>
+
+  <!-- Game definitions ship beside the executable; the built frontend goes to wwwroot. -->
+  <ItemGroup>
+    <None Include="..\..\LICENSE;..\..\NOTICE.md" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\ThirdPartyLicenses\*.txt" LinkBase="ThirdPartyLicenses" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\games\**\*.toml" LinkBase="games" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\games\BubbleFighter\media\background.mp4" Link="games\BubbleFighter\media\background.mp4" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\games\BubbleFighter\media\background.mp4')" />
+    <None Include="..\..\games\AirRider\media\background.mp4" Link="games\AirRider\media\background.mp4" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\games\AirRider\media\background.mp4')" />
+    <None Update="Assets/launcher.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/github-mirrors.toml" Link="github-mirrors.toml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/launcher-download.toml" Link="launcher-download.toml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\games\**\runtime\**\*.dll;..\..\games\**\plugins\**\*.dll" LinkBase="games" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\games\**\plugins\**\*" Exclude="..\..\games\**\plugins\**\*.toml;..\..\games\**\plugins\**\*.dll;..\..\games\**\plugins\**\*.md" LinkBase="games" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\games\**\media\*" LinkBase="games" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\games')" />
+    <None Include="..\..\games\**\levels\**\*.png;..\..\games\**\levels\**\*.csv;..\..\games\**\levels\**\*.txt" LinkBase="games" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\web\dist\**\*" LinkBase="wwwroot" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Developer overrides and runtime state are never deployment definitions or plugin assets. -->
+    <None Remove="..\..\games\**\*.local.toml;..\..\games\**\*.local.json;..\..\games\**\*.local.yaml;..\..\games\**\session.toml*;..\..\games\**\*.log;..\..\games\**\*.dmp;..\..\games\**\*.pdb;..\..\games\**\*.bak;..\..\games\**\.env*;..\..\games\**\logs\**;..\..\games\**\private\**;..\..\games\**\local\**;..\..\games\**\reference\**;..\..\games\**\.git\**;..\..\games\**\.fantasytale-*\**" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,43 @@
+schema = 1
+build = "cn-735"
+timestamp = 0x5767E697
+image_sizes = [0x17BB000, 0x17BE000]
+preferred_base = 0x400000
+table_rva = 0xF263F4
+guard_rva = 0x940060
+guard = "8B 81 0C 07 00 00 2B 81 08 07 00 00"
+# The fixed seven-entry table is consumed by the build's menu iterator and saved-option validator.
+original_modes = [[800, 600], [1024, 768], [1152, 864], [1280, 800], [1280, 960], [1366, 768], [1600, 900]]
+minimum_width = 1024
+minimum_height = 768
+maximum_aspect_milli = 1780
+# cn-735 sub_D40060 remains the native display-mode filter.
+# cn-735 VA 0x840A44 iterates the table; VA 0xB1C260 validates saved width and height.
+[[sites]]
+rva = 0x440A44
+expect = "BF F4 63 32 01"
+target = "begin"
+operand_offset = 1
+[[sites]]
+rva = 0x440A50
+expect = "83 FD 06 0F 87 8C 00 00 00"
+target = "remove_count_guard"
+[[sites]]
+rva = 0x440AE9
+expect = "81 FF 2C 64 32 01 0F 8C 5B FF FF FF"
+target = "end"
+operand_offset = 2
+[[sites]]
+rva = 0x71C260
+expect = "B8 F8 63 32 01"
+target = "height_begin"
+operand_offset = 1
+[[sites]]
+rva = 0x71C271
+expect = "3D 30 64 32 01"
+target = "height_end"
+operand_offset = 1
+
+[menu_filter_call]
+rva = 0x440A6E
+expect = "E8 ED F5 4F 00"

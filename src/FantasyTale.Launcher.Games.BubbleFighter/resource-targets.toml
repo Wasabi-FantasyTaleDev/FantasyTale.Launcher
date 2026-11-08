@@ -1,0 +1,154 @@
+# Default locations of frequently edited client resources, per client build.
+# A resource-edits manifest may override any key of a target for a build with a [[targets]] row; keys it does not state
+# keep these defaults, and [targets.fields] merges field by field.
+#
+# kind: spreadsheet (SpreadsheetML 2003 .xml), delimited (tab-separated UTF-16 LE text named .csv), ui (native .ui forms).
+# keys: header names, or #N for a one-based column position (cn-406 TranslatedStringTable has an empty first header).
+# fields: logical field -> original header. Plugins use logical names; raw headers also work.
+# Evidence: read-only inspection of each build's original archives (member digests, encodings and headers recorded in the
+# private handoff evidence). Rows marked "inferred" are not yet confirmed by an in-game run.
+
+schema = 1
+
+# ---- kr-812 (Korean 2015, BFZ archives) ----
+[[targets]]
+build = "kr-812"
+name = "item"
+kind = "spreadsheet"
+archive = "Config/Config.bfz"
+member = "Config/ShopItem2.xml"
+sheet = "ShopItem"
+header_row = 1
+keys = ["itemId"]
+fields = { id = "itemId", name = "itemName", description = "itemDesc", desc1 = "desc1", desc2 = "desc2" }
+
+[[targets]]
+build = "kr-812"
+name = "strings"
+kind = "delimited"
+archive = "StringTable/StringTable.bfz"
+member = "StringTable/TranslatedStringTable.csv"
+header_row = 1
+keys = ["KeyString"]
+# The only translation column in this build; the Korean client reads it (inferred from the header set).
+fields = { text = "Translated_Kr" }
+
+[[targets]]
+build = "kr-812"
+name = "xml-strings"
+kind = "delimited"
+archive = "StringTable/StringTable.bfz"
+member = "StringTable/TranslatedXmlTable.csv"
+header_row = 1
+keys = ["Category", "SubCategory", "KeyString"]
+fields = { text = "Translated_Kr", comment = "Comment", en = "Translated_En", cn = "Translated_Cn" }
+
+[[targets]]
+build = "kr-812"
+name = "ui"
+kind = "ui"
+archive = "Ui/Ui.bfz"
+
+[[targets]]
+build = "kr-812"
+name = "fighter"
+kind = "spreadsheet"
+archive = "Config/Config.bfz"
+member = "Config/FighterConfig.xml"
+# Horizontal: one record per column keyed by the [Field] row; fields are the names in column 1. Edits may name a sibling
+# worksheet (FighterConfigCommon, FighterConfigChannel, FighterConfigMode) with sheet = "...".
+sheet = "FighterConfig"
+orientation = "horizontal"
+
+# ---- cn-406 (Chinese 2013, BFZ archives) ----
+[[targets]]
+build = "cn-406"
+name = "item"
+kind = "spreadsheet"
+archive = "Config/Config.bfz"
+member = "Config/ShopItem2.xml"
+sheet = "ShopItem"
+header_row = 1
+keys = ["itemId"]
+fields = { id = "itemId", name = "itemName", description = "itemDesc", desc1 = "desc1", desc2 = "desc2" }
+
+[[targets]]
+build = "cn-406"
+name = "strings"
+kind = "delimited"
+archive = "StringTable/StringTable.bfz"
+member = "StringTable/TranslatedStringTable.csv"
+header_row = 1
+keys = ["#1"]
+# inferred: the Chinese client is assumed to read Translated_Cn; not yet confirmed in game.
+fields = { text = "Translated_Cn", kr = "Translated_Kr", en = "Translated_En" }
+
+[[targets]]
+build = "cn-406"
+name = "xml-strings"
+kind = "delimited"
+archive = "StringTable/StringTable.bfz"
+member = "StringTable/TranslatedXmlTable.csv"
+header_row = 1
+keys = ["Category", "SubCategory", "KeyString"]
+# inferred, as above.
+fields = { text = "Translated_Cn", comment = "Comment", kr = "Translated_Kr", en = "Translated_En" }
+
+[[targets]]
+build = "cn-406"
+name = "ui"
+kind = "ui"
+archive = "Ui/Ui.bfz"
+
+[[targets]]
+build = "cn-406"
+name = "fighter"
+kind = "spreadsheet"
+archive = "Config/Config.bfz"
+member = "Config/FighterConfig.xml"
+# Horizontal: one record per column keyed by the [Field] row; fields are the names in column 1. Edits may name a sibling
+# worksheet (FighterConfigCommon, FighterConfigChannel, FighterConfigMode) with sheet = "...".
+sheet = "FighterConfig"
+orientation = "horizontal"
+
+# ---- kr-1256 (current Korean, PKN archives) ----
+[[targets]]
+build = "kr-1256"
+name = "item"
+kind = "spreadsheet"
+archive = "Packs/ConfigSh_00000.pkn"
+member = "Config/ShopItem2.xml"
+sheet = "ShopItem"
+header_row = 1
+keys = ["itemId"]
+fields = { id = "itemId", name = "itemName", description = "itemDesc", desc1 = "desc1", desc2 = "desc2", desc3 = "desc3" }
+
+[[targets]]
+build = "kr-1256"
+name = "strings"
+kind = "delimited"
+archive = "Packs/StringTable_00000.pkn"
+member = "StringTable/TranslatedStringTable.csv"
+header_row = 1
+keys = ["KeyString"]
+fields = { text = "Translated_Kr", reference = "Reference" }
+
+[[targets]]
+build = "kr-1256"
+name = "ui"
+kind = "ui"
+archive = "Packs/Ui_00000.pkn"
+
+[[targets]]
+build = "kr-1256"
+name = "fighter"
+kind = "spreadsheet"
+archive = "Packs/Config_00000.pkn"
+member = "Config/FighterConfig.xml"
+# Horizontal: one record per column keyed by the [Field] row; fields are the names in column 1. Edits may name a sibling
+# worksheet (FighterConfigCommon, FighterConfigChannel, FighterConfigMode) with sheet = "...".
+sheet = "FighterConfig"
+orientation = "horizontal"
+
+# Not yet supported (no target rows on purpose): kr-1256 StringTable/ui.yaml and StringTable/uicustom.yaml (UTF-8 BOM YAML),
+# and every build not listed above.

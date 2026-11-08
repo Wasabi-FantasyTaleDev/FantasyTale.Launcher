@@ -1,0 +1,44 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.lxmarid-remaster"
+version = "1.0.0"
+game = "bubblefighter"
+kind = "files"
+minimum_launcher_version = "0.1.33"
+restore_files = true
+update_source = "fantasy-tale"
+authors = ["Fantasy Tale Studio"]
+
+[plugin.name]
+"en" = "Luxury Marid remastered model"
+"zh-CN" = "蓝妹妹新版模型"
+"zh-TW" = "優雅小蜜桃新版模型"
+"ko" = "럭셔리 마리드 신규 모델"
+"id" = "Model baru Luxury Marid"
+"vi" = "Mô hình mới Luxury Marid"
+
+[plugin.description]
+"en" = "Use the remastered Luxury Marid model. Original resources are restored after the game exits."
+"zh-CN" = "使用蓝妹妹重做后的角色模型，游戏退出后自动还原原文件。"
+"zh-TW" = "使用優雅小蜜桃重製後的角色模型，遊戲結束後自動還原原始檔案。"
+"ko" = "럭셔리 마리드의 리마스터 모델을 사용합니다. 게임 종료 후 원본 파일이 자동으로 복원됩니다."
+"id" = "Gunakan model Luxury Marid yang diperbarui. Berkas asli dipulihkan setelah game ditutup."
+"vi" = "Sử dụng mô hình Luxury Marid được làm lại. Tệp gốc được khôi phục sau khi thoát trò chơi."
+
+[compatibility]
+builds = ["cn-324", "cn-404", "cn-406", "cn-706", "cn-717", "kr-812", "id-400", "id-1809", "cn-735"]
+
+[[files]]
+source = "payload/Default.bfz"
+target = "Models/Characters/LXMarid/Default/Default.bfz"
+size = 725701
+sha256 = "58660cfed07e7a369c29ea5068153e817c9f74252b413edb173aa6f1b6fd98d4"
+builds = ["cn-324", "cn-404", "cn-406", "cn-706", "cn-717", "kr-812", "id-400", "id-1809"]
+
+[[files]]
+source = "payload/ModelsChrPlLXMarid_cn735_00003.pkn"
+target = "Packs/ModelsChrPlLXMarid_00003.pkn"
+size = 7312384
+sha256 = "0a9698fbfd1d18c5492cf306ff29ce04de528e62c0b2f92ce50ddf9b430d8950"
+builds = ["cn-735"]

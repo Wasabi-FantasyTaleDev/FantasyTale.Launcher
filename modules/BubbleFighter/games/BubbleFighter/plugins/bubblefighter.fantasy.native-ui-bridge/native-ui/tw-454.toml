@@ -1,0 +1,80 @@
+schema = 1
+build = "tw-454"
+timestamp = 0x5C0F4941
+
+# All addresses are RVAs in the unpacked tw-454 main image.
+[addresses]
+allocator = 0x123EFF0 # tw-454 sub_9F0710 allocates 0x4D0 bytes through the UI allocator virtual slot +4.
+construct_message = 0x704FB0 # tw-454 sub_9F0710 passes storage in ECX and title/body/mode/icon on the stack.
+layout_message = 0x705D30 # tw-454 sub_B05D30 measures body and buttons; the constructor vtable selects slot +252.
+modal_message = 0xAF2C00 # tw-454 sub_9F0710 calls vtable slot +268 with four flags 0,1,1,0.
+message_vtable = 0xFA1DFC # tw-454 sub_B04FB0 assigns the primary DlgMessageBox vtable.
+notify = 0x9BC470 # tw-454 sub_DBC470 receives body in ECX and wraps the defaults for tw-454 sub_B50570.
+application = 0x123DF04 # tw-454 sub_DBC470 passes this global value to the notification owner.
+ui_context = 0x123F080 # tw-454 sub_B05D30 measures native text through this XUI context.
+ui_manager = 0x123F038 # tw-454 sub_EF2C00 reads and restores modal controls through this manager.
+chat = 0x60CCF0 # tw-454 sub_A99620 passes caption/color/body/0 to the thiscall wrapper, which returns with RET 16.
+append_announcement = 0x75F550 # tw-454 sub_B51470 supplies vector/end/record; tw-454 sub_B5F4D0 deep-copies both strings.
+clock_now = 0xADB9A0 # tw-454 sub_EDB9A0 returns the paused or running game clock without arguments.
+
+set_text = 0xAEE790 # tw-454 sub_EEE790 invokes the text callback and copies text when it declines.
+
+[values]
+message_abi = 2 # tw-454 sub_9F0710 passes four stack arguments to the thiscall constructor.
+modal_abi = 1 # tw-454 sub_9F0710 pushes four flags before virtual slot +268; the decompiler omits the last.
+notify_abi = 2 # tw-454 sub_DBC470 receives the borrowed body in ECX and has no stack arguments.
+chat_abi = 5 # tw-454 sub_A99620 supplies module in ECX and caption/color/body/0 on the stack.
+message_size = 1232 # tw-454 sub_9F0710 allocates 0x4D0 bytes before construction.
+reference_offset = 4 # tw-454 sub_9F0710 retains the dialog around its modal call.
+secondary_offset = 0 # tw-454 sub_9F0710 releases through the primary object.
+destructor_slot = 4 # tw-454 sub_9F0710 invokes the primary deleting destructor at slot +4.
+release_previous = 1 # tw-454 sub_9F0710 destroys when the decrement reaches zero.
+ok_offset = 1184 # tw-454 sub_B05A30 binds the first button to command 257.
+cancel_offset = 1188 # tw-454 sub_B05A30 binds the second button to command 256.
+command_offset = 912 # tw-454 sub_B05A30 writes commands at button +912.
+modal_slot = 268 # tw-454 sub_9F0710 invokes the modal method through slot +268.
+notification_offset = 388 # tw-454 sub_B50570 owns and replaces the notification at MainApp +388.
+chat_offset = 456 # tw-454 sub_A99620 takes the chat module from MainApp +456.
+chat_view_offset = 72 # tw-454 sub_A0CCF0 inserts into the active chat view at module +72.
+announcement_abi = 2 # tw-454 sub_B51470 calls tw-454 sub_B5F550 with vector in ECX and end/record on the stack.
+announcement_layout = 2 # tw-454 sub_B5F4D0 copies 68-byte records with strings at +0/+36.
+clock_abi = 2 # tw-454 sub_EDB9A0 reads global clock state without an owner argument.
+announcement_offset = 340 # tw-454 sub_B51470 owns the vector at MainApp +340/+344/+348.
+announcement_duration = 13000 # tw-454 sub_A842D0 supplies 13000 ms; tw-454 sub_B4FA10 owns lifetime and fade.
+announcement_limit = 7 # tw-454 sub_B51470 evicts before inserting the eighth notice.
+icon_notice = 0 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.png.
+icon_warning = 1 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
+icon_question = 2 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
+icon_error = 3 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+
+[[signatures]]
+address = "construct_message"
+bytes = "55 8B EC 6A FF 68 30 02 1F 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "layout_message"
+bytes = "55 8B EC 6A FF 68 00 04 1F 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "modal_message"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 2A CE 27 01"
+
+[[signatures]]
+address = "notify"
+bytes = "55 8B EC 6A FF 68 40 D3 0F 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "chat"
+bytes = "55 8B EC 6A FF 68 7E 46 1C 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "append_announcement"
+bytes = "55 8B EC 6A FF 68 90 EA 1F 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "clock_now"
+bytes = "80 3D EC 05 64 01 00 74 06 A1 E0 05 64 01 C3 FF"
+
+[[signatures]]
+address = "set_text"
+bytes = "56 8B 74 24 08 57 8B F9 56 8B 07 8B 80 DC 00 00"

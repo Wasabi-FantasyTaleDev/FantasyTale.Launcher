@@ -1,0 +1,11 @@
+schema = 1
+
+[base]
+file = "GB13000.ttf"
+sha256 = "2d372f0568676b0a45a939fc460dd6cf5d269599b6a348f6f429df729f25794f"
+
+# kr-1256 Config/Fonts_kr.csv selects this donor for all three default aliases.
+[[variants]]
+file = "NANUMBARUNGOTHICBOLD_0.OTF"
+sha256 = "1ce1f53366c0c4b9f82954e2a2eb807c85765759678a200b9e844b7828237b97"
+builds = ["kr-1256"]

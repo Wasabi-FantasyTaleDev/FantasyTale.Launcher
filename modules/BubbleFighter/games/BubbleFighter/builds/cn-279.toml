@@ -1,0 +1,97 @@
+# Client build definition (roadmap card L2 formalizes the schema).
+schema = 1
+
+[build]
+id = "cn-279"
+game = "bubblefighter"
+branch = "cn"
+build_date = "2011-04-08 18:35:38"
+protocol_version = 279
+executable = "BubbleFighter.exe"
+messenger = "standin"                # nmcogame.dll mode: standin | forward
+server_profile = "cn-279"                 # BubbleFighter.Fantasy profile id
+hosting_adapter = "legacy"
+default_port = 7210
+
+release_version = "0.1.5.005"
+
+[build.name]
+"en" = "China 2011-04-08"
+"zh-CN" = "国服 2011-04-08"
+"zh-TW" = "中國 2011-04-08"
+"ko" = "중국 2011-04-08"
+"id" = "Tiongkok 2011-04-08"
+"vi" = "Trung Quốc 2011-04-08"
+
+# The PE header timestamp is the same in packed and unpacked images; image sizes differ.
+
+[fingerprint]
+pe_timestamp = 0x4D9ECC57
+
+[launch]
+native_language = "zh-CN"
+requires_elevation = true
+login = "gamewidget"                    # gamewidget | nmco | hook
+arguments = ["--ip={host}", "--port={port}", "--areaid=6", "--groupid=1"]
+
+[plugins]
+# Plugins installed and enabled for a new instance of this build.
+default = ["bubblefighter.fantasy.login-fix-cn"]
+
+[overlay]
+theme = "v1"
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-latest"
+type = "latest"
+builds = ["cn-279"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.login-fix-cn"
+id = "profile-require"
+type = "require"
+builds = ["cn-279"]
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.mid-match-exit"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-279"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.pirate-expression-fix"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-279"]
+sources = []
+default_selected = true
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.auto-dash"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-279"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.scene-styles"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-279"]
+sources = []
+
+
+[[client_policy_rules]]
+plugin = "bubblefighter.fantasy.character-models"
+id = "profile-recommend"
+type = "recommend"
+builds = ["cn-279"]
+sources = []
