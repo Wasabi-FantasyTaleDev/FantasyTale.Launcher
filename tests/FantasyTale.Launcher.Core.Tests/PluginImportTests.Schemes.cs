@@ -179,6 +179,13 @@ public sealed partial class PluginImportTests
         }
 
         var row = Assert.Single((await Call("plugins.list", new { instanceId = "client" }))!.AsArray())!;
+        // Inventory stays readable while the background update check owns the migration lease.
+        using var migrationDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        while (row["selection"] is null)
+        {
+            await Task.Delay(20, migrationDeadline.Token);
+            row = Assert.Single((await Call("plugins.list", new { instanceId = "client" }))!.AsArray())!;
+        }
         Assert.Equal("fixture.successor", row["id"]!.GetValue<string>());
         Assert.Equal("0.1.1", row["version"]!.GetValue<string>());
         Assert.True(row["required"]!.GetValue<bool>());

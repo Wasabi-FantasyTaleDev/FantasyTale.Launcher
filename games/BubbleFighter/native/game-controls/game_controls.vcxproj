@@ -8,6 +8,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="..\..\..\..\native\Native.props" />
   <ItemDefinitionGroup><ClCompile><PreprocessorDefinitions>TOML_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile><Link><ModuleDefinitionFile>game_controls.def</ModuleDefinitionFile><AdditionalDependencies>user32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link></ItemDefinitionGroup>
-  <ItemGroup><ClCompile Include="game_controls.cpp" /><ClCompile Include="ui_service.cpp" /><ClInclude Include="ui_service.h" /><None Include="game_controls.def" /></ItemGroup>
+  <ItemGroup>
+    <!-- The adapter catches client SEH faults after native calls; its locks and retained references must unwind. -->
+    <ClCompile Include="game_controls.cpp"><ExceptionHandling>Async</ExceptionHandling></ClCompile>
+    <ClCompile Include="ui_service.cpp" /><ClInclude Include="ui_service.h" /><ClInclude Include="control_registry.h" /><ClInclude Include="native_controls.h" /><ClInclude Include="signature_readiness.h" /><None Include="game_controls.def" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

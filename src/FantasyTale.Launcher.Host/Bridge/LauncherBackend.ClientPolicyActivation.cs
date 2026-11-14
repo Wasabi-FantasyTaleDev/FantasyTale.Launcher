@@ -94,6 +94,7 @@ internal sealed partial class LauncherBackend
                 {
                     var (selectedSource, selectedPackage) = await HighestAllowedAsync(game, build, id, rule, ct).ConfigureAwait(false);
                     if (selectedSource is null || selectedPackage is null) throw new InvalidOperationException("The recommended plugin is unavailable in configured stores.");
+                    await EnsureRequirementsAsync(selectedSource, selectedPackage, ct).ConfigureAwait(false);
                     var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(selectedSource), selectedPackage.Manifest, ct).ConfigureAwait(false);
                     var selectedId = selectedPackage.PluginDefinition is { } metadata ? ClientPolicyActivation.SelectionId(instance, metadata) : id;
                     stamp = ClientPolicyActivation.SelectionStamp(instance, selectedId);

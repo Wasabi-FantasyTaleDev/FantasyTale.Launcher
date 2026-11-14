@@ -26,7 +26,8 @@
     "installed": "Đã cài đặt"
   },
   "dialog": {
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "close": "Đóng"
   },
   "home": {
     "launch": "Chơi",
@@ -178,6 +179,7 @@
     "clientUnavailable": "Chưa có phiên bản máy khách để thêm.",
     "previousGame": "Trò chơi trước: {name}",
     "nextGame": "Trò chơi tiếp theo: {name}",
+    "buildNotServed": "Chưa có node máy chủ nào hỗ trợ phiên bản client này.",
     "gameComingSoon": "Đang chuẩn bị",
     "gamePending": "Trò chơi này đang được chuẩn bị. Bạn có thể chuyển sang trò chơi khác để chơi.",
     "subtitle": "Bắt đầu trò chơi quen thuộc tại đây.",
@@ -283,7 +285,8 @@
     "loginNeeded": "Hãy đăng nhập máy chủ này để tiếp tục.",
     "unknown": "Chưa có dữ liệu",
     "removeServerTitle": "Xóa máy chủ này?",
-    "removeServerBody": "Xóa “{name}” khỏi thiết bị? Các bản cài đặt trò chơi vẫn được giữ lại."
+    "removeServerBody": "Xóa “{name}” khỏi thiết bị? Các bản cài đặt trò chơi vẫn được giữ lại.",
+    "serverSection": "Máy chủ"
   },
   "updates": {
     "totalSpeed": "Tổng tốc độ tải",
@@ -478,7 +481,8 @@
     "description": "Bật tính năng thử nghiệm hoặc cấu hình và quản lý nguồn cửa hàng.",
     "tabs": {
       "options": "Tùy chọn nhà phát triển",
-      "sources": "Quản lý nguồn cửa hàng"
+      "sources": "Quản lý nguồn cửa hàng",
+      "demo": "Chế độ demo"
     },
     "pending": "Sắp ra mắt",
     "nsfw": {
@@ -490,6 +494,69 @@
       "description": "Hiện hộp thoại Overlay Test sau khi trò chơi khởi động. Áp dụng từ lần chạy trò chơi tiếp theo.",
       "passThrough": "Cho phép nhấp bên ngoài hộp thoại",
       "passThroughDescription": "Cho phép nhấp vào trò chơi bên ngoài hộp thông báo. Áp dụng từ lần chạy trò chơi tiếp theo."
+    },
+    "demo": {
+      "title": "Chế độ Demo giao diện",
+      "description": "Tự động bật khi phát triển trên trình duyệt (npm run dev). Cung cấp dữ liệu mô phỏng và hoạt ảnh tương tác mà không hiển thị bất kỳ dấu hiệu nào bên ngoài tab này.",
+      "disabledNotice": "Chế độ Demo giao diện hiện đang tắt. Hãy bật lại ở trên để thử nghiệm hộp thoại và hoạt ảnh mô phỏng.",
+      "reset": "Đặt lại dữ liệu mô phỏng",
+      "resetDone": "Đã khôi phục dữ liệu không gian làm việc mô phỏng.",
+      "activeTransfers": "Tiến trình demo đang chạy",
+      "groups": {
+        "store": "Cửa hàng & hoạt ảnh tải xuống",
+        "storeDesc": "Mở hộp thoại cài đặt từ cửa hàng và chạy tiến trình tải xuống trực tiếp đồng bộ trên các trang.",
+        "instances": "Ứng dụng khách, nhiều người chơi & máy chủ",
+        "instancesDesc": "Mở trình chỉnh sửa khách, đăng nhập, chi tiết máy chủ, danh sách người chơi và cài đặt máy chủ cục bộ.",
+        "plugins": "Plugin, chính sách & xung đột",
+        "pluginsDesc": "Kiểm tra giải quyết phụ thuộc, đề xuất cài đặt, cảnh báo khởi chạy, xung đột tài nguyên và thông báo khôi phục.",
+        "updates": "Cập nhật trình khởi chạy & máy chủ phản chiếu",
+        "updatesDesc": "Kiểm tra hộp thoại có bản cập nhật, hoạt ảnh tải về, xác nhận khởi động lại, nâng cấp bắt buộc và hướng dẫn lỗi.",
+        "notices": "Thông báo & biểu ngữ lỗi",
+        "noticesDesc": "Kích hoạt thông báo hệ thống và biểu ngữ lỗi kèm chi tiết chẩn đoán."
+      },
+      "actions": {
+        "storeClient": "Hộp thoại cài đặt khách",
+        "storePlugin": "Hộp thoại cài đặt plugin",
+        "storeServer": "Hộp thoại gói máy chủ",
+        "storePluginUpdates": "Cập nhật hàng loạt plugin",
+        "storeSources": "Hộp thoại nguồn cửa hàng",
+        "animateClient": "Chạy hoạt ảnh cài khách",
+        "animatePlugin": "Chạy hoạt ảnh tải plugin",
+        "animateServer": "Chạy hoạt ảnh tải máy chủ",
+        "instanceAdd": "Hộp thoại thêm khách",
+        "instanceEdit": "Hộp thoại sửa khách",
+        "stopGame": "Hộp thoại dừng trò chơi",
+        "auth": "Hộp thoại đăng nhập",
+        "serverDetails": "Chi tiết & cấu hình máy chủ",
+        "serverEdit": "Hộp thoại thêm/sửa máy chủ",
+        "onlinePlayers": "Danh sách người chơi trực tuyến",
+        "serverPlugins": "Plugin đề xuất của máy chủ",
+        "directorySources": "Hộp thoại nguồn danh mục",
+        "hostingSetup": "Hộp thoại thiết lập máy chủ cục bộ",
+        "hostingLog": "Nhật ký chạy máy chủ",
+        "pluginPolicy": "Hộp thoại chính sách plugin",
+        "pluginRecommend": "Hộp thoại plugin đề xuất",
+        "pluginLaunchWarning": "Cảnh báo khởi chạy plugin",
+        "pluginConflict": "Hộp thoại xung đột tài nguyên",
+        "pluginRequiredUpdate": "Cập nhật plugin bắt buộc",
+        "pluginSupport": "Đề nghị hỗ trợ khách mới",
+        "pluginImport": "Hộp thoại nhập plugin",
+        "pluginSchemeShare": "Hộp thoại chia sẻ sơ đồ",
+        "pluginRecovery": "Thông báo khôi phục plugin",
+        "pluginDeprecation": "Thông báo ngừng hỗ trợ plugin",
+        "updateAvailable": "Hộp thoại có bản cập nhật",
+        "updateProgress": "Hoạt ảnh tải bản cập nhật",
+        "updateReady": "Hộp thoại sẵn sàng khởi động lại",
+        "updateMandatory": "Hộp thoại nâng cấp bắt buộc",
+        "updateFailure": "Hướng dẫn khi cập nhật lỗi",
+        "githubMirror": "Gợi ý máy chủ phản chiếu GitHub",
+        "noticeSuccess": "Thông báo plugin thành công",
+        "noticeWarning": "Thông báo plugin cảnh báo",
+        "serverError": "Biểu ngữ lỗi máy chủ",
+        "launchFailure": "Biểu ngữ lỗi dọn dẹp khởi chạy",
+        "instanceBusy": "Biểu ngữ khách đang được dùng",
+        "clearNotices": "Xóa thông báo & lỗi"
+      }
     }
   },
   "nativeUi": {
@@ -913,6 +980,18 @@
   "featureAvailability": {
     "development": "Đang phát triển. Sẽ có trong phiên bản tương lai."
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "Máy chủ này yêu cầu plugin \"{plugin}\". Hãy bật plugin cho máy khách này rồi khởi chạy lại.",
+    "server_plugin_version_low": "Phiên bản \"{plugin}\" đã cài cũ hơn mức máy chủ này cho phép. Hãy cập nhật rồi khởi chạy lại.",
+    "server_plugin_version_high": "Phiên bản \"{plugin}\" đã cài mới hơn mức máy chủ này cho phép. Hãy chọn phiên bản được phép rồi khởi chạy lại.",
+    "server_plugin_policy_conflict": "Máy chủ này tắt \"{plugin}\" nhưng máy khách này cần nó. Hãy hỏi người vận hành máy chủ về quy tắc này.",
+    "client_policy_conflict": "Các quy tắc cho \"{plugin}\" mâu thuẫn với nhau. Hãy hỏi người vận hành máy chủ về quy tắc này.",
+    "client_policy_source_conflict": "Các quy tắc cho \"{plugin}\" chỉ định nguồn tải không có điểm chung. Hãy hỏi người vận hành máy chủ về quy tắc này.",
+    "client_policy_disabled": "Máy chủ này đã tắt \"{plugin}\". Hãy tắt plugin cho máy khách này rồi thử lại.",
+    "plugin_policy_require_unmet": "Hãy cài đặt hoặc bật \"{plugin}\" trước.",
+    "plugin_policy_required_by": "\"{plugin}\" cần plugin này. Hãy tắt \"{plugin}\" trước.",
+    "plugin_policy_conflict_active": "Xung đột với \"{plugin}\". Hãy tắt \"{plugin}\" trước."
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "Kết quả cài đặt gần nhất",
     "phase": "Giai đoạn cài đặt",
@@ -1219,5 +1298,86 @@
     "message": "Một thao tác khác đang dùng cấu hình máy khách này. Hãy thử lại sau ít phút.",
     "title": "Chi tiết máy khách đang được sử dụng",
     "explanation": "Khóa ngăn khởi chạy, tải xuống và lưu cài đặt cùng sửa một máy khách. Tác vụ nền có thể giữ khóa khi không có cửa sổ trò chơi. Chi tiết hiển thị thao tác bị chặn và đường dẫn khóa, chưa xác định tiến trình giữ khóa."
+  },
+  "pluginPolicy": {
+    "title": "Thiếu plugin tiên quyết",
+    "launchTitle": "Thiếu plugin tiên quyết",
+    "disableTitle": "Các plugin khác cần plugin này",
+    "body": "Plugin này cần các plugin tiên quyết. Hãy cài đặt hoặc bật chúng trước khi tiếp tục.",
+    "launchBody": "Plugin này cần các plugin tiên quyết. Hãy cài đặt hoặc bật chúng trước khi tiếp tục.",
+    "disableBody": "Các plugin đang bật bên dưới cần plugin bạn định tắt. Hãy tắt chúng trước hoặc hủy thao tác.",
+    "group": {
+      "require": "Cần cho {name}",
+      "conflict": "Xung đột với {name}"
+    },
+    "rule": {
+      "require": "{plugin} cần {other}",
+      "recommend": "{plugin} đề xuất {other}",
+      "conflict": "{plugin} không thể chạy cùng {other}"
+    },
+    "status": {
+      "missing": "Chưa cài đặt {name}.",
+      "disabled": "Đã cài {name} {version} nhưng đang tắt.",
+      "version": "Chỉ có {name} {version}; cần {range}.",
+      "unavailable": "{name} không hỗ trợ máy khách này.",
+      "conflict": "{name} đang bật."
+    },
+    "install": "Cài đặt",
+    "update": "Cập nhật",
+    "installing": "Đang cài",
+    "updating": "Đang cập nhật",
+    "enable": "Bật",
+    "enabledDone": "Đã bật",
+    "disableAction": "Tắt",
+    "disabledDone": "Đã tắt",
+    "notInstalled": "Chưa cài đặt",
+    "notEnabled": "Chưa bật",
+    "disableOther": "Tắt {name}",
+    "dependentSwitch": "Dùng {name}",
+    "confirm": "Xác nhận",
+    "continue": "Xác nhận",
+    "resolveFirst": "Xác nhận",
+    "recommendedLabel": "Đề xuất",
+    "blockedHint": "Hãy cài đặt hoặc bật plugin cần thiết, hoặc tắt plugin này, trước khi tiếp tục.",
+    "notInStore": "Các cửa hàng đang bật không cung cấp {name} cho máy khách này.",
+    "importEnable": "Bật trên mọi máy khách được hỗ trợ sau khi cài đặt",
+    "supportTitle": "{name} hỗ trợ thêm máy khách",
+    "supportBody": "Phiên bản {version} của {name} nay hỗ trợ các máy khách sau. Chọn nơi để bật.",
+    "supportEnable": "Bật",
+    "supportLater": "Để sau",
+    "chip": {
+      "require": "Cần {name}",
+      "recommend": "Đề xuất {name}",
+      "conflict": "Xung đột với {name}"
+    }
+  },
+  "maintenance": {
+    "title": "Một số máy chủ đang bảo trì",
+    "titleAll": "Máy chủ đang bảo trì",
+    "intro": "Không thể vào các máy chủ đang bảo trì lúc này. Bạn vẫn có thể chơi trên các máy chủ được đánh dấu Có thể vào.",
+    "introAll": "Tất cả máy chủ đang bảo trì. Vui lòng thử lại sau.",
+    "introSection": "Tất cả máy chủ của {section} đang bảo trì. Hãy đăng nhập vào khu máy chủ khác để chơi ngay, hoặc thử lại sau.",
+    "continue": "Tiếp tục",
+    "window": "{start} – {end}",
+    "until": "Đến {end}",
+    "from": "Từ {start}",
+    "players": "{players} / {capacity} người",
+    "canEnter": "Có thể vào",
+    "offlineHint": "Hiện không thể kết nối.",
+    "state": {
+      "maintenance": "Bảo trì",
+      "online": "Có thể vào",
+      "offline": "Ngoại tuyến"
+    },
+    "playHere": "Chơi ở đây",
+    "selected": "Đã chọn"
+  },
+  "notices": {
+    "title": "Thông báo",
+    "next": "Tiếp",
+    "start": "Đã hiểu",
+    "showAll": "Xem tất cả",
+    "allTitle": "Thông báo",
+    "none": "Chưa có thông báo nào."
   }
 }

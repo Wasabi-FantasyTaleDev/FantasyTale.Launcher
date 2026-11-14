@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import MarkdownText from '../components/MarkdownText.vue'
 import { useRoute } from 'vue-router'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { localized } from '../i18n'
 import { state } from '../state'
 import { downloads } from '../downloads/live'
@@ -36,7 +37,7 @@ const session = computed(() => {
   const demo = preview.value, animated = refreshPreview.value, more = route.query.morePlugins === '1'
   if (!demo) return liveStoreSession
   let previewRevision = 0
-  return storeSession(demo ? `preview:${animated}:${more}` : inHost ? 'desktop' : 'browser', {
+  return storeSession(demo ? `preview:${animated}:${more}` : (inHost || demoMode?.enabled) ? 'desktop' : 'browser', {
     sources: async () => demo ? previewStoreSources() : await call('store.sources'),
     catalog: async (source, force) => {
       if (!demo) return await call('store.catalog', { id: source.id, force })
@@ -46,13 +47,13 @@ const session = computed(() => {
         previewRevision++
         const item = catalog.packages.find(item => item.kind === 'plugin')!
         catalog.packages.unshift({ ...item, id: 'preview.new-arrival',
-          name: { en: 'New arrival', 'zh-CN': '新上架插件', 'zh-TW': '新上架外掛' },
+          name: { en: 'New arrival', 'zh-CN': '新上架插件', 'zh-TW': '新上架模組' },
           version: `1.${previewRevision}.0`, manifestSha256: 'a'.repeat(64) })
       }
       return catalog
     },
     plugins: async () => demo ? previewStorePlugins(more) : await call('plugins.list'),
-    error: error => inHost ? (error as Error).message : t('store.browserOnly'),
+    error: error => (inHost || !!demoMode?.enabled) ? (error as Error).message : t('store.browserOnly'),
   })
 })
 const sources = computed(() => session.value.state.sources), catalogs = computed(() => session.value.state.catalogs)
@@ -98,7 +99,7 @@ const installable = computed(() => current.value?.kind === 'client'
   : current.value?.kind === 'plugin' && state.games.some(game => game.id === current.value?.game && game.status === 'enabled' && game.supportsPlugins)
     && state.games.some(game => game.id === current.value?.game && game.builds.some(build => !current.value?.builds.length || current.value.builds.includes(build.id))))
 const unavailableReason = computed(() => {
-  if (!(inHost || preview.value)) return t('store.browserOnly')
+  if (!(inHost || !!demoMode?.enabled || preview.value)) return t('store.browserOnly')
   const game = state.games.find(item => item.id === current.value?.game)
   if (!game || game.status !== 'enabled') return t('clientLibrary.gameUnavailable')
   if (current.value?.kind === 'plugin' && !game.supportsPlugins) return t('clientLibrary.pluginsUnsupported')
@@ -165,7 +166,7 @@ function accent(game: string) { return state.games.find(item => item.id === game
         <WContentTransition><aside :key="currentGroup?.key ?? ''" class="package-detail surface" :aria-label="t('store.overview')" :aria-busy="initialLoading">
           <template v-if="current && currentGroup">
             <div class="detail-heading"><span class="package-symbol detail-symbol" :style="{ '--package-accent': accent(current.game) }"><FluentIcon :glyph="current.kind === 'server' ? 'globe' : current.kind === 'client' ? 'gamepad' : 'puzzle'" :size="34" /></span><span class="detail-game">{{ packageAuthor(current) }}</span><div class="detail-title"><h2>{{ localized(current.name) }}</h2><span v-if="isInstalled(current)" class="installed-badge">{{ t('store.installed') }}</span></div><!-- <p>{{ currentGroup.source.name }}</p> --></div>
-            <div class="detail-scroll"><p class="package-description">{{ localized(current.description) }}</p><label v-if="currentGroup.releases.length > 1 || current.version" class="field"><span>{{ t('store.version') }}</span><WComboBox :model-value="current.manifestSha256" :options="currentGroup.releases.map(item => ({ value: item.manifestSha256, label: item.version || t('clientUpdates.currentFiles') }))" @update:model-value="version = $event" /></label>
+            <div class="detail-scroll"><MarkdownText class="package-description" :source="localized(current.description)" /><label v-if="currentGroup.releases.length > 1 || current.version" class="field"><span>{{ t('store.version') }}</span><WComboBox :model-value="current.manifestSha256" :options="currentGroup.releases.map(item => ({ value: item.manifestSha256, label: item.version || t('clientUpdates.currentFiles') }))" @update:model-value="version = $event" /></label>
               <StorePackageVersion v-if="currentUpdateFrom" class="detail-update-version" :version="current.version" :installed-version="currentUpdateFrom" />
               <dl class="package-facts"><div v-if="current.authors?.length"><dt>{{ t('store.authors') }}</dt><dd>{{ current.authors.join(', ') }}</dd></div><div v-if="current.uploader"><dt>{{ t('store.uploader') }}</dt><dd>{{ current.uploader }}</dd></div><div><dt>{{ t('store.source') }}</dt><dd>{{ currentGroup.source.name }}</dd></div><div><dt>{{ t('store.size') }}</dt><dd>{{ size(current.size) }}</dd></div></dl>
               <h3>{{ t('store.builds') }}</h3><div class="build-tags"><span v-for="build in current.builds" :key="build">{{ buildName(build) }}</span><span v-if="!current.builds.length">{{ t('store.allBuilds') }}</span></div>
@@ -225,7 +226,7 @@ function accent(game: string) { return state.games.find(item => item.id === game
 .package-copy { display: grid; align-content: center; gap: 4px; min-width: 0; }.package-copy strong { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }.package-copy small, .package-copy > .package-version { color: var(--text-secondary); font-size: 12px; line-height: 16px; }
 .package-bottom { display: flex; justify-content: space-between; gap: 8px; grid-column: 1 / -1; padding-top: 10px; border-top: 1px solid var(--stroke-divider); color: var(--text-secondary); font-size: 11px; }.package-bottom > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.package-bottom > span:last-child { flex: none; }
 .detail-heading { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 28px 24px 20px; border-bottom: 1px solid var(--stroke-divider); }.detail-symbol { width: 72px; height: 76px; border-radius: 14px; margin-bottom: 18px; }.detail-game { font-size: 12px; color: var(--text-secondary); }.detail-heading h2 { font-size: 23px; line-height: 30px; font-weight: 600; margin: 6px 0; }.detail-heading p { color: var(--text-secondary); font-size: 12px; margin: 0; }
-.detail-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 24px; }.package-description { font-size: 13px; color: var(--text-secondary); line-height: 22px; margin: 0 0 20px; white-space: pre-line; }.package-facts { display: grid; gap: 12px; margin: 20px 0; font-size: 12px; }.package-facts > div { display: flex; justify-content: space-between; gap: 16px; }.package-facts dt { color: var(--text-secondary); flex: none; }.package-facts dd { margin: 0; text-align: right; overflow-wrap: anywhere; }.detail-scroll h3 { font-size: 12px; font-weight: 600; margin: 0 0 10px; }
+.detail-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 24px; }.package-description { font-size: 13px; color: var(--text-secondary); line-height: 22px; margin: 0 0 20px; }.package-facts { display: grid; gap: 12px; margin: 20px 0; font-size: 12px; }.package-facts > div { display: flex; justify-content: space-between; gap: 16px; }.package-facts dt { color: var(--text-secondary); flex: none; }.package-facts dd { margin: 0; text-align: right; overflow-wrap: anywhere; }.detail-scroll h3 { font-size: 12px; font-weight: 600; margin: 0 0 10px; }
 .build-tags { display: flex; flex-wrap: wrap; gap: 6px; }.build-tags span { font-size: 11px; padding: 2px 8px; border: 1px solid var(--card-stroke-default); border-radius: 4px; background: var(--subtle-secondary); }
 .detail-actions { flex: none; padding: 16px 24px; border-top: 1px solid var(--stroke-divider); }.detail-actions > button { width: 100%; }
 .store-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px; gap: 12px; color: var(--text-secondary); }.store-empty h2 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 4px 0 0; }.store-empty p { margin: 0; font-size: 13px; max-width: 280px; }.store-empty > button { margin-top: 6px; }

@@ -68,7 +68,7 @@ public static class PluginResolver
             // The launcher owns file deployment; only matching in-memory patches need native activation.
             var filePatches = package.Kind == "files" && package.Patches.Any(patch =>
                 patch.Builds.Count == 0 || PluginCatalog.Matches(patch.Builds, build));
-            if (filePatches || package.Kind is not ("files" or "overlay" or "service" or "resources"))
+            if (filePatches || package.Kind is not ("files" or "overlay" or "service" or "resources" or "assets"))
                 result.Add(new SessionPluginSpec(package.Id, package.Version, package.Folder, selection.Required || PluginCatalog.IsRequired(package, build), options));
         }
         return result;

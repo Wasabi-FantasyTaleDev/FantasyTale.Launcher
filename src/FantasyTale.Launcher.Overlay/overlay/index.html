@@ -43,7 +43,7 @@
     .catch(error => { window.fantasyTaleGameUiError = String(error); return null; });
 </script>
 <script type="module">
-import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks } from './panel-stack.js';
+import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks, subscribePanel } from './panel-stack.js';
 import { resolveAnchor } from './anchors.js';
 import { waitForNativeSurface } from './surface-ready.js';
 /**
@@ -77,6 +77,8 @@ const localeCatalog = await fetch('/locales.json').then(r => {
 });
 const requestedLocale = params.get('locale') ?? localeCatalog.default;
 const activeLocale = localeCatalog.locales[requestedLocale]?.status === 'ready' ? requestedLocale : localeCatalog.default;
+// Panels carry their own labels in every launcher language, so they follow the launcher even where these shell strings fall back.
+const panelLocale = localeCatalog.locales[requestedLocale] ? requestedLocale : activeLocale;
 document.documentElement.lang = activeLocale;
 function translate(key) {
     return localeCatalog.locales[activeLocale].messages[key]
@@ -220,6 +222,23 @@ window.overlayBus = {
     /** Build capabilities are selected by data, independently of a plugin's shared behavior. */
     buildContext: null,
     hasCapability(name) { return this.buildContext?.profile?.capabilities?.includes(name) === true; },
+    /**
+     * URL of a file inside a package of this launch: an enabled overlay package (path relative to its folder) or an
+     * assets package one of them requires (path relative to its `[assets] root`). The launcher serves these read-only,
+     * so `<img>`, `fetch()` and CSS `url()` work with the result. Both arguments are validated here and by the launcher.
+     * Mounted game UI components receive the same helper through inject('fantasyTalePackages').url.
+     * @param {string} packageId  package identifier, 1..96 characters of a-z 0-9 . -
+     * @param {string} path       slash-separated relative path without empty, '.' or '..' segments
+     * @returns {string}
+     */
+    packageUrl(packageId, path) {
+        if (typeof packageId !== 'string' || !/^[a-z0-9.-]{1,96}$/.test(packageId)) throw new TypeError('Invalid package id.');
+        if (typeof path !== 'string' || path.length === 0 || path.length > 1024) throw new TypeError('Invalid package file path.');
+        const parts = path.split('/');
+        if (parts.some(part => part === '' || part === '.' || part === '..' || part.length > 255 || part.endsWith('.') || part.endsWith(' ')
+            || /[\:*?"<>|\x00-\x1f\x7f]/.test(part))) throw new TypeError('Invalid package file path.');
+        return 'https://packages.fantasytale.local/' + packageId + '/' + parts.map(encodeURIComponent).join('/');
+    },
     /** Shell strings currently ship in zh-CN; other catalog rows remain explicit TODOs. */
     locale: activeLocale,
     translate,
@@ -241,12 +260,172 @@ window.overlayBus = {
      * @param {string}   panelId
      * @param {string}   name
      * @param {Function} handler  receives (data, panelId)
+     * @returns {Function} Unsubscribe this registration; safe after panel replacement or removal.
      */
     on(panelId, name, handler) {
+        return subscribePanel(panels, panelId, name, handler);
+    },
+
+    /**
+     * The companion channel of the package that owns this panel. Every feature uses the same calls; the package's
+     * manifest decides which message types exist here, and the launcher refuses any other.
+     *   request(type, version, payload, { timeoutMs }) -> Promise<{ status, response, request_id }>
+     *   send(type, version, payload)                  -> Promise<{ status }>
+     *   on(type, handler(payload, message))           -> unsubscribe function
+     *   onState(handler({ state, capabilities }))     -> unsubscribe function; `state` holds the latest value
+     * Mounted game UI components receive the same object through inject('fantasyTaleCompanion').
+     * @param {string} panelId
+     */
+    companion(panelId) {
         const entry = panels.get(panelId);
-        if (!entry) return;
-        if (!entry.listeners.has(name)) entry.listeners.set(name, []);
-        entry.listeners.get(name).push(handler);
+        if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
+        if (entry.companion) return entry.companion;
+        let next = 0;
+        let current = { state: 'unavailable', capabilities: [] };
+        const pending = new Map();
+        const routes = new Map();
+        const watchers = new Set();
+        this.on(panelId, 'companion.response', data => {
+            const waiting = pending.get(data.id);
+            if (!waiting) return;
+            pending.delete(data.id);
+            clearTimeout(waiting.timer);
+            waiting.resolve({ status: data.status, response: data.response ?? null, request_id: data.request_id ?? null });
+        });
+        this.on(panelId, 'companion.event', data => {
+            for (const handler of routes.get(data.type) ?? []) {
+                try { handler(data.payload ?? null, data); } catch (error) { console.error(error); }
+            }
+        });
+        this.on(panelId, 'companion.state', data => {
+            current = { state: String(data.state ?? 'unavailable'), capabilities: Array.isArray(data.capabilities) ? data.capabilities : [] };
+            for (const watcher of watchers) {
+                try { watcher(current); } catch (error) { console.error(error); }
+            }
+        });
+        // The launcher answers or the call times out; nothing waits forever and at most 32 calls are open at once.
+        const call = (method, type, version, payload, timeoutMs) => new Promise(resolve => {
+            if (pending.size >= 32) { resolve({ status: 'busy', response: null, request_id: null }); return; }
+            const id = 'r' + (++next);
+            const wait = Math.min(Math.max(Number(timeoutMs) || 15000, 100), 300000);
+            const timer = setTimeout(() => { pending.delete(id); resolve({ status: 'timeout', response: null, request_id: null }); }, wait + 1000);
+            pending.set(id, { resolve, timer });
+            this.emit(panelId, 'companion.' + method, { id, type, version, payload: payload ?? null, timeout_ms: Number(timeoutMs) || 0 });
+        });
+        entry.companion = {
+            get state() { return current; },
+            onState(handler) { watchers.add(handler); handler(current); return () => watchers.delete(handler); },
+            on(type, handler) {
+                if (!routes.has(type)) routes.set(type, new Set());
+                routes.get(type).add(handler);
+                return () => routes.get(type)?.delete(handler);
+            },
+            request: (type, version, payload, options = {}) => call('request', type, version, payload, options.timeoutMs),
+            send: (type, version, payload) => call('send', type, version, payload, 0),
+        };
+        this.emit(panelId, 'companion.state', {});
+        return entry.companion;
+    },
+
+    /**
+     * Let a panel's own page show, hide, place and configure itself, as the launcher's show/hide/configure/anchor
+     * messages do. Options: visible, interactive, modal, backdrop, backdropColor, layer (0..10000), anchor (game-pixel
+     * rectangle, see anchors.js, or null to release it).
+     * @param {string} panelId
+     * @param {object} options
+     */
+    present(panelId, options = {}) {
+        const entry = panels.get(panelId);
+        if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
+        if (Number.isInteger(options.layer) && options.layer >= 0 && options.layer <= 10000) entry.layer = options.layer;
+        if (typeof options.interactive === 'boolean') entry.interactive = options.interactive;
+        if (typeof options.modal === 'boolean') entry.modal = options.modal;
+        if (typeof options.backdrop === 'boolean') entry.backdrop = options.backdrop;
+        if (options.backdropColor === null) entry.backdropColor = null;
+        else if (typeof options.backdropColor === 'string' && options.backdropColor.length <= 64
+            && CSS.supports('color', options.backdropColor)) entry.backdropColor = options.backdropColor;
+        if (options.anchor !== undefined) {
+            if (!entry.anchor && options.anchor) entry.originalLayout = entry.host.style.cssText;
+            entry.anchor = options.anchor;
+            if (!options.anchor) entry.host.style.cssText = entry.originalLayout ?? '';
+        }
+        if (options.visible === true) { entry.requestedVisible = true; entry.host.classList.add('visible'); bringToFront(panels, panelId); }
+        else if (options.visible === false) hidePanel(entry);
+        else entry.host.classList.toggle('visible', entry.requestedVisible);
+        updateAnchor(entry);
+        clampPanel(entry);
+        reportPresentation();
+    },
+
+    /**
+     * Load a package's own feature module and mount the component it builds. The module's default export receives
+     * { vue, components, theme, locale, panelId, buildContext, companion, packages, present, emit, on } and returns a
+     * Vue component; the feature's logic lives in its package, so a new feature needs no launcher change.
+     * @param {string} panelId  the package's entry panel, named by its package id
+     * @param {string} path     package-relative path of an ES module (.js or .mjs)
+     */
+    async mountPackageModule(panelId, path) {
+        const entry = panels.get(panelId);
+        if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
+        if (typeof path !== 'string' || !/^[A-Za-z0-9_][A-Za-z0-9_./-]{0,127}\.m?js$/.test(path) || path.includes('..'))
+            throw new Error('A package module must be a package-relative .js or .mjs path.');
+        const { vue, components } = await uiLibrary;
+        const module = await import(window.overlayBus.packageUrl(panelId, path));
+        if (typeof module.default !== 'function') throw new Error(`Package module ${path} has no default setup function.`);
+        const bus = window.overlayBus;
+        const component = await module.default({
+            vue, components, theme: window.fantasyTaleOverlayTheme, locale: panelLocale, panelId,
+            buildContext: bus.buildContext ?? null, companion: bus.companion(panelId), nativeUi: bus.nativeUi(panelId),
+            packages: { url: (path, packageId = panelId) => bus.packageUrl(packageId, path) },
+            present: options => bus.present(panelId, options),
+            emit: (name, data) => bus.emit(panelId, name, data), on: (name, handler) => bus.on(panelId, name, handler),
+        });
+        if (!component || (typeof component !== 'object' && typeof component !== 'function'))
+            throw new Error(`Package module ${path} did not return a component.`);
+        return window.overlayBus.mountGameUi(panelId, component, {}, null, { bare: true });
+    },
+
+    /**
+     * The game's own controls through Game Control Support, for this panel's package. Native first: use the overlay's
+     * own drawing only when an operation is unsupported or not ready. Every call resolves:
+     *   capabilities()             -> { status, result: { build, operations: [{ kind, supported, ready, features }] } }
+     *   invoke(request)            -> { status, result: { operationId, status, buttonId } }  (request as IGameNativeUi)
+     *   result(operationId)        -> { status, result }  (reads the outcome; never presents again)
+     *   available(kind)            -> true when the kind is supported and ready now
+     * status is completed, unavailable (no hook channel), busy, failed or timeout.
+     * @param {string} panelId
+     */
+    nativeUi(panelId) {
+        const entry = panels.get(panelId);
+        if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
+        if (entry.nativeUi) return entry.nativeUi;
+        let next = 0;
+        const pending = new Map();
+        this.on(panelId, 'native-ui.response', data => {
+            const waiting = pending.get(data.id);
+            if (!waiting) return;
+            pending.delete(data.id);
+            clearTimeout(waiting.timer);
+            waiting.resolve({ status: String(data.status ?? 'failed'), result: data.result ?? null });
+        });
+        const call = (action, fields) => new Promise(resolve => {
+            if (pending.size >= 16) { resolve({ status: 'busy', result: null }); return; }
+            const id = 'n' + (++next);
+            const timer = setTimeout(() => { pending.delete(id); resolve({ status: 'timeout', result: null }); }, 15000);
+            pending.set(id, { resolve, timer });
+            this.emit(panelId, 'native-ui.request', { id, action, ...fields });
+        });
+        entry.nativeUi = {
+            capabilities: () => call('capabilities', {}),
+            invoke: request => call('invoke', { request }),
+            result: operationId => call('result', { operation_id: operationId }),
+            async available(kind) {
+                const reply = await call('capabilities', {});
+                return reply.status === 'completed'
+                    && (reply.result?.operations ?? []).some(op => op.kind === kind && op.supported && op.ready);
+            },
+        };
+        return entry.nativeUi;
     },
 
     /** Resolve the optional Vue component library and the selected native theme. */
@@ -254,8 +433,11 @@ window.overlayBus = {
         return uiLibrary.then(value => ({ ...value, theme: window.fantasyTaleOverlayTheme }));
     },
 
-    /** Mount one library component into a panel's shadow root. */
-    async mountGameUi(panelId, component, props = {}, target = null) {
+    /**
+     * Mount one library component into a panel's shadow root. A bare mount (a package's own feature module) gets no
+     * shared provider and no wait for a native surface: it supplies its own resources and may draw nothing for a while.
+     */
+    async mountGameUi(panelId, component, props = {}, target = null, { bare = false } = {}) {
         const entry = panels.get(panelId);
         if (!entry) throw new Error(`Unknown overlay panel: ${panelId}`);
         const { vue, components } = await uiLibrary;
@@ -275,7 +457,7 @@ window.overlayBus = {
         if (!(mountPoint instanceof HTMLElement)) throw new Error('The panel mount target was not found.');
         entry.app?.unmount();
         entry.uiObserver?.disconnect();
-        const surface = waitForNativeSurface(mountPoint);
+        const surface = bare ? { ready: Promise.resolve(), fail() {} } : waitForNativeSurface(mountPoint);
         const emitComponentEvent = (name, data) => {
             if (panels.get(panelId) !== entry) return;
             if (name === 'action') playSound(panelId, 'button-press');
@@ -284,7 +466,15 @@ window.overlayBus = {
             window.overlayBus.emit(panelId, 'game-ui.' + name,
                 name === 'error' ? { message: String(data) } : data ?? {});
         };
-        entry.app = vue.createApp({
+        const handlers = {
+            onAction: data => emitComponentEvent('action', data),
+            onChange: data => emitComponentEvent('change', data),
+            onClose: data => emitComponentEvent('close', data),
+            onSave: data => emitComponentEvent('save', data),
+            onCancel: () => emitComponentEvent('cancel'),
+            onError: e => emitComponentEvent('error', e),
+        };
+        entry.app = vue.createApp(bare ? { render: () => vue.h(selected, { ...props, ...handlers }) } : {
             render: () => vue.h(components.BfUiProvider,
                 { theme: window.fantasyTaleOverlayTheme, clientDate: window.overlayBus.buildContext?.buildDate?.slice(0, 10), resourceRoot, onError: e => emitComponentEvent('error', e) },
                 { default: () => vue.h(selected, { ...props,
@@ -296,6 +486,8 @@ window.overlayBus = {
                     onError: e => emitComponentEvent('error', e),
                 }) }),
         });
+        entry.app.provide('fantasyTaleCompanion', window.overlayBus.companion(panelId));
+        entry.app.provide('fantasyTalePackages', { url: (packageId, path) => window.overlayBus.packageUrl(packageId, path) });
         const mounted = entry.app.mount(mountPoint);
         // The resource-backed renderer creates its title bar asynchronously.
         // Observe that creation without polling, then attach the default drag handle.
@@ -419,8 +611,17 @@ async function handleMessage(e) {
                 content.innerHTML = html;
                 entry.shadow.append(content);
             }
+            const moduleRoot = entry.shadow.querySelector('[data-game-ui-root][data-game-ui-module]');
             const componentRoot = entry.shadow.querySelector('[data-game-ui-root][data-game-ui-component]');
-            if (componentRoot instanceof HTMLElement) {
+            if (moduleRoot instanceof HTMLElement) {
+                try {
+                    await window.overlayBus.mountPackageModule(panelId, moduleRoot.dataset.gameUiModule);
+                    window.overlayBus.emit(panelId, 'game-ui.mounted');
+                } catch (error) {
+                    console.error(error);
+                    window.overlayBus.emit(panelId, 'game-ui.error', { message: String(error) });
+                }
+            } else if (componentRoot instanceof HTMLElement) {
                 try {
                     await window.overlayBus.mountGameUi(panelId, componentRoot.dataset.gameUiComponent,
                         JSON.parse(componentRoot.dataset.gameUiProps || '{}'));
@@ -533,7 +734,7 @@ async function handleMessage(e) {
                 break;
             }
             const handlers = entry.listeners.get(msg.name);
-            handlers?.forEach(h => h(msg.data ?? {}, panelId));
+            handlers?.slice().forEach(h => h(msg.data ?? {}, panelId));
             break;
         }
     }

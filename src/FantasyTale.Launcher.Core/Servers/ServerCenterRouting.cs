@@ -33,6 +33,20 @@ public static class ServerCenterRouting
         return await PrepareAsync(directory, resolver, supportsAutomatic, launcherLogin, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Keeps only nodes that serve the directory's build, so the Center list a Gateway shows never offers a node the
+    /// client cannot play on. A node that does not state its builds is kept, and a manual server left without any
+    /// node is dropped; a server that listed no node to begin with (a reserved entry) is kept as it came.
+    /// </summary>
+    internal static ServerDirectory ServingBuild(ServerDirectory directory) => directory with
+    {
+        Servers = directory.Servers
+            .Select(row => row with { Targets = row.Targets.Where(target => target.ClientBuilds is null
+                || target.ClientBuilds.Contains(directory.Build, StringComparer.Ordinal)).ToArray() })
+            .Where((row, index) => row.Automatic || row.Targets.Count > 0 || directory.Servers[index].Targets.Count == 0)
+            .ToArray(),
+    };
+
     /// <summary>Rejects an enabled Center whose mode this launcher cannot honour.</summary>
     /// <remarks>
     /// A disabled Center is inert: its mode is never read, so an unknown or future value must not reject
@@ -53,6 +67,7 @@ public static class ServerCenterRouting
         if (directory is null) return new(false, [], []);
         LauncherApiClient.ValidateDirectory(directory, directory.Build, configuredMembership: true);
         if (directory.Center is not { Enabled: true, Mode: "gateway" }) return new(false, [], []);
+        directory = ServingBuild(directory);
         if (supportsAutomatic && launcherLogin is not ("none" or "game") && directory.Servers.Any(row => row.Automatic))
             return new(true, [], []) { Directory = directory };
 

@@ -86,6 +86,25 @@ def package(folder: Path, output: Path, *, uploader: str = "", archive: bool = F
         raise ValueError("Plugin aliases must be distinct and exclude the current identifier")
     for alias in aliases:
         identifier(alias)
+    requires = p.get("requires", [])
+    if not isinstance(requires, list) or any(not isinstance(item, str) for item in requires):
+        raise ValueError("Plugin requirements must be package identifiers")
+    for item in requires:
+        identifier(item.split("@", 1)[0])
+    if plugin.get("schema") not in (1, 2) or plugin.get("schema") == 1 and "plugin_policy" in plugin:
+        raise ValueError("plugin.toml schema must be 1, or 2 for [[plugin_policy]] rules")
+    policy = plugin.get("plugin_policy", [])
+    if not isinstance(policy, list) or any(not isinstance(rule, dict) or rule.get("type") not in ("require", "recommend", "conflict")
+                                           or not isinstance(rule.get("plugin"), str) for rule in policy):
+        raise ValueError("Plugin policy rules need a plugin identifier and a require, recommend or conflict type")
+    for rule in policy:
+        identifier(rule["plugin"])
+    if p.get("kind") == "assets":
+        # Generated game art is staged into the package before publication; an empty data folder is a packaging mistake.
+        root = plugin.get("assets", {}).get("root")
+        data = (folder / root) if isinstance(root, str) and root else None
+        if data is None or not data.is_dir() or not any(path.is_file() for path in data.rglob("*")):
+            raise ValueError(f"Assets package {identity} has no files under its data folder; stage the generated data first")
     requirements = tomllib.loads(Path(__file__).with_name("package-requirements.toml").read_text(encoding="utf-8"))
     policy = requirements.get("plugins", {}).get(identity, {})
     for relative in policy.get("required", []):
@@ -165,8 +184,8 @@ def package(folder: Path, output: Path, *, uploader: str = "", archive: bool = F
     row += f"authors = [{', '.join(quote(author) for author in authors)}]\n"
     if p.get("minimum_launcher_version"):
         row += f"minimum_launcher_version = {quote(server_version(p['minimum_launcher_version']))}\n"
-    if aliases:
-        # Update discovery needs former identities before downloading the package itself.
+    if aliases or requires or policy:
+        # Update discovery needs former identities, and installation needs requirements and policy, before downloading the package itself.
         row += f"plugin_definition = {quote((folder / 'plugin.toml').read_text(encoding='utf-8'))}\n"
     if uploader:
         row += f"uploader = {quote(uploader)}\n"

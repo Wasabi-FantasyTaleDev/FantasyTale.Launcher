@@ -20,6 +20,28 @@ public sealed class ServerCenterRoutingTests
 
     private static ServerDirectoryTarget Node(string id, string host) => new(id, host, 17110, "shared", "", true, false, 1, 100);
 
+    /// <summary>
+    /// The Gateway's Center list offers only nodes that serve the client's build: a node that states other builds is
+    /// dropped, a manual server left without a node goes with it, and nodes or reserved servers that state nothing stay.
+    /// </summary>
+    [Fact]
+    public void CenterListKeepsOnlyNodesServingTheBuild()
+    {
+        var legacyOnly = Node("legacy-only", "192.0.2.3") with { ClientBuilds = ["kr-812"] };
+        var modernOnly = Node("modern-only", "192.0.2.4") with { ClientBuilds = ["kr-1256"] };
+        var directory = new ServerDirectory(1, "kr-812",
+        [
+            new(1, "Automatic", true, [legacyOnly, modernOnly]),
+            new(2, "Legacy", false, [legacyOnly]),
+            new(3, "Modern", false, [modernOnly]),
+            new(4, "Unstated", false, [Node("unstated", "192.0.2.5")]),
+            new(5, "Reserved", false, []),
+        ]) { Center = new(true, "gateway") };
+        var served = ServerCenterRouting.ServingBuild(directory);
+        Assert.Equal(["Automatic", "Legacy", "Unstated", "Reserved"], served.Servers.Select(row => row.Name));
+        Assert.Equal(["legacy-only"], served.Servers[0].Targets.Select(target => target.NodeId));
+    }
+
     private static ServerDirectoryResolver NoNetwork() => new(
         (_, _) => throw new InvalidOperationException("Native handling must not resolve Gateway destinations."),
         (_, _) => throw new InvalidOperationException("This route must not measure automatic candidates."));

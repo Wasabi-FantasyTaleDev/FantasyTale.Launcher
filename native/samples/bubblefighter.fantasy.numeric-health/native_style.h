@@ -7,10 +7,14 @@
 namespace native_style {
 using ConstructOptions = void*(__thiscall*)(void*);
 using DestroyOptions = void(__thiscall*)(void*);
+using ConstructString = void*(__thiscall*)(const wchar_t**, const wchar_t*);
+using ReleaseString = void(__thiscall*)(const wchar_t**);
 using LoadSprite = uintptr_t(__thiscall*)(void*, const void*, void*);
 using MeasureNumber = void(__thiscall*)(void*, float, float, int, const wchar_t*, float, float, float, int, float*);
 ConstructOptions construct_options = nullptr;
 DestroyOptions destroy_options = nullptr;
+ConstructString construct_string = nullptr;
+ReleaseString release_string = nullptr;
 LoadSprite load_sprite = nullptr;
 MeasureNumber measure_number = nullptr;
 struct BorrowedString {
@@ -20,6 +24,28 @@ struct BorrowedString {
     uint32_t capacity;
 };
 static_assert(sizeof(BorrowedString) == 24);
+
+// cn-279 sub_401570 and cn-324 sub_401C00 allocate the header required by their sprite loaders.
+class NativeString {
+    const wchar_t* value_ = nullptr;
+public:
+    explicit NativeString(const wchar_t* value) { construct_string(&value_, value); }
+    ~NativeString() { if (value_) release_string(&value_); }
+    NativeString(const NativeString&) = delete;
+    NativeString& operator=(const NativeString&) = delete;
+    const wchar_t* const* address() const { return value_ ? &value_ : nullptr; }
+};
+
+class ResourceOptions {
+    std::vector<uint8_t> storage_;
+public:
+    ResourceOptions() : storage_(client_descriptor.resource_options_size) { construct_options(storage_.data()); }
+    // cn-279 sub_74DBE0 destroys the COW member at +32; kr-812 sub_426D10 destroys the full record.
+    ~ResourceOptions() { destroy_options(storage_.data() + client_descriptor.destroy_options_offset); }
+    ResourceOptions(const ResourceOptions&) = delete;
+    ResourceOptions& operator=(const ResourceOptions&) = delete;
+    void* address() { return storage_.data(); }
+};
 using NumberTable = std::array<uint32_t, numeric_health::number_table_words>;
 NumberTable digits{};
 NumberTable percent_digits{};
@@ -84,19 +110,25 @@ bool validate_percent_assets(const std::wstring& folder) {
 }
 
 uintptr_t load(const wchar_t* path) {
-    if (!construct_options || !destroy_options || !load_sprite) return 0;
+    if (!path || !construct_options || !destroy_options || !load_sprite ||
+        client_descriptor.resource_options_size < 4 || client_descriptor.resource_options_size > 4096 ||
+        client_descriptor.destroy_options_offset > client_descriptor.resource_options_size - 4) return 0;
     uintptr_t manager = 0;
     if (!client_descriptor.resource_manager_rva ||
         !read(image_base + client_descriptor.resource_manager_rva, &manager, sizeof(manager)) || !manager) return 0;
+    if (client_descriptor.resource_string_abi == "cow_wstring4") {
+        if (!construct_string || !release_string) return 0;
+        NativeString name(path);
+        if (!name.address()) return 0;
+        ResourceOptions options;
+        return load_sprite(reinterpret_cast<void*>(manager), name.address(), options.address());
+    }
+    if (client_descriptor.resource_string_abi != "msvc_wstring24") return 0;
     const auto length = static_cast<uint32_t>(wcslen(path));
     BorrowedString name{path, {}, length,
-        std::max(length, client_descriptor.resource_string_inline_capacity)};
-    std::vector<uint8_t> options(client_descriptor.resource_options_size);
-    construct_options(options.data());
-    const auto result = load_sprite(
-        reinterpret_cast<void*>(manager), &name, options.data());
-    destroy_options(options.data());
-    return result;
+        std::max(length, client_descriptor.resource_string_inline_capacity + 1)};
+    ResourceOptions options;
+    return load_sprite(reinterpret_cast<void*>(manager), &name, options.address());
 }
 
 bool prepare() {

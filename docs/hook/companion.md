@@ -218,6 +218,71 @@ channel availability and report `delivery-failed` when bounded result delivery
 fails. Reconnect tests verify that old dialogs close and their late button actions
 cannot enter a fresh connection, while fresh notifications still render.
 
+## Panel consumers: features without launcher code
+
+A new server feature needs no launcher or companion change. It is a server plugin that offers and routes its own
+message types, plus an overlay package whose entry page uses them. The package declares exactly the types it may use:
+
+```toml
+[plugin]
+id = "bubblefighter.fantasy.example"
+kind = "overlay"
+
+[overlay]
+entry = "example.html"
+
+[companion.messages]
+"game.example.changed" = 1   # server event the page listens to
+"game.example.get" = 1       # request the page sends
+```
+
+The launcher bridges every such package the same way. The package gets its own channel, limited to the declared
+types at the declared schemas. Server events of those types reach its entry panel, and its page may send and request
+only those types: any other type or schema is answered `not_granted` without reaching the server. The grants count
+toward the same per-launch budget as native consumers.
+
+The entry page, or a game UI component it mounts, uses one API for every feature:
+
+```js
+const companion = overlayBus.companion(panelId);      // in a component: inject('fantasyTaleCompanion')
+companion.onState(({ state, capabilities }) => {});   // 'connected' and the granted types the server offers
+companion.on('game.example.changed', payload => {});
+const { status, response } = await companion.request('game.example.get', 1, { page: 1 }, { timeoutMs: 5000 });
+await companion.send('game.example.note', 1, { text: 'hi' });
+```
+
+Every call resolves: with the server's reply, or with `not_granted`, `busy` (more than 32 open calls),
+`unavailable`, `not_bound`, `timeout` or `failed`. A feature should still show its information without the
+overlay, because a player without the package receives it from the server in chat.
+
+### Package modules
+
+An entry page may name an ES module of its own package instead of a library component:
+
+```html
+<div data-game-ui-root data-game-ui-module="feature.js"></div>
+```
+
+The overlay imports `https://packages.fantasytale.local/<package id>/feature.js` and calls its default export with
+`{ vue, components, theme, locale, panelId, buildContext, companion, nativeUi, packages, present, emit, on }`; it returns the
+Vue component to mount. The component brings its own `BfUiProvider` and resource root (usually a required assets
+package) and is mounted without the shared provider. `present({ visible, interactive, modal, backdrop, layer, anchor })`
+shows, hides and places the panel, as the launcher's own show, hide, configure and anchor messages do. `nativeUi` reaches the game's own
+controls (message boxes, notifications, announcements, local chat) through Game Control Support; a feature uses it
+first and draws its own overlay version only when the native operation is unavailable or fails. All the
+feature's logic is in its package, so shipping or changing a feature needs no launcher release.
+
+### Ban Pick
+
+The store package `bubblefighter.fantasy.banpick` is such an overlay package. It requires the shared
+`bubblefighter.fantasy.item-previews` and `bubblefighter.fantasy.game-ui-resources` assets packages and declares
+`game.ban.list.changed`, `game.ban.start.confirm`, `game.ban.list.get` and `game.command.execute`, all schema one. The
+server decides everything: its list message says whether the player is in a room and hosts it. The host gets a button
+that opens the editor; other members get it once the host has set a list and see the editor read-only. Applying sends
+the whole list as one `bp set` (or `bp clear`) through `game.command.execute`, keeping groups and items the editor
+cannot show, so the server checks it like a typed command and records its source as Nirinsou. The host's start
+confirmation is a native message box whose yes is the server's own command.
+
 ## Native consumers (runtime 3.3.3)
 
 An optional native plugin requests only its own message/schema pairs in the same

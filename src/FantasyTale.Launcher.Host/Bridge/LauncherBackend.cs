@@ -43,6 +43,8 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
     private readonly Task<IReadOnlyList<StoreCatalogSyncState>> _catalogSync;
     private readonly ClientDownloadService _downloads;
     private readonly ClientUpdateSettings _updateSettings;
+    private readonly SeenNoticeStore _seenNotices;
+    private readonly ServerSectionCache _sectionCache;
     private readonly ClientUpdateService _updates;
     private readonly LauncherUpdateService _launcherUpdates;
     private readonly LocalServerProfiles _hostingProfiles;
@@ -65,6 +67,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
     private readonly PluginDeprecationService _pluginDeprecations;
     private readonly PluginUpdateMonitor _pluginMonitor;
     private readonly PluginUpgradeActivationService _pluginUpgrades;
+    private readonly PluginSupportOffers _supportOffers;
     private readonly CancellationTokenSource _pluginUpgradeStop = new();
     private readonly Dictionary<string, long> _launchDeadlines = new(StringComparer.Ordinal);
     private readonly Dictionary<string, long> _cancelledLaunchDeadlines = new(StringComparer.Ordinal);
@@ -98,7 +101,8 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         _serverDirectoryResolver = new(diagnostics: launchDiagnostics);
         _launches = new LaunchService(_store, diagnosticSink: launchDiagnostics);
         _overlay = new OverlayProcessManager(AppContext.BaseDirectory, launchDiagnostics, OverlayTestSettings.Load(dataRoot));
-        _sessionServices = new LauncherServiceManager(_overlay.GetHost, CreateCompanionAsync);
+        _sessionServices = new LauncherServiceManager(_overlay.GetHost, CreateCompanionAsync, _overlay.GetEntryPanel,
+            (name, detail) => _launchDiagnostics.Record(name, detail));
         _servers = new ServerStore(Path.Combine(dataRoot, "servers"));
         _hostingProfiles = new LocalServerProfiles(Path.Combine(dataRoot, "hosting", "profiles"));
         _hosting = new LocalServerService(Path.Combine(dataRoot, "hosting", "runs"), Path.Combine(dataRoot, "hosting", "data"));
@@ -114,18 +118,24 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         _downloads = new ClientDownloadService(_store, _transferHttp, Path.Combine(dataRoot, "downloads"),
             id => _sources.List().SingleOrDefault(s => s.Id == id), OpenSource, _plugins, Game, _serverPackages);
         _updateSettings = new ClientUpdateSettings(dataRoot);
+        _seenNotices = new SeenNoticeStore(dataRoot);
+        _sectionCache = new ServerSectionCache(dataRoot);
         _pluginUpgrades = new PluginUpgradeActivationService(dataRoot, _store, _plugins, _downloads, Game,
             id => _launches.IsActive(id), id => _sources.List().SingleOrDefault(source => source.Id == id),
             () => _updateSettings.Value.RemoveOldPluginVersions);
+        _supportOffers = new PluginSupportOffers(dataRoot);
+        _plugins.PackageInstalled += OnPluginInstalled;
         _pluginDeprecations = new PluginDeprecationService(_plugins, _pluginUpgrades,
             id => Games().SingleOrDefault(game => game.Id == id && game.Status == GameStatus.Enabled));
         _pluginUpdates = new PluginUpdateService(_plugins, _store, _sources, _sourceHttp, OpenSource, Game,
             id => _launches.IsActive(id), async (source, package, id, ct) =>
             {
+                await EnsureRequirementsAsync(source, package, ct).ConfigureAwait(false);
                 var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source), package.Manifest, ct).ConfigureAwait(false);
                 return _pluginUpgrades.Enqueue(source, package, manifest, id);
             }, async (source, package, id, stamp, ct) =>
             {
+                await EnsureRequirementsAsync(source, package, ct).ConfigureAwait(false);
                 var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source), package.Manifest, ct).ConfigureAwait(false);
                 return _pluginUpgrades.Enqueue(source, package, manifest, id, explicitSelection: true, expectedSelection: stamp);
             }, readCatalog: (source, ct) => _catalogs.GetAsync(source, cancellationToken: ct), allowRunningUpdates: true,
@@ -262,6 +272,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         RegisterServerProfiles(bridge);
         RegisterPluginUpdates(bridge);
         RegisterClientPolicyActivation(bridge);
+        RegisterPluginPolicy(bridge);
         RegisterServerPackages(bridge);
         bridge.Add("hosting.list", _ => new { profiles = _hostingProfiles.List(), sessions = _hosting.List() });
         bridge.Add("hosting.availablePorts", _ => LocalServerNetwork.AvailablePorts());
@@ -410,6 +421,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 var catalog = await _catalogs.GetAsync(source, cancellationToken: ct).ConfigureAwait(false);
                 var package = catalog.Packages.SingleOrDefault(item => item.Kind == "plugin" && item.Id == Text(p, "packageId") && item.Version == Text(p, "version") && item.ManifestSha256 == Text(p, "manifestSha256"))
                     ?? throw new InvalidOperationException("The release changed. Refresh the store before downloading.");
+                await EnsureRequirementsAsync(source, package, ct).ConfigureAwait(false);
                 var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source), package.Manifest, ct).ConfigureAwait(false);
                 return _downloads.PreloadPlugin(source, package, manifest);
             }
@@ -455,6 +467,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 if (package.Game != game.Id) throw new InvalidDataException("The plugin belongs to another game.");
                 if (ids.Length == 0)
                 {
+                    await EnsureRequirementsAsync(source, package, ct).ConfigureAwait(false);
                     var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source), package.Manifest, ct).ConfigureAwait(false);
                     return _downloads.PreloadPlugin(source, package, manifest);
                 }
@@ -747,7 +760,9 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             { PreferIp = p?["preferIp"]?.GetValue<bool>(), UseHttps = p?["useHttps"]?.GetValue<bool>() ?? original?.UseHttps ?? false, Presentation = presentation, IconAsset = original?.IconAsset, Builds = original?.Builds ?? [], ClientPolicy = original?.ClientPolicy ?? ClientPolicy.Empty };
             _servers.Save(changed, createOnly); _api.Forget(id); return changed;
         });
-        bridge.Add("servers.delete", p => { Keys(p, "id"); var server = Server(Text(p, "id")); _servers.Delete(server); _api.Forget(server.Id); return null; });
+        bridge.Add("servers.delete", p => { Keys(p, "id"); var server = Server(Text(p, "id")); _servers.Delete(server); _api.Forget(server.Id); _seenNotices.Forget(server.Id);
+            foreach (var (_, sectionServer) in AccountSections(server).Skip(1)) { _api.Forget(sectionServer.Id); _seenNotices.Forget(sectionServer.Id); }
+            _sectionCache.Forget(server.Id); return null; });
         bridge.Add("servers.catalog", async (p, ct) =>
         {
             Keys(p, "id"); var server = Server(Text(p, "id"));
@@ -767,35 +782,53 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             Keys(p, "id"); return await _api.OnlinePlayersAsync(Server(Text(p, "id")), ct).ConfigureAwait(false);
         });
         RegisterServerClients(bridge);
+        RegisterServerStatus(bridge);
+        // Account calls take an optional section: a separate section's accounts belong to its own API (see ServerStatus).
         bridge.Add("accounts.list", async (p, ct) =>
         {
             Keys(p, "serverId");
             var server = await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false);
-            if (StoppedLocalCatalog(server) is not null) return new { current = (object?)null, accounts = Array.Empty<object>() };
-            try { await _api.RefreshIfNeededAsync(server, ct).ConfigureAwait(false); }
-            catch (UnauthorizedAccessException) when (_api.Current(server) is null)
-            {
-                // Renewal already removed the rejected selection; other accounts still belong in the list.
-            }
-            return _api.Accounts(server);
+            if (StoppedLocalCatalog(server) is not null) return new AccountSessionList(null, []);
+            return await SectionAccountsAsync(server, refresh: true, ct).ConfigureAwait(false);
         });
-        bridge.Add("accounts.select", p => { Keys(p, "serverId", "username"); return _api.Select(Server(Text(p, "serverId")), Text(p, "username")); });
-        bridge.Add("accounts.current", p => { Keys(p, "serverId"); return _api.Current(Server(Text(p, "serverId"))); });
-        bridge.Add("accounts.rememberedLogin", p => { Keys(p, "serverId"); return _api.RememberedLogin(Server(Text(p, "serverId"))); });
-        bridge.Add("accounts.refresh", async (p, ct) => { Keys(p, "serverId"); return await _api.RefreshAsync(await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false), ct).ConfigureAwait(false); });
+        bridge.Add("accounts.select", async (p, ct) =>
+        {
+            Keys(p, "serverId", "username", "section");
+            var server = Server(Text(p, "serverId")); var section = OptionalText(p, "section");
+            _api.Select(SectionServer(server, section), Text(p, "username"));
+            return await UseSectionAsync(server, section, ct).ConfigureAwait(false);
+        });
+        bridge.Add("accounts.current", async (p, ct) => { Keys(p, "serverId"); return (await SectionAccountsAsync(Server(Text(p, "serverId")), refresh: false, ct).ConfigureAwait(false)).Current; });
+        bridge.Add("accounts.rememberedLogin", p => { Keys(p, "serverId", "section"); return _api.RememberedLogin(SectionServer(Server(Text(p, "serverId")), OptionalText(p, "section"))); });
+        bridge.Add("accounts.refresh", async (p, ct) =>
+        {
+            Keys(p, "serverId", "section");
+            var server = await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false);
+            await _api.RefreshAsync(LaunchAccountServer(server, OptionalText(p, "section")), ct).ConfigureAwait(false);
+            return (await SectionAccountsAsync(server, refresh: false, ct).ConfigureAwait(false)).Current;
+        });
         bridge.Add("accounts.login", async (p, ct) =>
         {
-            Keys(p, "serverId", "username", "password", "rememberPassword");
-            return await _api.LoginAsync(await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false), Text(p, "username"), Text(p, "password"),
+            Keys(p, "serverId", "section", "username", "password", "rememberPassword");
+            var server = await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false); var section = OptionalText(p, "section");
+            var profile = await _api.LoginAsync(SectionServer(server, section), Text(p, "username"), Text(p, "password"),
                 rememberPassword: p?["rememberPassword"]?.GetValue<bool>() ?? false, ct: ct).ConfigureAwait(false);
+            var list = await UseSectionAsync(server, section, ct).ConfigureAwait(false);
+            return list.Current ?? profile with { Section = null };
         });
         bridge.Add("accounts.register", async (p, ct) =>
         {
-            Keys(p, "serverId", "username", "password", "fields");
+            Keys(p, "serverId", "section", "username", "password", "fields");
             var fields = p?["fields"]?.Deserialize<Dictionary<string, string>>(BridgeRouter.Json) ?? [];
-            await _api.RegisterAsync(await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false), Text(p, "username"), Text(p, "password"), fields, ct).ConfigureAwait(false); return null;
+            var server = await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false);
+            await _api.RegisterAsync(SectionServer(server, OptionalText(p, "section")), Text(p, "username"), Text(p, "password"), fields, ct).ConfigureAwait(false); return null;
         });
-        bridge.Add("accounts.logout", async (p, ct) => { Keys(p, "serverId", "username"); await _api.LogoutAsync(Server(Text(p, "serverId")), p?["username"]?.GetValue<string>(), ct).ConfigureAwait(false); return null; });
+        bridge.Add("accounts.logout", async (p, ct) =>
+        {
+            Keys(p, "serverId", "username", "section");
+            var server = Server(Text(p, "serverId"));
+            await _api.LogoutAsync(SectionServer(server, OptionalText(p, "section")), p?["username"]?.GetValue<string>(), ct).ConfigureAwait(false); return null;
+        });
         bridge.Add("plugins.launchWarnings", async (p, ct) =>
         {
             Keys(p, "instanceId", "serverId");
@@ -872,11 +905,15 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             {
             _launchDiagnostics.Record("launch-requested");
             if (_launcherUpdates.State.Mandatory) throw new InvalidOperationException("Update Fantasy Tale Launcher before starting a game.");
-            var launchSelection = _api.CaptureLaunchSelection(Text(p, "serverId"));
+            // The account a launch uses may belong to a separate section, which signs in and issues tickets through its own API.
+            var launchSection = OptionalText(p, "section");
+            var launchSelection = _api.CaptureLaunchSelection(Servers().SingleOrDefault(known => known.Id == Text(p, "serverId")) is { } knownServer
+                ? LaunchAccountServer(knownServer, launchSection).Id : Text(p, "serverId"));
             await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
             lifecycleEntered = true;
             if (_exitPending || _restartPending) throw new InvalidOperationException("Wait until the launcher update or exit finishes before starting a game.");
-            Keys(p, "id", "serverId", "account", "confirmedWarnings", "confirmedPendingPlugins", "confirmedRequiredPluginUpdates", "resourceConflictChoices", "launcherLanguage", "deadlineUnixMilliseconds");
+            // "section" and "unavailableServers" come from the server-section selector; the gateway routing that uses them follows.
+            Keys(p, "id", "serverId", "section", "unavailableServers", "account", "confirmedWarnings", "confirmedPendingPlugins", "confirmedRequiredPluginUpdates", "resourceConflictChoices", "launcherLanguage", "deadlineUnixMilliseconds");
             var resourceConflictChoices = ResourceConflictBridge.Parse(p?["resourceConflictChoices"]);
             _launchDiagnostics.Record("launch-plugins-start");
             launchPhase = "plugins";
@@ -895,6 +932,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             launchPhase = "server";
             var server = await ConnectedServerAsync(Text(p, "serverId"), ct).ConfigureAwait(false);
             if (server.Game != game.Id) throw new ArgumentException("The selected server belongs to a different game.");
+            var accountServer = LaunchAccountServer(server, launchSection);
             await ReleasePrivateServersAsync(server.Id).ConfigureAwait(false);
             var confirmedRequiredUpdates = p?["confirmedRequiredPluginUpdates"]?.Deserialize<string[]>(BridgeRouter.Json) ?? [];
             if (RequiredPluginUpdates(instance.Id, server.Id).Any(update => !confirmedRequiredUpdates.Contains(update.Key, StringComparer.Ordinal)))
@@ -914,6 +952,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 center = catalog.Center;
                 var preset = catalog.Instances.FirstOrDefault(i => i.Build == build.Id);
                 if (preset is null) throw new InvalidOperationException("The server does not support this client build.");
+                if (preset.ClusterServed == false) throw new InvalidOperationException("No node of this server serves this client build.");
                 endpoint = preset.Endpoint ?? endpoint;
                 launcherLogin = LauncherLoginPolicy.Resolve(build.LauncherLogin, game.LauncherLogin, preset.LauncherLogin ?? catalog.LauncherLogin, server.Kind == "room");
                 required = launcherLogin == "required";
@@ -925,7 +964,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             }
             IReadOnlyList<GameServerTarget> gameTargets = [];
             IReadOnlyList<GameServerChoice> gameChoices = [];
-            if (launcherLogin is not ("none" or "game")) _api.RequireLaunchSelection(server, launchSelection);
+            if (launcherLogin is not ("none" or "game")) _api.RequireLaunchSelection(accountServer, launchSelection);
             ct.ThrowIfCancellationRequested();
             _launchDiagnostics.Record("launch-routing-start");
             launchPhase = "routing";
@@ -935,15 +974,22 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             ServerDirectory? automaticDirectory = null;
             if (server.ApiUrl is not null)
             {
+                // Servers the player was told are unavailable (maintenance or offline) are left out of the in-game list,
+                // and automatic placement never lands on a node under maintenance.
+                var unavailable = p?["unavailableServers"] is JsonArray unavailableIds && unavailableIds.Count <= 4096
+                    ? unavailableIds.Select(id => id?.GetValue<int>() ?? throw new ArgumentException("Invalid server identity.")).ToHashSet() : [];
                 var route = await ServerCenterRouting.PrepareAsync(center,
-                    token => _api.ServerDirectoryAsync(server, build.Id, configuredMembership: true, ct: token),
+                    async token => await StatusDirectoryAsync(server, build.Id, token).ConfigureAwait(false) is { } routed
+                        ? routed with { Servers = routed.Servers.Where(selector => selector.Automatic || !unavailable.Contains(selector.Id))
+                            .Select(selector => selector.Automatic ? selector with { Targets = selector.Targets.Where(target => target.Maintenance is null).ToArray() } : selector).ToArray() }
+                        : null,
                     _serverDirectoryResolver, supportsAutomatic, launcherLogin, ct).ConfigureAwait(false);
                 automaticRequested = route.AutomaticRequested;
                 automaticDirectory = route.Directory;
                 gameTargets = route.Targets;
                 gameChoices = route.Choices;
             }
-            if (launcherLogin is not ("none" or "game")) _api.RequireLaunchSelection(server, launchSelection);
+            if (launcherLogin is not ("none" or "game")) _api.RequireLaunchSelection(accountServer, launchSelection);
             if (endpoint is not null)
                 endpoint = endpoint with { Host = await _network.HostAsync(endpoint.Host, server, hostPolicy, region, ct).ConfigureAwait(false) };
             if (server.ApiUrl is null && server.NativeDirectory is { Enabled: true, Mode: "gateway" } nativeDirectory && nativeDirectory.Builds.Contains(build.Id, StringComparer.Ordinal))
@@ -973,19 +1019,19 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             var versionMetadata = await Task.Run(() => module.ReadVersionMetadata(build, _store.ClientFolder(instance.Id)), ct).ConfigureAwait(false);
             // A game policy keeps every launch request; only the sign-in moves to the game's own login screen.
             var gameLogin = launcherLogin == "game" && server.ApiUrl is not null
-                ? await _api.OpenGameLoginAsync(server, build, versionMetadata, languageMetadata, ct).ConfigureAwait(false) : null;
+                ? await _api.OpenGameLoginAsync(accountServer, build, versionMetadata, languageMetadata, ct).ConfigureAwait(false) : null;
             var credentials = launcherLogin is "none" or "game"
                 ? null
                 : automaticRequested
-                    ? await _api.SelectionCredentialsAsync(server, build, versionMetadata, languageMetadata, launchSelection, ct).ConfigureAwait(false)
-                    : await _api.CredentialsAsync(server, build, versionMetadata, languageMetadata, required, launchSelection, ct).ConfigureAwait(false);
+                    ? await _api.SelectionCredentialsAsync(accountServer, build, versionMetadata, languageMetadata, launchSelection, ct).ConfigureAwait(false)
+                    : await _api.CredentialsAsync(accountServer, build, versionMetadata, languageMetadata, required, launchSelection, ct).ConfigureAwait(false);
             AutomaticServerSelection? automaticSelection = null;
             if (automaticRequested)
             {
                 var admittedCredentials = credentials ?? throw new InvalidDataException("Native automatic selection requires authenticated admission.");
-                var admittedApiUrl = _api.EffectiveApiUrl(server);
+                var admittedApiUrl = _api.EffectiveApiUrl(accountServer);
                 automaticSelection = await AutomaticServerSelection.CreateAsync(admittedCredentials.ServerSelection!, admittedApiUrl,
-                    token => _api.RefreshServerSelectionAsync(server, launchSelection, admittedCredentials, admittedApiUrl, token),
+                    token => _api.RefreshServerSelectionAsync(accountServer, launchSelection, admittedCredentials, admittedApiUrl, token),
                     ct: ct, directory: automaticDirectory, diagnostics: _launchDiagnostics).ConfigureAwait(false);
                 gameTargets = automaticSelection.Targets;
             }
@@ -996,13 +1042,17 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             var servicePlan = game.SupportsPlugins ? LauncherServicePlan.Resolve(instance, build, launchPackages) : [];
             var nativeConsumers = game.SupportsPlugins ? LauncherServicePlan.NativeConsumers(instance, build, launchPackages)
                 : new Dictionary<string, IReadOnlyDictionary<string, int>>();
-            _ = LauncherServicePlan.MessageGrants(servicePlan, nativeConsumers);
+            var panelConsumers = game.SupportsPlugins ? LauncherServicePlan.PanelConsumers(instance, build, launchPackages)
+                : new Dictionary<string, IReadOnlyDictionary<string, int>>();
+            var controllerConsumers = game.SupportsPlugins ? LauncherServicePlan.ControllerConsumers(instance, build, launchPackages)
+                : new Dictionary<string, IReadOnlyDictionary<string, int>>();
+            _ = LauncherServicePlan.MessageGrants(servicePlan, nativeConsumers.Concat(panelConsumers).Concat(controllerConsumers).ToDictionary(StringComparer.Ordinal));
 
             // The game's own HTTP clients take the launcher's routing: a mainland host answers plain HTTP for an
             // unregistered domain with its own registration block (403), so those addresses must use the server's IP.
             var messenger = credentials?.Messenger is { } advertised
                 ? advertised with { Url = await _network.RouteAsync(advertised.Url, server, hostPolicy, region, ct).ConfigureAwait(false) } : null;
-            var gameLoginApi = gameLogin is null ? null : await _network.RouteAsync(_api.EffectiveApiUrl(server), server, hostPolicy, region, ct).ConfigureAwait(false);
+            var gameLoginApi = gameLogin is null ? null : await _network.RouteAsync(_api.EffectiveApiUrl(accountServer), server, hostPolicy, region, ct).ConfigureAwait(false);
             var overlayEnabled = _overlay.IsEnabledForClient(instance, build, packageList);
             using var resourceCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
             _launchDiagnostics.Record("launch-process-preparation-start");
@@ -1021,7 +1071,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                     languageMetadata.LauncherLanguage, languageMetadata.NativeLanguage, languageMetadata.ClientLanguage),
                 resourceProgress: new InlineResourceProgress(progress => bridge.Emit("instances.resourceProgress", new { instanceId = instance.Id, progress })),
                 preparationCancellation: resourceCancellation.Token, gameTargets: gameTargets, gameChoices: gameChoices,
-                automaticSelection: automaticSelection, startupTimeout: deadline - DateTimeOffset.UtcNow,
+                automaticSelection: automaticSelection, startupTimeout: deadline - DateTimeOffset.UtcNow, launcherLanguage: languageMetadata.LauncherLanguage,
                 resourceConflictChoices: resourceConflictChoices).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (resourceCancellation.IsCancellationRequested)
@@ -1036,9 +1086,11 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 var recoveries = DrainPluginRecoveries();
                 if (recoveries.Length > 0) bridge.Emit("plugins.recovered", recoveries);
             }
-            _overlay.StartForClient(instance, build with { Overlay = overlayProfile }, packageList, client);
             OfferCompanion(instance.Id, server, credentials, game.Id, languageMetadata.LauncherLanguage, gameLogin);
-            _sessionServices.StartForClient(instance, build, servicePlan, client.Completion, nativeConsumers, client.Control);
+            _sessionServices.StartForClient(instance, build, servicePlan, client.Completion, nativeConsumers, client.Control, panelConsumers, controllerConsumers);
+            _overlay.StartForClient(instance, build with { Overlay = overlayProfile }, packageList, client, languageMetadata.LauncherLanguage,
+                module.GetCapability<IGameOverlayControllerProvider>(),
+                (owner, token) => _sessionServices.GetControllerChannelAsync(instance.Id, owner, token));
             if (server.Id.StartsWith("local-", StringComparison.Ordinal)
                 && _hosting.List().SingleOrDefault(s => s.ProfileId == server.Id[6..] && s.State == "ready") is { } hosted
                 && _hosting.StartedProfile(hosted.ProfileId, hosted.RunId).Mode == "private")
@@ -1093,14 +1145,32 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         });
         bridge.Add("plugins.installImport", async (p, ct) =>
         {
-            Keys(p, "game", "token", "operationId");
+            Keys(p, "game", "token", "operationId", "enable");
             var game = Game(Text(p, "game"));
-            var installed = await Task.Run(() => _plugins.Install(Text(p, "token"), game, ImportProgress(bridge, p), ct), ct).ConfigureAwait(false);
+            var fresh = false;
+            var installed = await Task.Run(() =>
+            {
+                var before = Packages(game);
+                var result = _plugins.Install(Text(p, "token"), game, ImportProgress(bridge, p), ct);
+                fresh = !before.Any(item => PluginCatalog.MatchesIdentity(result, item.Id));
+                return result;
+            }, ct).ConfigureAwait(false);
+            // Existing selections move to the new version with their enabled state; a first installation is enabled on
+            // every supported client when the page asks for it ("turn on after installation", on by default in the dialog).
             _pluginUpgrades.EnqueueImported(installed, game);
             _pluginUpgrades.ApplyReady(cancellationToken: ct);
+            var skipped = new List<string>();
+            if (fresh && p?["enable"]?.GetValue<bool>() == true)
+                foreach (var instance in _store.List().Where(item => item.Game == game.Id))
+                {
+                    try { if (!EnableEverywhereSelection(instance.Id, installed)) skipped.Add(instance.Id); }
+                    catch (Exception error) when (error is InstanceBusyException or InvalidOperationException or DefinitionException or IOException)
+                    { skipped.Add(instance.Id); }
+                }
+            _pluginUpgrades.RetireSupersededImports();
             bridge.Emit("instances.changed", null);
             bridge.Emit("plugins.changed", new { game = game.Id });
-            return new { installed.Id, installed.Version };
+            return new { installed.Id, installed.Version, skipped };
         });
         bridge.Add("plugins.discardImport", p => { Keys(p, "token"); _plugins.Discard(Text(p, "token")); return null; });
         bridge.Add("plugins.loadIssues", p =>
@@ -1124,7 +1194,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         bridge.Add("plugins.list", p =>
         {
             p ??= new JsonObject();
-            Keys(p, "instanceId", "serverId");
+            Keys(p, "instanceId", "serverId", "language");
             var instance = p?["instanceId"] is null ? null : _store.Load(Text(p, "instanceId"));
             var serverRequirements = instance is not null && p?["serverId"]?.GetValue<string>() is { Length: > 0 } destination
                 ? ServerPluginPolicy.ForBuild(_api.ClientPolicy(Server(destination)), instance.Build) : [];
@@ -1147,7 +1217,8 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 var ui = PluginConfigurationUi.Load(plugin);
                 return new
             {
-                plugin.Id, plugin.Aliases, plugin.Game, plugin.Version, plugin.Kind, plugin.Authors, name = plugin.Name.Values, description = plugin.Description?.Values,
+                plugin.Id, plugin.Aliases, plugin.Game, plugin.Version, plugin.Kind, plugin.Authors, requires = plugin.Requires.Select(item => item.ToString()), name = plugin.Name.Values, description = plugin.Description?.Values,
+                policy = SerializePolicyRules(plugin, instance, build, p?["language"]?.GetValue<string>() ?? LauncherLanguage.Current),
                 builtIn = bundledIdentities.Contains((plugin.Game, plugin.Id)), canUninstall = packages.Any(item => item.Game == plugin.Game && item.Id == plugin.Id && _plugins.CanUninstall(item)),
                 plugin.MinimumLauncherVersion, launcherCompatible = LauncherCompatibility.Supports(plugin.MinimumLauncherVersion),
                 languagePackCompatible = build is not null && ClientLanguagePolicy.IsTranslationPackage(build, plugin),
@@ -1319,7 +1390,12 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                     new GameResourceSelection(selectedPackage, PluginCatalog.ResolveOptionValues(selectedPackage, selected.Options)));
             }
             var changed = PluginSelectionCompatibility.Select(instance, selected, build, Packages(game));
-            void ValidateSettings() => PluginResolver.Resolve(changed, build, Packages(game), requireLibraries: false);
+            void ValidateSettings()
+            {
+                var packages = Packages(game);
+                PluginResolver.Resolve(changed, build, packages, requireLibraries: false);
+                PluginPolicy.RequireConfigured(selectedPackage, selected.Enabled, changed, build, LauncherLanguage.Current, packages);
+            }
             if (_launches.IsActive(instance.Id)) _store.SavePluginSettingsValidated(changed, instance, ValidateSettings);
             else _store.SaveValidated(changed, instance, ValidateSettings);
             if (p?["deferRefresh"]?.GetValue<bool>() != true) bridge.Emit("instances.changed", new { id = changed.Id });

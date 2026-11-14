@@ -14,7 +14,7 @@ import type { GlyphName } from '../icons'
 import WInfoBadge from '../controls/WInfoBadge.vue'
 import { availableStoreUpdates } from '../store/background'
 import { previewStoreUpdateCount } from '../store/preview'
-import { inHost } from '../bridge'
+import { demoMode, inHost } from '../bridge'
 
 const { t } = useI18n()
 const storeUpdateCount = computed(() => import.meta.env.DEV && !inHost && previewStoreUpdateCount.value !== undefined
@@ -26,7 +26,8 @@ function navigate(name: string) {
   if (narrow.value) expanded.value = false
   void router.push({ name })
 }
-function disabled(name: string) { return name === 'developer' && !prefs.developerMode || name === 'hosting' && selectedGame.value?.localHostingEnabled === false }
+const showDeveloper = computed(() => prefs.developerMode || !!demoMode?.enabled)
+function disabled(name: string) { return name === 'developer' && !showDeveloper.value || name === 'hosting' && selectedGame.value?.localHostingEnabled === false }
 
 // Each launch starts compact; expansion applies only to the current session.
 const expanded = ref(false)
@@ -36,7 +37,7 @@ const compact = computed(() => !expanded.value)
 const availableItems = computed(() => navEntries.filter(entry => entry.footer || navigationEntries.value.includes(entry.tag)))
 const mainItems = computed(() => {
   const entries = availableItems.value.filter(entry => !entry.footer)
-  return prefs.developerMode ? [...entries, { tag: 'developer', label: 'developerMode.navigation', icon: 'developerTools' }] : entries
+  return showDeveloper.value ? [...entries, { tag: 'developer', label: 'developerMode.navigation', icon: 'developerTools' }] : entries
 })
 const footerItems = computed(() => availableItems.value.filter(entry => entry.footer))
 const selected = computed(() => String(route.name ?? 'home'))

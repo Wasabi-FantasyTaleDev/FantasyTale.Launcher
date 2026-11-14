@@ -5,6 +5,7 @@ import WButton from './WButton.vue'
 import FluentIcon from './FluentIcon.vue'
 import WProgressRing from './WProgressRing.vue'
 import { computed, inject, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue'
+import MarkdownText from '../components/MarkdownText.vue'
 import { overlayLayer } from './overlay'
 
 const props = withDefaults(
@@ -26,8 +27,11 @@ const props = withDefaults(
     wide?: boolean
     navigation?: boolean
     imageViewer?: boolean
+    autoResize?: boolean
+    /** A server or plugin message in Markdown, shown above the default slot. */
+    markdown?: string
   }>(),
-  { title: '', primaryText: '', secondaryText: '', closeText: '', primaryDisabled: false, primaryBusy: false, secondaryDisabled: false, closeDisabled: false, focusPanel: false },
+  { title: '', primaryText: '', secondaryText: '', closeText: '', primaryDisabled: false, primaryBusy: false, secondaryDisabled: false, closeDisabled: false, focusPanel: false, autoResize: true },
 )
 const emit = defineEmits<{ close: []; primary: []; secondary: []; afterLeave: [] }>()
 const actions = computed(() => props.primaryFirst ? ['primary', 'secondary'] as const : ['secondary', 'primary'] as const)
@@ -50,6 +54,7 @@ function resetPanelSize() {
   if (panel.value) panel.value.style.height = ''
 }
 function observePanelSize() {
+  if (!props.autoResize) return
   const element = panel.value
   if (!element) return
   resetPanelSize()
@@ -94,6 +99,12 @@ function observePanelSize() {
   })
   resizeObserver.observe(element)
 }
+watch(() => props.autoResize, async autoResize => {
+  if (!props.open) return
+  if (!autoResize) { resetPanelSize(); return }
+  await nextTick()
+  observePanelSize()
+})
 watch(() => props.open, async open => {
   if (!open) { resetPanelSize(); previous?.focus(); return }
   previous = document.activeElement as HTMLElement
@@ -128,14 +139,15 @@ function onKeydown(e: KeyboardEvent) {
       <div v-if="open" class="w-dialog-smoke" :style="{ zIndex: layer }" @keydown="onKeydown" @click.self="dismissOnBackdrop && !closeDisabled && emit('close')">
         <div ref="panel" class="w-dialog" :class="{ 'has-dismiss': showDismissButton, wide, navigation, 'image-viewer': imageViewer }" role="dialog" aria-modal="true" :aria-label="title" tabindex="-1">
           <button v-if="showDismissButton && !closeDisabled" type="button" class="w-dialog-dismiss" :aria-label="dismissLabel" @click="emit('close')"><FluentIcon glyph="cancel" :size="12" /></button>
-          <h2 v-if="title" class="w-dialog-title type-subtitle">{{ title }}</h2>
-          <div class="w-dialog-content"><slot /></div>
-          <div class="w-dialog-actions">
+          <div v-if="title" class="w-dialog-heading"><h2 class="w-dialog-title type-subtitle">{{ title }}</h2><div v-if="$slots['title-extra']" class="w-dialog-title-extra"><slot name="title-extra" /></div></div>
+          <div class="w-dialog-content"><MarkdownText v-if="markdown" class="w-dialog-markdown" :source="markdown" /><slot /></div>
+          <!-- A button that appears while the dialog is open (Close turning into Continue) animates in; opening does not. -->
+          <TransitionGroup tag="div" name="w-dialog-btn" class="w-dialog-actions">
             <template v-for="action in actions" :key="action">
-              <WButton v-if="props[`${action}Text`]" :variant="action === 'primary' ? 'accent' : 'standard'" class="w-dialog-btn" :class="{ 'is-busy': action === 'primary' && primaryBusy }" :disabled="props[`${action}Disabled`] || (action === 'primary' && primaryBusy)" :aria-busy="action === 'primary' && primaryBusy" @click="action === 'primary' ? emit('primary') : emit('secondary')"><WProgressRing v-if="action === 'primary' && primaryBusy" :size="16" />{{ props[`${action}Text`] }}</WButton>
+              <WButton v-if="props[`${action}Text`]" :key="`${action}:${props[`${action}Text`]}`" :variant="action === 'primary' ? 'accent' : 'standard'" class="w-dialog-btn" :class="{ 'is-busy': action === 'primary' && primaryBusy }" :disabled="props[`${action}Disabled`] || (action === 'primary' && primaryBusy)" :aria-busy="action === 'primary' && primaryBusy" @click="action === 'primary' ? emit('primary') : emit('secondary')"><WProgressRing v-if="action === 'primary' && primaryBusy" :size="16" />{{ props[`${action}Text`] }}</WButton>
             </template>
-            <WButton v-if="closeText" class="w-dialog-btn" :disabled="closeDisabled" @click="emit('close')">{{ closeText }}</WButton>
-          </div>
+            <WButton v-if="closeText" :key="`close:${closeText}`" class="w-dialog-btn" :disabled="closeDisabled" @click="emit('close')">{{ closeText }}</WButton>
+          </TransitionGroup>
         </div>
       </div>
     </Transition>
@@ -176,16 +188,21 @@ function onKeydown(e: KeyboardEvent) {
 .w-dialog:focus { outline: none; }
 .w-dialog.wide { max-width: 660px; }
 .w-dialog.navigation { max-width: 1080px; }
-.navigation > .w-dialog-title { display: none; }
+.navigation > .w-dialog-heading { display: none; }
 .navigation > .w-dialog-content { padding: 0; overflow: hidden; }
 .w-dialog.image-viewer { max-width: 1280px; }
-.image-viewer > .w-dialog-title { display: none; }
+.image-viewer > .w-dialog-heading { display: none; }
 .image-viewer > .w-dialog-content { padding: 0; overflow: hidden; }
 .w-dialog-title {
   margin: 0;
   padding: 20px 24px 12px;
 }
 .has-dismiss .w-dialog-title { padding-right: 64px; }
+/* The title row may carry a control on its right, such as the server section chooser of the sign-in dialog. */
+.w-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+.w-dialog-heading > .w-dialog-title { min-width: 0; }
+.w-dialog-title-extra { flex: none; display: flex; align-items: center; padding: 16px 24px 8px 0; }
+.has-dismiss .w-dialog-title-extra { padding-right: 64px; }
 .w-dialog-dismiss { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-control); color: var(--text-secondary); background: transparent; transition: background 167ms linear, color 167ms linear; }
 .w-dialog-dismiss:hover { background: var(--subtle-secondary); color: var(--text-primary); }
 .w-dialog-dismiss:active { background: var(--subtle-tertiary); }
@@ -207,6 +224,13 @@ function onKeydown(e: KeyboardEvent) {
 .w-dialog-btn {
   flex: 1;
 }
+.w-dialog-markdown:not(:last-child) { margin-bottom: 12px; }
+/* WinUI entrance: fade in over 167 ms while rising a few pixels on the decelerate spline (0,0,0,1). */
+.w-dialog-btn-enter-active { transition: opacity 167ms linear, transform 333ms cubic-bezier(0, 0, 0, 1); }
+.w-dialog-btn-enter-from { opacity: 0; transform: translateY(8px); }
+/* The replaced button leaves at once so the two never stand side by side. */
+.w-dialog-btn-leave-active { display: none; }
+@media (prefers-reduced-motion: reduce) { .w-dialog-btn-enter-active { transition: none; } }
 .dialog-enter-active {
   transition: opacity 340ms cubic-bezier(0.2, 0.65, 0.25, 1);
 }

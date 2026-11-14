@@ -16,6 +16,17 @@ ui_context = 0x14E689C     # kr-1256 sub_6279A0 uses this native rendering conte
 ui_manager = 0x14E6850     # kr-1256 sub_FCDFD0 uses this native UI manager.
 chat = 0x0DC0D0            # kr-1256 sub_4DC0D0 copies caption/body with explicit UTF-16 lengths.
 chat_module = 0x14E555C    # kr-1256 sub_9BE620 uses this local chat module.
+control_load_form = 0xBBA9F0 # kr-1256 sub_FBA9F0 loads a .ui resource into the supplied UiForm (kr-812 sub_A88160).
+control_initialize = 0xBB4D80 # kr-1256 sub_FB4430 initializes every Control through sub_FB4D80 (kr-812 sub_A851A0).
+control_destroy = 0xBB44F0  # kr-1256 sub_FB4B60 calls this Control destructor before freeing 1136 bytes.
+control_click = 0xBD7890    # kr-1256 sub_FD7890 fires the click event, the owner form and the command (kr-812 sub_A91840).
+control_set_text = 0xBB5E70 # kr-1256 sub_FB5E70 copies borrowed text into the Control's string at +716.
+edit_set_text = 0xBC91C0    # kr-1256 sub_FC91C0 (UiEdit vtable +220) copies text, truncates to +1264 and clamps the caret.
+control_focus = 0xBC04F0    # kr-1256 sub_FC04F0 is the stdcall focus setter; sub_5C9070 passes 0 before disabling.
+button_vtable = 0x1233FB0   # kr-1256 RTTI Lambda::UiButton primary vtable (single base).
+edit_vtable = 0x12333C8     # kr-1256 RTTI Lambda::UiEdit primary vtable.
+label_vtable = 0x1233C1C    # kr-1256 RTTI Lambda::UiLabel primary vtable.
+create_room_vtable = 0x116F014 # kr-1256 sub_5C5110 assigns DlgCreateRoom before loading its .ui resource.
 
 [values]
 message_abi = 2            # kr-1256 sub_6265D0 is thiscall with title, body, mode and icon.
@@ -32,11 +43,46 @@ cancel_offset = 1644       # kr-1256 sub_627630 binds this button to command 256
 command_offset = 1296      # kr-1256 sub_627630 writes button commands at +0x510.
 notification_offset = 36   # kr-1256 sub_899850 owns/replaces its notification at +36.
 chat_view_offset = 68      # kr-1256 sub_4DC0D0 reveals this active chat view.
+control_abi = 2             # kr-1256 Controls keep text in place and inline their enable setter.
+text_offset = 716           # kr-1256 sub_FB5E70 and sub_FC91C0 store the Control's text string here.
+name_offset = 692           # kr-1256 sub_FF4480 copies the resource attribute Name to +692.
+array_index_offset = 832    # kr-1256 sub_FF4480 reads ArrayIndex to +832; kr-1256 sub_FB7670 matches children by it.
+x_offset = 852              # kr-1256 sub_FF4480 reads PosX, PosY, Width and Height to +852..+864.
+y_offset = 856
+width_offset = 860          # kr-1256 sub_FB6600 centers against the root's width at +860.
+height_offset = 864
+enabled_offset = 908        # kr-1256 sub_FB8120 (kr-812 sub_A80560) ignores input while +908 is clear.
+owner_form_offset = 948     # kr-1256 sub_FB8120 walks owners through +948 as kr-812 sub_A80560 walks +380.
+children_offset = 972       # kr-1256 sub_FB7670 iterates child pointers between +972 and +976.
+visible_offset = 1112       # kr-1256 sub_FF4480 reads the resource attribute Visible to +1112.
+edit_maximum_offset = 1264  # kr-1256 sub_5C8330 limits edtRoomTitle by writing +1264.
+focus_offset = 20           # kr-1256 sub_FC04F0 stores the focused control at UI manager +20.
+control_root_offset = 28    # kr-1256 sub_FB6600 reads the UI root from manager +28.
+control_layer_offset = 8    # kr-1256 sub_FC05D0 stores the active form at manager +8.
+control_modal_offset = 4    # kr-1256 sub_FCDFD0 installs the modal form at manager +4 through sub_FC0800.
+# Observer prologue lengths that end on an instruction boundary in kr-1256.
+load_hook_bytes = 9         # kr-1256 sub_FBA9F0: push ebp; mov ebp,esp; mov eax,fs:[0].
+initialize_hook_bytes = 6   # kr-1256 sub_FB4D80: push ebx; mov ebx,esp; sub esp,8.
+destroy_hook_bytes = 5      # kr-1256 sub_FB44F0: push ebp; mov ebp,esp; push -1.
+click_hook_bytes = 9        # kr-1256 sub_FD7890: push ebp; mov ebp,esp; mov eax,fs:[0].
 # kr-1256 Ui/DlgMessageBox.ui uses the four standard pnlIcon array entries.
 icon_notice = 0
 icon_warning = 1
 icon_question = 2
 icon_error = 3
+
+[[selection_groups]]
+form = "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui" # kr-1256 sub_5C5110 loads this resource for DlgCreateRoom.
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 1840            # kr-1256 sub_855AE0 allocates 1840 bytes for DlgCreateRoom.
+value_offset = 1824         # kr-1256 sub_5C9550 stores the selected game mode here; sub_5C9CA0 finds its record by it.
+# kr-1256 sub_5C5110 keeps 56-byte mode records between +1736 and +1740: record +0 is the btnGameMode ArrayIndex
+# (kr-1256 sub_5C9070 matches the map key with it) and record +4 the game mode (compared with +1824).
+records_offset = 1736
+record_size = 56
+record_key_offset = 0
+record_value_offset = 4
 
 [[signatures]]
 address = "construct_message"
@@ -61,3 +107,31 @@ bytes = "55 8B EC 6A FF 68 35 C8 44 01 64 A1 00 00 00 00"
 [[signatures]]
 address = "chat"
 bytes = "55 8B EC 6A FF 68 00 35 30 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 E5 2B 4A 01"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "53 8B DC 83 EC 08 83 E4 F8 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 6A FF 68 EB 4E 4A 01 64 A1 00"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "55 8B EC 6A FF 68 E5 4B 4A 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_click"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 35 8C 4A 01"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "53 8B DC 83 EC 08 83 E4 F8 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 6A FF 68 43 50 4A 01 64 A1 00"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 5D 6C 30 01"
+
+[[signatures]]
+address = "control_focus"
+bytes = "55 8B EC 6A FF 68 75 67 30 01 64 A1 00 00 00 00"

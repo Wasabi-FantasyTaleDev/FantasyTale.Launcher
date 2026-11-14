@@ -265,7 +265,7 @@ public sealed partial class ResourceEditPipelineTests : IDisposable
     [InlineData("cn-406", "en", 6)]
     public void DocumentedExamplePlansOnEachBuild(string build, string language, int expected)
     {
-        var docs = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "docs", "examples", "resource-edits"));
+        var docs = Path.Combine(TestRepository.StartDirectory().FullName, "docs", "examples", "resource-edits");
         var folder = Directory.CreateDirectory(Path.Combine(_root, "example")).FullName;
         foreach (var file in Directory.GetFiles(docs)) File.Copy(file, Path.Combine(folder, Path.GetFileName(file)));
         var package = PluginCatalog.LoadFile(Path.Combine(folder, "plugin.toml"));

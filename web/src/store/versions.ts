@@ -24,3 +24,20 @@ export function compareVersions(left: string, right: string): number | undefined
 export function newestFirst<T extends { version: string }>(releases: readonly T[]): T[] {
   return [...releases].sort((left, right) => -(compareVersions(left.version, right.version) ?? 0))
 }
+
+/** Tests whether a semantic version satisfies a space-separated constraint range (`>=`, `<=`, `>`, `<`, `=`). */
+export function satisfiesRange(version: string, range: string): boolean {
+  const tokens = range.trim().split(/\s+/).filter(Boolean)
+  if (!tokens.length) return true
+  if (compareVersions(version, version) === undefined) return false
+  for (const token of tokens) {
+    const match = /^(>=|<=|>|<|=)?(.+)$/.exec(token)
+    if (!match) return false
+    const comparison = compareVersions(version, match[2]!)
+    if (comparison === undefined) return false
+    const operator = match[1] ?? '='
+    if (operator === '>=' ? comparison < 0 : operator === '<=' ? comparison > 0
+      : operator === '>' ? comparison <= 0 : operator === '<' ? comparison >= 0 : comparison !== 0) return false
+  }
+  return true
+}

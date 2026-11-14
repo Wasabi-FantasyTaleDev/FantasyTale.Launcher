@@ -26,7 +26,7 @@ public static class ServerProfileFile
         try
         {
             await File.WriteAllTextAsync(temporary, text, new UTF8Encoding(false), ct).ConfigureAwait(false);
-            ct.ThrowIfCancellationRequested(); File.Move(temporary, file, true);
+            ct.ThrowIfCancellationRequested(); AtomicFile.Replace(temporary, file);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }

@@ -62,6 +62,7 @@ export const glyphs = {
   connect: '',
   contactInfo: '',
   blocked: '',
+  repair: '',
   pin: '',
   gamepad: '',
   drop: '',

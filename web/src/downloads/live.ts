@@ -1,5 +1,5 @@
-import { computed, reactive } from 'vue'
-import { call, inHost } from '../bridge'
+import { computed, reactive, watch } from 'vue'
+import { call, demoMode, inHost, on } from '../bridge'
 import type { DownloadTask } from './model'
 import { isTerminal } from './model'
 import { previewAction, updatePreview } from './preview'
@@ -44,7 +44,7 @@ export async function downloadAction(task: DownloadTask, action: Parameters<type
 /** Removes all completed and failed tasks from the active task list. */
 export async function clearFinishedDownloads() {
   revision++
-  if (inHost) downloads.tasks = await call('downloads.clearFinished')
+  if (inHost || !!demoMode?.enabled) downloads.tasks = await call('downloads.clearFinished')
   updatePreview.tasks = updatePreview.tasks.filter(task => !isTerminal(task))
 }
 
@@ -59,7 +59,9 @@ export async function clearFinishedDownloads() {
  */
 export function pollDownloads() {
   let stopped = false, timer: ReturnType<typeof setTimeout> | undefined
+  const active = () => inHost || !!demoMode?.enabled
   async function poll() {
+    if (!active()) { timer = undefined; return }
     const expected = revision
     try {
       const tasks = await call('downloads.list')
@@ -68,8 +70,27 @@ export function pollDownloads() {
         downloads.tasks = tasks; downloads.error = ''
       }
     } catch (error) { if (!stopped) downloads.error = (error as Error).message }
-    if (!stopped) timer = setTimeout(poll, 500)
+    if (!stopped && active()) timer = setTimeout(poll, 500)
   }
-  if (inHost) void poll()
-  return () => { stopped = true; if (timer) clearTimeout(timer) }
+  const stopEvents = on('downloads.changed', data => {
+    if (stopped || !demoMode?.enabled || !Array.isArray(data)) return
+    const tasks = data as DownloadTask[]
+    for (const task of tasks) if (!isTerminal(task)) sessionDownloadIds.add(task.id)
+    downloads.tasks = tasks
+    downloads.error = ''
+  })
+  const stopModeWatch = demoMode
+    ? watch(() => demoMode.enabled, enabled => {
+        if (stopped) return
+        if (enabled && !timer) void poll()
+        else if (!enabled && !inHost) {
+          if (timer) clearTimeout(timer)
+          timer = undefined
+          downloads.tasks = []
+          downloads.error = ''
+        }
+      })
+    : () => {}
+  if (active()) void poll()
+  return () => { stopped = true; if (timer) clearTimeout(timer); stopEvents(); stopModeWatch() }
 }

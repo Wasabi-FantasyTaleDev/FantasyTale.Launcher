@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
@@ -8,6 +9,7 @@ using System.Threading.Channels;
 using FantasyTale.Launcher.Core.Definitions;
 using FantasyTale.Launcher.Core.Hooks;
 using FantasyTale.Launcher.Core.Instances;
+using FantasyTale.Launcher.Core.Plugins;
 using FantasyTale.Launcher.Sdk;
 using Microsoft.Win32.SafeHandles;
 
@@ -23,6 +25,9 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
     private OverlayTestSettings _test;
     private readonly object _gate = new();
     private readonly Dictionary<string, OverlaySession> _sessions = new(StringComparer.Ordinal);
+    private readonly HashSet<Task> _runs = [];
+    private readonly CancellationTokenSource _stop = new();
+    private Task? _dispose;
     private int _disposed;
 
     /// <summary>Creates a manager that starts the overlay executable beside the launcher.</summary>
@@ -40,7 +45,8 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
 
     /// <summary>Starts an overlay only when the selected instance contains an available overlay package.</summary>
     internal void StartForClient(InstanceDefinition instance, BuildDefinition build, IReadOnlyList<PluginDefinition> packages,
-        RunningClient client)
+        RunningClient client, string? locale = null, IGameOverlayControllerProvider? controllerProvider = null,
+        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion = null)
     {
         ArgumentNullException.ThrowIfNull(instance);
         ArgumentNullException.ThrowIfNull(build);
@@ -56,7 +62,19 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             && PluginCatalog.IsAvailable(package, build)
             && instance.Plugins.Any(selection => selection.Id == package.Id && selection.Version == package.Version && selection.Enabled)).ToArray();
         WriteLog("overlay-entry-count", panels.Length.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        _ = RunSessionAsync(instance.Id, build, panels, client.ProcessId, client.Control, client.Completion, TestSettings);
+        var packageFolders = PluginRequirements.OverlayPackageFolders(instance, build, packages, locale);
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed != 0, this);
+            var work = Task.Run(() => RunSessionAsync(instance.Id, build, panels, packageFolders, client.ProcessId,
+                client.Control, client.Completion, TestSettings, locale, controllerProvider, controllerCompanion));
+            _runs.Add(work);
+            _ = work.ContinueWith(completed =>
+            {
+                lock (_gate) _runs.Remove(completed);
+                if (completed.IsFaulted) WriteLog("overlay-session-failed", completed.Exception!.GetType().Name);
+            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
     }
 
     /// <summary>Returns whether an installed and enabled overlay package applies to a build.</summary>
@@ -73,12 +91,25 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         lock (_gate) return _sessions.TryGetValue(instanceId, out var session) && session.IsReady ? session : null;
     }
 
-    private async Task RunSessionAsync(string instanceId, BuildDefinition build, IReadOnlyList<PluginDefinition> panels, int gameProcessId, HookChannel? control,
-        Task<LaunchResult> gameCompletion, OverlayTestSettings test)
+    /// <summary>Returns the panel an enabled overlay package's entry page was registered on, once the overlay is ready.</summary>
+    internal IOverlayPanel? GetEntryPanel(string instanceId, string packageId)
+    {
+        lock (_gate) return _sessions.TryGetValue(instanceId, out var session) && session.IsReady
+            && session.EntryPanels.TryGetValue(packageId, out var panel) ? panel : null;
+    }
+
+    private async Task RunSessionAsync(string instanceId, BuildDefinition build, IReadOnlyList<PluginDefinition> panels,
+        IReadOnlyDictionary<string, string> packageFolders, int gameProcessId, HookChannel? control,
+        Task<LaunchResult> gameCompletion, OverlayTestSettings test, string? locale,
+        IGameOverlayControllerProvider? controllerProvider,
+        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion)
     {
         OverlaySession? session = null;
         Process? overlay = null;
+        NamedPipeServerStream? pipe = null;
         IOverlayPanel? startupTest = null;
+        var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var stopRegistration = _stop.Token.Register(() => stopped.TrySetResult());
         try
         {
             ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
@@ -92,13 +123,13 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             // The external renderer does not depend on an injected hook reporting readiness.
             // File-only clients may never report native readiness at all.
             using var game = Process.GetProcessById(gameProcessId);
-            var hwnd = await WaitForMainWindowAsync(game, gameCompletion).ConfigureAwait(false);
+            var hwnd = await WaitForMainWindowAsync(game, gameCompletion, _stop.Token).ConfigureAwait(false);
             if (hwnd == nint.Zero) return;
             if (gameCompletion.IsCompleted || Volatile.Read(ref _disposed) != 0) return;
 
             var launchId = Guid.NewGuid().ToString("N");
             var pipeName = "FantasyTale.Overlay." + launchId;
-            await using var pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte,
+            pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte,
                 PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly | PipeOptions.FirstPipeInstance, 65536, 65536);
             overlay = new Process
             {
@@ -121,6 +152,11 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             overlay.StartInfo.ArgumentList.Add(ProtocolVersion.ToString(System.Globalization.CultureInfo.InvariantCulture));
             overlay.StartInfo.ArgumentList.Add("--theme");
             overlay.StartInfo.ArgumentList.Add(profile.Theme);
+            if (locale is "zh-CN" or "zh-TW" or "ko" or "en" or "id" or "vi" or "th")
+            {
+                overlay.StartInfo.ArgumentList.Add("--locale");
+                overlay.StartInfo.ArgumentList.Add(locale);
+            }
             if (test.ResourceRoot is { } resourceRoot)
             {
                 overlay.StartInfo.ArgumentList.Add("--resource-root");
@@ -128,7 +164,8 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             }
             if (!overlay.Start()) return;
 
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
+            timeout.CancelAfter(TimeSpan.FromSeconds(15));
             await pipe.WaitForConnectionAsync(timeout.Token).ConfigureAwait(false);
             if (!GetNamedPipeClientProcessId(pipe.SafePipeHandle, out var peerPid) || peerPid != overlay.Id)
                 throw new IOException("The overlay pipe was connected by a different process.");
@@ -145,14 +182,20 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             control?.SetOverlayHandler(session.HandleNative);
             session.StartReader();
             await session.SendContextAsync().ConfigureAwait(false);
+            // Folders are registered before any page exists, so a page can fetch package files from its first script.
+            if (packageFolders.Count > 0) await session.SendPackageRootsAsync(packageFolders).ConfigureAwait(false);
+            OverlaySession? previous;
             lock (_gate)
             {
                 if (Volatile.Read(ref _disposed) != 0) return;
-                if (_sessions.Remove(instanceId, out var previous)) previous.Dispose();
+                _sessions.Remove(instanceId, out previous);
                 _sessions.Add(instanceId, session);
             }
+            if (previous is not null) await previous.DisposeAsync().ConfigureAwait(false);
             foreach (var package in panels)
             {
+                var companion = package.Overlay?.Controller is null || controllerCompanion is null ? null
+                    : await controllerCompanion(package.Id, _stop.Token).ConfigureAwait(false);
                 var entry = Path.Combine(package.Folder, package.Overlay!.Entry!);
                 for (var path = entry; path is not null; path = Path.GetDirectoryName(path))
                     if (Path.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
@@ -160,16 +203,32 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 using var input = new FileStream(entry, FileMode.Open, FileAccess.Read, FileShare.Read);
                 if (input.Length > MaximumHandshakeBytes) throw new IOException("An overlay entry exceeds 16 KiB.");
                 using var reader = new StreamReader(input, new UTF8Encoding(false, true));
-                var panel = session.RegisterPanel(package.Id, new OverlayPanelDescriptor { InlineHtml = await reader.ReadToEndAsync().ConfigureAwait(false) });
-                panel.MessageReceived += (_, args) =>
-                {
-                    if (args.EventName is "game-ui.mounted" or "game-ui.error") WriteLog(args.EventName, package.Id);
-                };
+                var panel = session.RegisterPanel(package.Id,
+                    new OverlayPanelDescriptor { InlineHtml = await reader.ReadToEndAsync().ConfigureAwait(false) }, prepared =>
+                    {
+                        // Subscribe before dispatching the entry HTML so a cached page cannot outrun its controller.
+                        try
+                        {
+                            session.Backends.Start(package, build, prepared, control is null ? null : new GameNativeUiClient(control, build.Id),
+                                locale, controllerProvider, (name, detail) => WriteLog(name, detail), companion);
+                        }
+                        catch (Exception error) when (error is InvalidOperationException or ArgumentException or IOException or JsonException)
+                        {
+                            WriteLog("overlay-controller-start-failed", package.Id + "-" + error.GetType().Name);
+                            throw;
+                        }
+                        prepared.MessageReceived += (_, args) =>
+                        {
+                            if (args.EventName is "game-ui.mounted" or "game-ui.error") WriteLog(args.EventName, package.Id);
+                        };
+                    });
+                session.EntryPanels[package.Id] = panel;
                 WriteLog("overlay-entry-prepared", package.Id);
             }
             if (test.StartupMessage)
             {
-                using var readinessTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+                using var readinessTimeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
+                readinessTimeout.CancelAfter(TimeSpan.FromSeconds(45));
                 var rendererReady = session.WaitUntilReadyAsync(readinessTimeout.Token);
                 if (await Task.WhenAny(rendererReady, gameCompletion).ConfigureAwait(false) == gameCompletion) return;
                 await rendererReady.ConfigureAwait(false);
@@ -185,9 +244,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 });
                 WriteLog("overlay-test-requested");
             }
-            var completed = await Task.WhenAny(gameCompletion, overlay.WaitForExitAsync()).ConfigureAwait(false);
-            if (completed == gameCompletion && !overlay.HasExited) overlay.Kill(entireProcessTree: true);
-            else if (!gameCompletion.IsCompleted) await gameCompletion.ConfigureAwait(false);
+            await Task.WhenAny(gameCompletion, overlay.WaitForExitAsync(), session.ConnectionCompletion, stopped.Task).ConfigureAwait(false);
         }
         catch (Exception error) when (error is InvalidOperationException or IOException or UnauthorizedAccessException
             or System.ComponentModel.Win32Exception or OperationCanceledException or TimeoutException or JsonException or KeyNotFoundException)
@@ -201,15 +258,23 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             {
                 if (_sessions.TryGetValue(instanceId, out var current) && ReferenceEquals(current, session)) _sessions.Remove(instanceId);
             }
-            try { startupTest?.Dispose(); }
-            finally { session?.Dispose(); }
+            try
+            {
+                if (session is not null) await session.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception error) { WriteLog("overlay-controller-stop-failed", error.GetType().Name); }
+            finally { startupTest?.Dispose(); }
             if (session is null && overlay is not null)
             {
                 try { if (!overlay.HasExited) overlay.Kill(entireProcessTree: true); }
                 catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception) { }
                 finally { overlay.Dispose(); }
             }
-            if (session is null) control?.SetOverlayHandler(_ => new OverlayBrokerResponse("not-found", "overlay is unavailable"));
+            if (session is null)
+            {
+                pipe?.Dispose();
+                control?.SetOverlayHandler(_ => new OverlayBrokerResponse("not-found", "overlay is unavailable"));
+            }
             WriteLog("overlay-ended");
         }
     }
@@ -220,9 +285,10 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         catch (ArgumentException) { }
     }
 
-    private static async Task<nint> WaitForMainWindowAsync(Process process, Task<LaunchResult> completion)
+    private static async Task<nint> WaitForMainWindowAsync(Process process, Task<LaunchResult> completion, CancellationToken cancellationToken)
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(30));
         while (!timeout.IsCancellationRequested && !completion.IsCompleted)
         {
             try
@@ -278,16 +344,25 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        OverlaySession[] sessions;
-        lock (_gate) { sessions = _sessions.Values.ToArray(); _sessions.Clear(); }
-        foreach (var session in sessions) session.Dispose();
-        await Task.CompletedTask.ConfigureAwait(false);
+        lock (_gate)
+        {
+            _disposed = 1;
+            return new(_dispose ??= Task.Run(DisposeCoreAsync));
+        }
     }
 
-    private sealed class OverlaySession(string instanceId, Process process, Stream pipe, OverlayBuildContext buildContext) : IOverlayHost, IDisposable
+    private async Task DisposeCoreAsync()
+    {
+        _stop.Cancel();
+        Task[] runs;
+        lock (_gate) runs = _runs.ToArray();
+        try { await Task.WhenAll(runs).ConfigureAwait(false); }
+        finally { _stop.Dispose(); }
+    }
+
+    private sealed class OverlaySession(string instanceId, Process process, Stream pipe, OverlayBuildContext buildContext) : IOverlayHost, IAsyncDisposable
     {
         private const int MaximumFrameBytes = 256 * 1024;
         private readonly object _gate = new();
@@ -295,7 +370,13 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         private readonly CancellationTokenSource _shutdown = new();
         private readonly Dictionary<string, TaskCompletionSource<OverlayResponse>> _pending = new(StringComparer.Ordinal);
         private readonly Dictionary<string, OverlayPanelProxy> _panels = new(StringComparer.Ordinal);
+        internal PanelBackendLifetime Backends { get; } = new();
+        private Task? _dispose;
+
+        // Entry pages by package id, so a package's companion grants can be bridged to its own panel.
+        internal System.Collections.Concurrent.ConcurrentDictionary<string, IOverlayPanel> EntryPanels { get; } = new(StringComparer.Ordinal);
         private Task? _reader;
+        private Task? _dispatcher;
         private long _requestNumber;
         private int _disposed;
         private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -305,15 +386,18 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         public bool IsReady => _ready.Task.IsCompletedSuccessfully;
         public OverlayBuildContext BuildContext => buildContext;
         public Task WaitUntilReadyAsync(CancellationToken cancellationToken = default) => _ready.Task.WaitAsync(cancellationToken);
+        internal Task ConnectionCompletion => _reader ?? throw new InvalidOperationException("The overlay reader has not started.");
 
         internal Task SendContextAsync() => SendCommandAsync(new { type = "build-context", context = buildContext });
+
+        internal Task SendPackageRootsAsync(IReadOnlyDictionary<string, string> roots) => SendCommandAsync(new { type = "package-roots", roots });
 
         internal IOverlayHost Host => this;
 
         internal void StartReader()
         {
             _reader = Task.Run(ReadLoopAsync);
-            _ = Task.Run(DispatchEventsAsync);
+            _dispatcher = Task.Run(DispatchEventsAsync);
         }
 
         private async Task DispatchEventsAsync()
@@ -329,7 +413,9 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             catch (OperationCanceledException) { }
         }
 
-        public IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor)
+        public IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor) => RegisterPanel(panelId, descriptor, null);
+
+        internal IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor, Action<IOverlayPanel>? prepare)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(panelId);
             ArgumentNullException.ThrowIfNull(descriptor);
@@ -341,6 +427,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             }
             try
             {
+                prepare?.Invoke(panel);
                 var request = new Dictionary<string, object?>
                 {
                     ["type"] = "register", ["panelId"] = panelId,
@@ -514,18 +601,33 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             return new UTF8Encoding(false, true).GetString(bytes);
         }
 
-        public void Dispose()
+        public ValueTask DisposeAsync()
         {
-            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-            _ready.TrySetCanceled();
-            _events.Writer.TryComplete();
-            _shutdown.Cancel();
-            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
-            process.Dispose();
-            pipe.Dispose();
-            _writeGate.Dispose();
-            _shutdown.Dispose();
-            _ = instanceId;
+            lock (_gate) return new(_dispose ??= Task.Run(DisposeCoreAsync));
+        }
+
+        private async Task DisposeCoreAsync()
+        {
+            try { await Backends.DisposeAsync().ConfigureAwait(false); }
+            finally
+            {
+                Interlocked.Exchange(ref _disposed, 1);
+                _ready.TrySetCanceled();
+                _events.Writer.TryComplete();
+                _shutdown.Cancel();
+                OverlayPanelProxy[] panels;
+                lock (_gate) { panels = _panels.Values.ToArray(); _panels.Clear(); }
+                foreach (var panel in panels) panel.Dispose();
+                try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+                process.Dispose();
+                pipe.Dispose();
+                if (_reader is not null) await _reader.ConfigureAwait(false);
+                if (_dispatcher is not null) await _dispatcher.ConfigureAwait(false);
+                _writeGate.Dispose();
+                _shutdown.Dispose();
+                _ = instanceId;
+            }
         }
 
         private readonly record struct OverlayResponse(bool Ok, string? Error);

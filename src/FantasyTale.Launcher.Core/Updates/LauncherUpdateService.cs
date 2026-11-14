@@ -23,7 +23,7 @@ public sealed record LauncherUpdateState(string Status, string? Version = null, 
     /// <summary>Whether this installation must update before continuing normal use.</summary>
     public bool Mandatory { get; init; }
     /// <summary>Inclusive version boundary supplied by the verified release policy.</summary>
-    public string? DeprecatedMaxVersion { get; init; }
+    public string? DeprecatedBeforeVersion { get; init; }
 }
 
 /// <summary>Self-update automation never restarts the application without an explicit user action.</summary>
@@ -59,7 +59,7 @@ public sealed class LauncherUpdateService : IAsyncDisposable
     {
         get => _requiredRelease is { } required ? _snapshot with
         {
-            Mandatory = true, DeprecatedMaxVersion = required.DeprecatedMaxVersion,
+            Mandatory = true, DeprecatedBeforeVersion = required.DeprecatedBeforeVersion,
             Version = required.Version, Revision = required.Revision, ManifestSha256 = required.ManifestSha256,
             Status = _snapshot.Status is "current" or "unconfigured" ? "available" : _snapshot.Status
         } : _snapshot;

@@ -1,5 +1,5 @@
-import { reactive } from 'vue'
-import { call, inHost } from '../bridge'
+import { reactive, watch } from 'vue'
+import { call, demoMode, inHost } from '../bridge'
 import { trackDownload } from './live'
 
 export interface ClientUpdateState {
@@ -40,15 +40,34 @@ export async function saveUpdatePreferences(value: ClientUpdatePreferences) {
 }
 export function pollClientUpdates() {
   let stopped = false, timer: ReturnType<typeof setTimeout> | undefined
+  const active = () => inHost || !!demoMode?.enabled
   async function poll() {
+    if (!active()) { timer = undefined; return }
     const expected = revision
     try {
       const result = await call('updates.list')
       if (!stopped && expected === revision && !clientUpdates.requesting) clientUpdates.overview = result
     } catch (error) { if (!stopped) clientUpdates.error = (error as Error).message }
-    if (!stopped) timer = setTimeout(poll, 2000)
+    if (!stopped && active()) timer = setTimeout(poll, 2000)
   }
-  void call('settings.updates').then(value => { if (!stopped) clientUpdates.preferences = value }).catch(error => { clientUpdates.error = (error as Error).message })
-  if (inHost) void poll()
-  return () => { stopped = true; if (timer) clearTimeout(timer) }
+  const loadPreferences = () => {
+    void call('settings.updates').then(value => { if (!stopped) clientUpdates.preferences = value }).catch(error => { clientUpdates.error = (error as Error).message })
+  }
+  const stopModeWatch = demoMode
+    ? watch(() => demoMode.enabled, enabled => {
+        if (stopped) return
+        if (enabled) {
+          loadPreferences()
+          if (!timer) void poll()
+        } else if (!inHost) {
+          if (timer) clearTimeout(timer)
+          timer = undefined
+          clientUpdates.overview = { checking: false, clients: [], error: null }
+          clientUpdates.error = ''
+        }
+      })
+    : () => {}
+  loadPreferences()
+  if (active()) void poll()
+  return () => { stopped = true; if (timer) clearTimeout(timer); stopModeWatch() }
 }

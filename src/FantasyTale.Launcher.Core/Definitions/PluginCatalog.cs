@@ -85,10 +85,14 @@ public static class PluginCatalog
     private static PluginDefinition ReadManifest(TomlReader root, bool readSidecars)
     {
         var file = root.File;
-        root.OnlyKeys("schema", "plugin", "compatibility", "options", "patches", "native", "files", "overlay", "service", "companion", "resources");
-        if (root.Integer("schema", true) != 1) throw root.Error("schema", "must be 1");
+        root.OnlyKeys("schema", "plugin", "compatibility", "options", "patches", "native", "files", "overlay", "service", "companion", "resources", "assets", "plugin_policy");
+        // Schema 2 adds [[plugin_policy]]; schema 1 manifests keep loading unchanged. A launcher that predates schema 2
+        // rejects it on the version instead of ignoring rules it cannot apply.
+        var manifestSchema = root.Integer("schema", true);
+        if (manifestSchema is not (1 or 2)) throw root.Error("schema", "must be 1 or 2");
+        if (manifestSchema == 1 && root.Has("plugin_policy")) throw root.Error("plugin_policy", "requires schema = 2");
         var p = root.Table("plugin", true)!;
-        p.OnlyKeys("id", "aliases", "version", "game", "kind", "runtime", "name", "description", "authors", "license", "homepage", "warning", "update_source", "minimum_launcher_version", "restore_files", "diagnostics", "exclusive_with");
+        p.OnlyKeys("id", "aliases", "version", "game", "kind", "runtime", "name", "description", "authors", "license", "homepage", "warning", "update_source", "minimum_launcher_version", "restore_files", "diagnostics", "exclusive_with", "requires");
         var minimumLauncher = p.String("minimum_launcher_version");
         try { LauncherCompatibility.ValidateMinimum(minimumLauncher); }
         catch (InvalidDataException) { throw p.Error("minimum_launcher_version", "must be a SemVer version"); }
@@ -102,13 +106,22 @@ public static class PluginCatalog
         foreach (var other in exclusiveWith) ValidateId(file, "plugin.exclusive_with", other);
         if (exclusiveWith.Contains(id, StringComparer.Ordinal) || exclusiveWith.Distinct(StringComparer.Ordinal).Count() != exclusiveWith.Count)
             throw p.Error("exclusive_with", "must contain distinct other plugin identities");
+        var legacyRequires = p.Strings("requires").Select(text => ReadRequirement(p, text)).ToArray();
+        if (legacyRequires.Any(item => item.Id == id) || legacyRequires.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count() != legacyRequires.Length)
+            throw p.Error("requires", "must name distinct other packages");
+        // A legacy requires entry is an unscoped require rule; [[plugin_policy]] adds scoped rules of any type.
+        var policy = legacyRequires.Select(item => new PluginPolicyRule(item.Id, "require", item.Range, [], [], false))
+            .Concat(root.Tables("plugin_policy", 256).Select(table => ReadPolicyRule(table, id))).ToArray();
+        // Install planning and uninstall protection use every requirement; launch checks apply the rule's scope.
+        var requires = policy.Where(rule => rule.Type == "require").GroupBy(rule => (rule.Plugin, rule.Range))
+            .Select(group => new PluginRequirement(group.Key.Plugin, group.Key.Range)).ToArray();
         var version = p.String("version", true);
         ValidateVersion(file, "plugin.version", version);
         var game = p.String("game", true);
         ValidateId(file, "plugin.game", game);
         if (p.String("update_source") is { Length: > 0 } updateSource) ValidateId(file, "plugin.update_source", updateSource);
         var kind = p.String("kind", true);
-        if (kind is not ("patch" or "native" or "files" or "overlay" or "service" or "resources")) throw p.Error("kind", "must be patch, native, files, overlay, service or resources");
+        if (kind is not ("patch" or "native" or "files" or "overlay" or "service" or "resources" or "assets")) throw p.Error("kind", "must be patch, native, files, overlay, service, resources or assets");
         var restoreFiles = p.Boolean("restore_files", true);
         if (p.Has("restore_files") && kind != "files") throw p.Error("restore_files", "only allowed for file plugins");
         var installationFile = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file))!, "file-install.toml");
@@ -144,7 +157,7 @@ public static class PluginCatalog
         }
         if (kind == "native" && native is null) throw root.Error("native", "required for native plugins");
         var overlay = root.Table("overlay");
-        overlay?.OnlyKeys("entry");
+        overlay?.OnlyKeys("entry", "controller");
         OverlayPluginDefinition? overlayDefinition = null;
         if (kind == "overlay")
         {
@@ -153,7 +166,16 @@ public static class PluginCatalog
             if (overlayEntry.Length > 0 && (Path.GetFileName(overlayEntry) != overlayEntry || !overlayEntry.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
                 || overlayEntry.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || overlayEntry.Contains("..", StringComparison.Ordinal)))
                 throw overlay.Error("entry", "must be a single package-relative .html file name");
-            overlayDefinition = new OverlayPluginDefinition(overlayEntry.Length == 0 ? null : overlayEntry);
+            string? controller = null;
+            if (overlay.Has("controller"))
+            {
+                controller = overlay.String("controller", true);
+                if (controller.Length == 0 || !char.IsAsciiLetterOrDigit(controller[0])
+                    || controller.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not ('.' or '_' or '-')))
+                    throw overlay.Error("controller", "must be an identifier using ASCII letters, digits, dots, underscores or hyphens");
+                if (overlayEntry.Length == 0) throw overlay.Error("controller", "requires an overlay entry page");
+            }
+            overlayDefinition = new OverlayPluginDefinition(overlayEntry.Length == 0 ? null : overlayEntry) { Controller = controller };
         }
         else if (overlay is not null) throw root.Error("overlay", "only allowed for overlay plugins");
         var service = root.Table("service");
@@ -174,10 +196,11 @@ public static class PluginCatalog
                     throw service.Error("messages", "requires lower-case message type identities and schema versions between 1 and 65535");
                 grants.Add(type, (int)versionNumber);
             }
-            if (provider == "companion" && grants.Count > 0 && (grants.Count != 2
-                || !grants.TryGetValue("ui.notification.show", out var notificationShow) || notificationShow != 1
-                || !grants.TryGetValue("ui.notification.result", out var notificationResult) || notificationResult != 1))
-                throw service.Error("messages", "communication accepts only the notification routing schema pair");
+            // Communication itself consumes only complete schema-one pairs: server popups and native UI requests.
+            string[][] communicationPairs = [["ui.notification.show", "ui.notification.result"], ["ui.native.invoke", "ui.native.result"]];
+            if (provider == "companion" && (grants.Any(grant => grant.Value != 1 || !communicationPairs.Any(pair => pair.Contains(grant.Key)))
+                || communicationPairs.Any(pair => grants.ContainsKey(pair[0]) != grants.ContainsKey(pair[1]))))
+                throw service.Error("messages", "communication accepts only the notification and native UI routing schema pairs");
             if (provider == "overlay-notifications" && (grants.Count != 2 || !grants.TryGetValue("ui.notification.show", out var showVersion)
                 || showVersion != 1 || !grants.TryGetValue("ui.notification.result", out var resultVersion) || resultVersion != 1))
                 throw service.Error("messages", "the notification provider requires only ui.notification.show/result schema one");
@@ -196,11 +219,27 @@ public static class PluginCatalog
             if (patches.Length != 0 || native is not null) throw resource.Error("provider", "resource plugins cannot contain patches or native libraries");
         }
         else if (resource is not null) throw root.Error("resources", "only allowed for resource plugins");
+        var assetsTable = root.Table("assets");
+        AssetsPluginDefinition? assetsDefinition = null;
+        if (kind == "assets")
+        {
+            if (assetsTable is null) throw root.Error("assets", "required for assets packages");
+            assetsTable.OnlyKeys("root");
+            var assetsRoot = assetsTable.String("root", true);
+            try { _ = Hooks.FilePluginResolver.RelativePath(assetsRoot); }
+            catch (IOException) { throw assetsTable.Error("root", "must be a safe package-relative folder"); }
+            if (assetsRoot.EndsWith('/') || assetsRoot.Split('/').Any(part => part is "." or ".." || part.Length == 0))
+                throw assetsTable.Error("root", "must be a safe package-relative folder");
+            assetsDefinition = new AssetsPluginDefinition(assetsRoot);
+        }
+        else if (assetsTable is not null) throw root.Error("assets", "only allowed for assets packages");
         var companion = root.Table("companion");
         var companionMessages = new Dictionary<string, int>(StringComparer.Ordinal);
         if (companion is not null)
         {
-            if (kind != "native") throw companion.Error("messages", "only native plugins declare companion consumer grants");
+            // Native libraries and overlay pages are the two kinds that consume companion messages themselves.
+            if (kind is not ("native" or "overlay")) throw companion.Error("messages", "only native and overlay plugins declare companion consumer grants");
+            if (kind == "overlay" && overlayDefinition?.Entry is null) throw companion.Error("messages", "an overlay plugin needs an entry page to consume companion messages");
             companion.OnlyKeys("messages");
             var messages = companion.Table("messages", true)!.Scalars();
             if (messages.Count is < 1 or > 128) throw companion.Error("messages", "requires 1..128 message types");
@@ -229,6 +268,8 @@ public static class PluginCatalog
             throw root.Error("files", "file plugin options must be boolean gates referenced by memory patches");
         if (kind == "overlay" && (patches.Length != 0 || options.Length != 0 || native is not null))
             throw root.Error("overlay", "overlay plugins cannot contain patches, options or native libraries");
+        if (kind == "assets" && (patches.Length != 0 || options.Length != 0 || native is not null || companion is not null))
+            throw root.Error("assets", "assets packages are data only and cannot contain patches, options, native libraries or companion grants");
         if (kind == "service" && (patches.Length != 0 || native is not null))
             throw root.Error("service", "service plugins cannot contain patches or native libraries");
         return new PluginDefinition(id, version, game, kind, runtime, Path.GetDirectoryName(Path.GetFullPath(file))!,
@@ -237,7 +278,54 @@ public static class PluginCatalog
             options, patches, library, entry) { Files = files, Warning = p.Has("warning") ? p.Localized("warning") : null,
                 UpdateSource = p.String("update_source"), MinimumLauncherVersion = minimumLauncher, RestoreFiles = restoreFiles,
                 Diagnostics = p.Boolean("diagnostics"), Overlay = overlayDefinition, Service = serviceDefinition, Resources = resourceDefinition, CompanionMessages = companionMessages,
-                ExclusiveWith = exclusiveWith, Aliases = aliases };
+                ExclusiveWith = exclusiveWith, Aliases = aliases, Assets = assetsDefinition, Requires = requires, Policy = policy };
+    }
+
+    /// <summary>Reads one <c>[[plugin_policy]]</c> rule; a package may declare several, as client policy does.</summary>
+    private static PluginPolicyRule ReadPolicyRule(TomlReader table, string ownId)
+    {
+        table.OnlyKeys("plugin", "type", "version", "builds", "languages", "default_selected");
+        var plugin = table.String("plugin", true);
+        ValidateId(table.File, "plugin_policy.plugin", plugin);
+        if (plugin == ownId) throw table.Error("plugin", "must name another package");
+        var type = table.String("type", true);
+        if (!PluginPolicyRule.Types.Contains(type, StringComparer.Ordinal)) throw table.Error("type", "must be require, recommend or conflict");
+        var range = table.String("version");
+        if (range.Length > 0)
+        {
+            try { _ = PluginVersion.Satisfies("0.0.0", range); }
+            catch (Exception e) when (e is FormatException or OverflowException) { throw table.Error("version", "invalid version constraint"); }
+            range = string.Join(' ', range.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
+        var builds = table.Strings("builds");
+        foreach (var build in builds) ValidateId(table.File, "plugin_policy.builds", build);
+        var languages = table.Strings("languages");
+        if (languages.Any(language => language.Length is 0 or > 35 || !language.All(c => char.IsAsciiLetterOrDigit(c) || c == '-')))
+            throw table.Error("languages", "must be launcher language tags such as zh-CN");
+        if (builds.Distinct(StringComparer.Ordinal).Count() != builds.Count || languages.Distinct(StringComparer.OrdinalIgnoreCase).Count() != languages.Count)
+            throw table.Error("builds", "builds and languages must be distinct");
+        var defaultSelected = table.Boolean("default_selected");
+        if (table.Has("default_selected") && type != "recommend") throw table.Error("default_selected", "only a recommendation can be pre-selected");
+        return new PluginPolicyRule(plugin, type, range, builds, languages, defaultSelected);
+    }
+
+    /// <summary>Tests whether a validated version satisfies a requirement's space-separated comparisons; an empty range accepts every version.</summary>
+    public static bool Satisfies(string version, string range) => PluginVersion.Satisfies(version, range);
+
+    private static PluginRequirement ReadRequirement(TomlReader table, string text)
+    {
+        var at = text.IndexOf('@', StringComparison.Ordinal);
+        var id = at < 0 ? text : text[..at];
+        var range = at < 0 ? "" : text[(at + 1)..];
+        ValidateId(table.File, "plugin.requires", id);
+        if (at >= 0 && range.Length == 0) throw table.Error("requires", "a version constraint after '@' must not be empty");
+        if (range.Length > 0)
+        {
+            try { _ = PluginVersion.Satisfies("0.0.0", range); }
+            catch (Exception e) when (e is FormatException or OverflowException) { throw table.Error("requires", "invalid version constraint for '" + id + "'"); }
+            range = string.Join(' ', range.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        }
+        return new PluginRequirement(id, range);
     }
 
     /// <summary>Tests build availability, including exclusion selectors.</summary>

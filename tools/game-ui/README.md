@@ -41,3 +41,15 @@ The provider owns the player across theme changes and disposes it on unmount.
 This library implements a subset of native controls. Browser glyph rasterization
 remains approximate; the tutorial's optional prepared glyph atlas follows a
 separate rendering path. See `TUTORIAL.md` for that optional resource contract.
+
+The Ban Pick demo opts into weight 700 using its own W9 font face and
+visible-ink item-name centering; these host options do not change the settings
+renderer defaults above. Panel skins are composed at integer dimensions and
+encoded as one PNG image before mounting.
+
+The Ban Pick host supplies `textScale` so captions choose an integer final
+pixel size and use browser SVG text instead of a resized glyph bitmap. `BfWindow`
+accepts optional `fontFamily`, `fontWeight`, `textRenderer`, `textScale` and
+`titleBounds`; callers that omit them retain the existing renderer defaults.
+The Ban Pick appearance carries `nameBounds`, `statusBounds` and `titleBounds`
+from its own theme assets. Native drawing errors are forwarded to the host.

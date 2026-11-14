@@ -11,7 +11,23 @@ public sealed record ServerDirectory(int Schema, string Build, [property: JsonPr
     /// <summary>Explicit server-owned Center activation; absent metadata keeps the ordinary server launch unchanged.</summary>
     [JsonPropertyName("center")]
     public ServerCenterConfiguration? Center { get; init; }
+
+    /// <summary>Groups the servers are offered in, the first being the default; null or empty when the server does not group them.</summary>
+    [JsonPropertyName("sections")]
+    public IReadOnlyList<ServerDirectorySection>? Sections { get; init; }
 }
+
+/// <summary>A named group of servers offered as one choice.</summary>
+/// <param name="Id">Stable identity that selectors refer to.</param>
+/// <param name="Name">Display name.</param>
+/// <param name="ApiUrl">The section's own Launcher API when it signs players in separately; null when it shares the publishing API's sign-in.</param>
+public sealed record ServerDirectorySection(string Id, string Name, [property: JsonPropertyName("api_url")] string? ApiUrl = null);
+
+/// <summary>A node's maintenance period while it is in effect.</summary>
+/// <param name="Start">When it began; null when not announced.</param>
+/// <param name="End">When it is expected to end; null when unknown.</param>
+/// <param name="Description">The operator's explanation.</param>
+public sealed record ServerDirectoryMaintenance(DateTimeOffset? Start, DateTimeOffset? End, string Description);
 
 /// <summary>Server authorization to enable Center handling independently of client adapter support.</summary>
 /// <param name="Enabled">Whether this server explicitly enables Center; omission leaves it disabled.</param>
@@ -28,6 +44,9 @@ public sealed record ServerSelector(int Id, string Name, bool Automatic, IReadOn
     /// <summary>Optional short label projected into the Gateway Center entry; the Launcher preserves it verbatim.</summary>
     [JsonPropertyName("short_name")]
     public string? ShortName { get; init; }
+    /// <summary>The section this selector is offered in; null when the server does not group its selectors.</summary>
+    [JsonPropertyName("section")]
+    public string? Section { get; init; }
 }
 
 /// <summary>A physical node declaration; scope names do not grant authentication or cross-node joining.</summary>
@@ -54,6 +73,12 @@ public sealed record ServerDirectoryTarget(string NodeId, string Host, int Port,
     /// <summary>Opaque source revision; lexical or numeric ordering has no meaning.</summary>
     [JsonPropertyName("status_revision")]
     public string? StatusRevision { get; init; }
+    /// <summary>Every client build the node serves; null from a server that does not say.</summary>
+    [JsonPropertyName("client_builds")]
+    public IReadOnlyList<string>? ClientBuilds { get; init; }
+    /// <summary>The node's maintenance period while it is in effect; null otherwise.</summary>
+    [JsonPropertyName("maintenance")]
+    public ServerDirectoryMaintenance? Maintenance { get; init; }
 }
 
 /// <summary>Identifies the ticket issuer and policy catalog independently of data and routing scopes.</summary>
@@ -62,3 +87,11 @@ public sealed record ServerDirectoryTarget(string NodeId, string Host, int Port,
 /// <param name="Mode">master-issued for a shared issuer or own-authority for independent authentication.</param>
 /// <param name="PolicyMode">authority requires that issuer's catalog and build policy without implicit inheritance.</param>
 public sealed record ServerDirectoryAuthentication(string AuthorityId, string ApiUrl, string Mode, string PolicyMode);
+
+/// <summary>An operator notice published by a server.</summary>
+/// <param name="Id">Stable identity; the Launcher shows each one on its own only once.</param>
+/// <param name="Title">Title.</param>
+/// <param name="Body">Body in Markdown, rendered without raw HTML.</param>
+/// <param name="Level">info, warning or important.</param>
+/// <param name="PublishedAt">When the notice was published.</param>
+public sealed record ServerNotice(string Id, string Title, string Body, string Level, DateTimeOffset? PublishedAt);

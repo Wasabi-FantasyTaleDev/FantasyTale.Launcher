@@ -5,7 +5,9 @@ import { i18n } from './i18n'
 import './theme'
 import './styles/tokens.css'
 import './styles/app.css'
+import { installAutoHidingScrollbars } from './scrollbars'
 
+installAutoHidingScrollbars()
 const app = createApp(App)
 app.use(router)
 app.use(i18n)

@@ -15,6 +15,13 @@
 Provider 收到客户端日期时也执行同样的边界判断。`BfExtensionSettings` 在三个主题
 间共用控件树和状态，只发送 change、save、cancel 事件，不实现游戏功能。
 
+`BfCaptionButton` 绘制带自身文字的原生 O/X 按钮。设置 `fit` 后不再使用 `width`/`height`，而是按客户端自己的
+按钮取尺寸：`fit-captions`（默认是按钮文字）中最宽的文字加 37 像素图标边距，宽度至少 65，高度 27。
+`fitCaptionWidth`、`measureCaptionWidth` 向普通 JavaScript 提供同一规则。`BfAnchoredPanel` 以游戏客户区像素
+（锚点的 `width`/`height`）排版内容，并缩放到实际分配的面板区域；区域用 `ResizeObserver` 测量，而不是取共享
+Overlay 页面的宽度，因此显示缩放不会让内容比旁边的原生控件更大。插槽通过 `zoom` 提供缩放比例，可作为 FreeType
+文字的 `text-scale`。
+
 启动器保留此前已认可的 v1/v2 文字效果。空字体名的 UiLabel、扩展设置正文和文字
 选项卡使用 BFMalgun（DF_GB_Y9.TTF）；明确指定 Default、DefaultBold、NexonBTBold
 的标签以及窗口、分组标题使用 BF（GB13000.ttf）。v1 确认、取消文字保留
@@ -30,3 +37,13 @@ BFMalgun 和 13 逻辑像素。v3 使用自己的原生字体声明。所有字�
 
 当前库只覆盖部分原生控件。浏览器字形栅格仍存在近似；教学对话的可选预制字形图集
 使用独立绘制路径，资源契约见 `TUTORIAL.zh.md`。
+
+Ban Pick 演示单独使用 W9 字体的 700 字重，并按可见字形居中道具名称；
+这些宿主选项不改变上述设置界面的默认值。面板皮肤先按整数尺寸合成，
+再编码为一张 PNG 图像挂入页面。
+
+Ban Pick 宿主提供 `textScale`，让文字按最终显示尺寸取整数像素字号，使用浏览器
+直接绘制的 SVG 文字，不缩放字形位图。`BfWindow` 可选提供 `fontFamily`、
+`fontWeight`、`textRenderer`、`textScale` 和 `titleBounds`；省略这些参数时保留
+已有绘制默认值。Ban Pick 的样式包含各自主题素材中的 `nameBounds`、
+`statusBounds` 和 `titleBounds`。原生绘制错误会传给宿主。

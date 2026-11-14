@@ -12,21 +12,28 @@ export async function createGameUi({theme='v2',resourceRoot='./local/',sounds}={
   const response=await fetch(base()+'manifest.json');
   if(!response.ok)throw Error(`Unable to load ${theme} UI resources (${response.status}).`);
   const manifest=await response.json();
+  // A prepared resource set may store its sprites as lossless WebP; its manifest says so and every image path follows.
+  const image=path=>manifest.imageFormat==='webp'?path.replace(/\.png$/i,'.webp'):path;
 const number = (a, key, fallback=0) => Number(a[key] || fallback);
 function place(el,x,y,w,h){Object.assign(el.style,{left:`${x}px`,top:`${y}px`,width:`${w}px`,height:`${h}px`});return el;}
-async function tile(parent,path,rect,x,y,w,h){const index=manifest.sprites[path]?.findIndex(r=>r.every((v,i)=>v===rect[i]));if(index===undefined||index<0)throw Error(`Missing sprite frame: ${path}`);const box=place(document.createElement('span'),x,y,w,h);box.className='tile';const copy=new Image();copy.src=base()+path.replace(/\.smf$/i,'')+'/'+index+'.png';Object.assign(copy.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(copy);parent.append(box);}
+async function tile(parent,path,rect,x,y,w,h){const index=manifest.sprites[path]?.findIndex(r=>r.every((v,i)=>v===rect[i]));if(index===undefined||index<0)throw Error(`Missing sprite frame: ${path}`);const box=place(document.createElement('span'),x,y,w,h);box.className='tile';const copy=Object.assign(new Image(), { crossOrigin: 'anonymous' });copy.src=base()+path.replace(/\.smf$/i,'')+'/'+image(index+'.png');Object.assign(copy.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(copy);parent.append(box);}
 const decodedFrames=new Map();
-async function frameImage(path,index){const key=path+':'+index;if(!decodedFrames.has(key)){decodedFrames.set(key,(async()=>{const img=new Image();img.src=base()+path.replace(/\.smf$/i,'')+'/'+index+'.png';await img.decode();return img;})());}return decodedFrames.get(key);}
+async function frameImage(path,index){const key=path+':'+index;if(!decodedFrames.has(key)){decodedFrames.set(key,(async()=>{const img=Object.assign(new Image(), { crossOrigin: 'anonymous' });img.src=base()+path.replace(/\.smf$/i,'')+'/'+image(index+'.png');await img.decode();return img;})());}return decodedFrames.get(key);}
 async function skin(parent,path,w,h){
   const frames=manifest.sprites[path];if(!frames)throw Error(`Missing sprite: ${path}`);
   const canvas=document.createElement('canvas');canvas.className='skin';canvas.width=w;canvas.height=h;canvas.style.width=w+'px';canvas.style.height=h+'px';canvas.ariaHidden='true';
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   // Compose shared integer edges before CSS scaling to avoid independently rounded tile boundaries.
   if(frames.length!==9)ctx.drawImage(await frameImage(path,0),0,0,w,h);
-  else {const widths=[frames[0][2]-frames[0][0]+1,0,frames[2][2]-frames[2][0]+1],heights=[frames[0][3]-frames[0][1]+1,0,frames[6][3]-frames[6][1]+1];widths[1]=w-widths[0]-widths[2];heights[1]=h-heights[0]-heights[2];if(widths[1]<0||heights[1]<0)throw Error(`Skin destination too small: ${path}`);const images=await Promise.all(frames.map((_,i)=>frameImage(path,i)));let y=0;for(let row=0;row<3;row++){let x=0;for(let col=0;col<3;col++){if(widths[col]&&heights[row])ctx.drawImage(images[row*3+col],x,y,widths[col],heights[row]);x+=widths[col];}y+=heights[row];}}
-  parent.prepend(canvas);return canvas;
+  else {const widths=[frames[0][2]-frames[0][0]+1,0,frames[2][2]-frames[2][0]+1],heights=[frames[0][3]-frames[0][1]+1,0,frames[6][3]-frames[6][1]+1];// A destination thinner than the edges (the popup's 1px divider) shrinks the edges to fit, as the client draws it.
+    const fit=(sizes,total)=>{if(sizes[0]+sizes[2]>total){const scale=total/(sizes[0]+sizes[2]);sizes[0]=Math.floor(sizes[0]*scale);sizes[2]=total-sizes[0];}sizes[1]=total-sizes[0]-sizes[2];};fit(widths,w);fit(heights,h);const images=await Promise.all(frames.map((_,i)=>frameImage(path,i)));let y=0;for(let row=0;row<3;row++){let x=0;for(let col=0;col<3;col++){if(widths[col]&&heights[row])ctx.drawImage(images[row*3+col],x,y,widths[col],heights[row]);x+=widths[col];}y+=heights[row];}}
+  const image=Object.assign(new Image(), { crossOrigin: 'anonymous' });image.className='skin';image.width=w;image.height=h;
+  image.style.width=w+'px';image.style.height=h+'px';image.alt='';image.ariaHidden='true';
+  image.src=canvas.toDataURL('image/png');await image.decode();
+  parent.prepend(image);return image;
 }
 async function button(parent,name,x,y,w,h,text,explicit,attrs={}){
+// Vue wrappers can mount the returned control directly; its temporary parent is not an event target.
 if(theme==='v3'&&(!explicit||explicit.includes('/dialogueNew/'))){
   const el=place(document.createElement('button'),x,y,w,h);el.className='control sprite-button';el.ariaLabel=text;el.dataset.control=attrs.Name||name;parent.append(el);
   const fallback=name==='Ok'?'Images/Ui/dialogueNew/dialogue_type01BTN-Up.smf':manifest.scheme.UiButton.SkinImage_Up;
@@ -41,12 +48,12 @@ if(theme==='v3'&&(!explicit||explicit.includes('/dialogueNew/'))){
   }
   await paint(0);el.setSelected=async value=>{selected=Boolean(value);el.ariaPressed=String(selected);await paint(0)};
   el.addEventListener('pointerenter',()=>{void paint(2)});el.addEventListener('pointerleave',()=>{void paint(0)});el.addEventListener('pointerdown',()=>{void paint(1)});el.addEventListener('pointerup',()=>{void paint(2)});el.addEventListener('pointercancel',()=>{void paint(0)});
-  el.addEventListener('click',()=>parent.dispatchEvent(new CustomEvent('bf-action',{bubbles:true,detail:{name,text}})));return el;
+  el.addEventListener('click',()=>el.dispatchEvent(new CustomEvent('bf-action',{bubbles:true,detail:{name,text}})));return el;
 }
-const el=place(document.createElement('button'),x,y,w,h);el.className='control sprite-button';el.ariaLabel=text;parent.append(el);const path=explicit || `Images/Ui/DialogBtn${name}.smf`;let state=0;async function paint(i){state=i;el.replaceChildren();if(theme==='v1'&&(!explicit||/DialogButton(?:Ok|Cancel)-Up/.test(explicit))){const suffix=['Up','Down','Hover','Disabled'][i];const skinName=explicit?.match(/DialogButton(Ok|Cancel)-Up/)?.[1]??name;await skin(el,`Images/Ui/DialogButton${skinName}-${suffix}.smf`,w,h);const label=document.createElement('span');label.className='text';label.style.cssText='left:14px;right:0;top:0;bottom:0;width:'+(w-14)+'px;height:'+h+'px';el.append(label);await paintText(label,text,{family:'BFMalgun',size:13,weight:400,width:w-14,height:h,align:'center',color:'white',outline:'#79a4cf',outlineWidth:0.5});}else{const frames=manifest.sprites[path];if(!frames)throw Error(`Missing button: ${path}`);await tile(el,path,frames[Math.min(i,frames.length-1)],0,0,w,h);}}await paint(0);el.setSelected=async selected=>{el.ariaPressed=String(selected);await paint(selected?3:0);};el.addEventListener('pointerenter',()=>paint(el.ariaPressed==='true'?3:2));el.addEventListener('pointerleave',()=>paint(el.ariaPressed==='true'?3:0));el.addEventListener('pointerdown',()=>paint(1));el.addEventListener('pointerup',()=>paint(el.ariaPressed==='true'?3:2));el.addEventListener('click',()=>{parent.dispatchEvent(new CustomEvent('bf-action',{bubbles:true,detail:{name,text,state}}));});return el;}
-async function windowShell(width,height,title){const el=place(document.createElement('div'),0,0,width,height);el.className='bf-window';el.dataset.theme=theme;el.dataset.bfOpenSound='popup';await skin(el,theme==='v3'?manifest.scheme.Dialog.SkinImage_Title:'Images/Ui/DialogSkin-Basic.smf',width,height);const caption=document.createElement('span');caption.className='caption';caption.style.width=(width-(theme==='v1'?62:50))+'px';caption.style.height=(theme==='v2'?38:18)+'px';if(theme==='v1'){caption.style.left='37px';caption.style.top='11px';}if(theme==='v2'){caption.style.left='3px';caption.style.top='9px';caption.style.width=width+'px';}if(theme==='v3'){
+const el=place(document.createElement('button'),x,y,w,h);el.className='control sprite-button';el.ariaLabel=text;parent.append(el);const path=explicit || `Images/Ui/DialogBtn${name}.smf`;let state=0;async function paint(i){state=i;el.replaceChildren();if(theme==='v1'&&(!explicit||/DialogButton(?:Ok|Cancel)-Up/.test(explicit))){const suffix=['Up','Down','Hover','Disabled'][i];const skinName=explicit?.match(/DialogButton(Ok|Cancel)-Up/)?.[1]??name;await skin(el,`Images/Ui/DialogButton${skinName}-${suffix}.smf`,w,h);const label=document.createElement('span');label.className='text';label.style.cssText='left:14px;right:0;top:0;bottom:0;width:'+(w-14)+'px;height:'+h+'px';el.append(label);await paintText(label,text,{family:'BFMalgun',size:13,weight:400,width:w-14,height:h,align:'center',color:'white',outline:'#79a4cf',outlineWidth:0.5});}else{const frames=manifest.sprites[path];if(!frames)throw Error(`Missing button: ${path}`);await tile(el,path,frames[Math.min(i,frames.length-1)],0,0,w,h);}}await paint(0);el.setSelected=async selected=>{el.ariaPressed=String(selected);await paint(selected?3:0);};el.addEventListener('pointerenter',()=>paint(el.ariaPressed==='true'?3:2));el.addEventListener('pointerleave',()=>paint(el.ariaPressed==='true'?3:0));el.addEventListener('pointerdown',()=>paint(1));el.addEventListener('pointerup',()=>paint(el.ariaPressed==='true'?3:2));el.addEventListener('click',()=>{el.dispatchEvent(new CustomEvent('bf-action',{bubbles:true,detail:{name,text,state}}));});return el;}
+async function windowShell(width,height,title,textOptions={}){const el=place(document.createElement('div'),0,0,width,height);el.className='bf-window';el.dataset.theme=theme;el.dataset.bfOpenSound='popup';await skin(el,theme==='v3'?manifest.scheme.Dialog.SkinImage_Title:'Images/Ui/DialogSkin-Basic.smf',width,height);const caption=document.createElement('span');caption.className='caption';caption.style.width=(width-(theme==='v1'?62:50))+'px';caption.style.height=(theme==='v2'?38:18)+'px';if(theme==='v1'){caption.style.left='37px';caption.style.top='11px';}if(theme==='v2'){caption.style.left='3px';caption.style.top='9px';caption.style.width=width+'px';}if(theme==='v3'){
  const a=manifest.scheme.Dialog;place(caption,Number(a.Title_TextMargin_Left),Number(a.Title_TextMargin_Top),width-Number(a.Title_TextMargin_Left)-Number(a.Title_TextMargin_Right),Number(a.Title_Margin_Top)-Number(a.Title_TextMargin_Top)-Number(a.Title_TextMargin_Bottom));
-}el.append(caption);await paintText(caption,title,{size:Number(manifest.scheme.Dialog.Title_FontSize),family:'BF',align:theme==='v1'?'left':'center',color:'#'+manifest.scheme.Dialog.Title_TextColor.slice(-6),decoration:Number(manifest.scheme.Dialog.Title_TextDecoration),outline:'#'+manifest.scheme.Dialog.Title_TextDecoColor.slice(-6),outlineWidth:2,nativeMetrics:theme!=='v1',vertical:theme==='v3'?'middle':'top'});const path=manifest.scheme.Dialog.CloseButton_SkinImage;
+}el.append(caption);await paintText(caption,title,{size:Number(manifest.scheme.Dialog.Title_FontSize),family:'BF',align:theme==='v1'?'left':'center',color:'#'+manifest.scheme.Dialog.Title_TextColor.slice(-6),decoration:Number(manifest.scheme.Dialog.Title_TextDecoration),outline:'#'+manifest.scheme.Dialog.Title_TextDecoColor.slice(-6),outlineWidth:textOptions.renderer==='freetype'?0.5:2,nativeMetrics:theme!=='v1',vertical:theme==='v3'?'middle':'top',...textOptions});const path=manifest.scheme.Dialog.CloseButton_SkinImage;
 const frames=manifest.sprites[path];
 const closeWidth=frames[0][2]-frames[0][0]+1;
 const closeHeight=frames[0][3]-frames[0][1]+1;
@@ -59,7 +66,7 @@ close.className='bf-close';close.ariaLabel='关闭';
 close.dataset.bfPressSound='cancel';
 await tile(close,path,frames[0],0,0,closeWidth,closeHeight);
 const sprite=close.querySelector('img');
-const paintClose=index=>{sprite.src=base()+path.replace(/\.smf$/i,'')+'/'+index+'.png';};
+const paintClose=index=>{sprite.src=base()+path.replace(/\.smf$/i,'')+'/'+image(index+'.png');};
 close.addEventListener('pointerenter',()=>paintClose(close.disabled?3:2));
 close.addEventListener('pointerleave',()=>paintClose(close.disabled?3:0));
 close.addEventListener('pointerdown',()=>{if(!close.disabled)paintClose(1);});
@@ -82,19 +89,22 @@ function messageGeometry({contentWidth,contentHeight,textWidth,textHeight,button
   const width=Math.max(contentWidth,textUnits+104,buttonSpan+20),height=Math.max(contentHeight,bodyHeight+9+buttonHeight);
   return {width,height,bodyHeight,buttonY:bodyHeight+9,buttonX:buttonCount===1?Math.floor((width-buttonWidth)/2):undefined};
 }
-async function renderMessageBox({title,text,iconKind='notice',buttons,body,contentWidth=350,contentHeight,contentX=10,contentY=38,outerWidth,outerHeight,buttonY:customButtonY}){
+async function renderMessageBox({title,text,iconKind='notice',buttons,body,contentWidth=350,contentHeight,contentX=10,contentY=38,outerWidth,outerHeight,buttonY:customButtonY,textScale=1}){
+  // Native-style dialogs draw their title and message with the client's own glyph rasteriser.
+  const textOptions={renderer:'freetype',resourceRoot,pixelRatio:textScale};
   if(theme==='v3')return renderV3MessageBox(arguments[0]);
   const modern=theme==='v2',baseWidth=contentWidth,baseHeight=contentHeight??(modern?104:105),customBody=typeof body==='function';
   const iconNames={notice:'Notice',warning:'Warning',question:'Question',error:'Error'};
   // Warning reserves a 100-unit slot in the .ui layout, but its extracted PNG
   // is 63x58. Keep the slot for layout calculations and draw the bitmap at
   // natural size so the triangle is never stretched.
-  const iconFile=`Images/Ui/MsgBoxIcon${iconNames[iconKind]||'Notice'}.png`,iconWidth=63;
+  const iconFile=image(`Images/Ui/MsgBoxIcon${iconNames[iconKind]||'Notice'}.png`),iconWidth=63;
   const gap=modern?5:8,normalized=buttons.map(spec=>({...spec,width:spec.width??(modern?64:68),height:spec.height??(modern?26:25)}));
   if(!normalized.length&&!customBody)throw Error('Message boxes require at least one button.');
   const buttonSpan=normalized.reduce((sum,spec)=>sum+spec.width,0)+gap*(normalized.length-1);
-  await document.fonts.load('400 13px BFMalgun');
-  const measured=customBody?{width:0,height:0}:messageTextSize(text,13,'BFMalgun');
+  // The message body is the client's thin GB13000 face ('BF'); the DF_GB_Y9 face is the heavier one.
+  await document.fonts.load('400 13px BF');
+  const measured=customBody?{width:0,height:0}:messageTextSize(text,13,'BF');
   const geometry=customBody
     ? {width:contentWidth,height:baseHeight,bodyHeight:baseHeight,buttonY:customButtonY??(baseHeight+9)}
     : messageGeometry({contentWidth:baseWidth,contentHeight:baseHeight,textWidth:measured.width,textHeight:measured.height,buttonWidth:normalized[0].width,buttonHeight:normalized[0].height,buttonCount:normalized.length,buttonSpan});
@@ -102,19 +112,19 @@ async function renderMessageBox({title,text,iconKind='notice',buttons,body,conte
   const actionBottom=geometry.buttonY+Math.max(0,...normalized.map(spec=>spec.height));
   geometry.height=Math.max(geometry.height,actionBottom);
   const right=Number(manifest.scheme.Dialog.Title_Margin_Right),bottom=Number(manifest.scheme.Dialog.Title_Margin_Bottom);
-  const el=await windowShell(Math.max(outerWidth??0,contentX+geometry.width+right),Math.max(outerHeight??0,contentY+geometry.height+bottom),title);
+  const el=await windowShell(Math.max(outerWidth??0,contentX+geometry.width+right),Math.max(outerHeight??0,contentY+geometry.height+bottom),title,textOptions);
   const content=place(document.createElement('div'),contentX,contentY,geometry.width,geometry.height);content.className='bf-form';el.append(content);
   if(customBody)await body(content,geometry);
   else {
     const panelWidth=modern?geometry.width-1:geometry.width;const panel=place(document.createElement('div'),modern?1:0,2,panelWidth,geometry.bodyHeight);panel.className='control';await skin(panel,'Images/Ui/FrameBox.smf',panelWidth,geometry.bodyHeight);content.append(panel);
-    const icon=new Image();icon.src=base()+iconFile;icon.className='control';
+    const icon=Object.assign(new Image(), { crossOrigin: 'anonymous' });icon.src=base()+iconFile;icon.className='control';
     // The .ui width is a layout slot, not an instruction to scale the PNG.
     // Read the decoded bitmap for every icon so a future resource pack with
     // a different natural size cannot silently stretch it.
     await icon.decode().catch(()=>{});
     const naturalWidth=icon.naturalWidth||iconWidth,naturalHeight=icon.naturalHeight||58;
     place(icon,11,Math.round(2+(geometry.bodyHeight-naturalHeight)/2),naturalWidth,naturalHeight);content.append(icon);
-    const textHeight=Math.max(40,measured.height),copy=place(document.createElement('div'),90,Math.round(2+(geometry.bodyHeight-textHeight)/2),geometry.width-104,textHeight);copy.className='message-copy';content.append(copy);await paintText(copy,text,{size:13,weight:400,family:'BFMalgun',align:'center',color:'#444',height:textHeight,width:geometry.width-104});
+    const textHeight=Math.max(40,measured.height),copy=place(document.createElement('div'),90,Math.round(2+(geometry.bodyHeight-textHeight)/2),geometry.width-104,textHeight);copy.className='message-copy';content.append(copy);await paintText(copy,text,{size:13,weight:400,family:'BF',align:'center',color:'#444',height:textHeight,width:geometry.width-104,...textOptions});
   }
   // cn-279 sub_8A27D0 anchors two buttons to the content right edge;
   // the scheme's outer right margin remains outside this coordinate space.
@@ -144,7 +154,8 @@ async function dialog(confirmOrOptions,iconKind=typeof confirmOrOptions==='boole
     contentY:options.contentY,
     outerWidth:options.outerWidth,
     outerHeight:options.outerHeight,
-    buttonY:options.buttonY
+    buttonY:options.buttonY,
+    textScale:options.textScale
   });
   // cn-279 sub_4A78A0 selects popup/fail independently of the icon.
   if(options.openSound===false)delete element.dataset.bfOpenSound;
@@ -157,7 +168,7 @@ switch(node.type){case 'UiPanel':case 'UiForm':if(path)await skin(el,path,w,h);e
 case 'UiGroupBox':if(path)await skin(el,path,w,h);{const label=place(document.createElement('span'),26,4,w-26,22);label.textContent=text;label.style.color='white';label.className='control bf-label';el.append(label);await paintText(label,text,{color:'white',size:Number(a.FontSize)||Number(manifest.scheme.GroupBox.FontSize),family:'BF',nativeMetrics:true,vertical:'top',inset:0});}break;
 case 'UiLabel':el.classList.add('bf-label');el.textContent=text;el.style.fontSize=`${number(a,'FontSize',13)}px`;el.style.fontFamily=['Default','DefaultBold','NexonBTBold'].includes(a.FontName)?'BF':'BFMalgun';if(a.TextColor)el.style.color='#'+a.TextColor.slice(-6);if(number(a,'TextFormat')===5)el.style.justifyContent='center';await paintText(el,text,{size:Number(a.FontSize)||13,color:a.TextColor?'#'+a.TextColor.slice(-6):'#5b5b5b',family:el.style.fontFamily||'BFMalgun',align:number(a,'TextFormat')===5?'center':'left',outline:overrides[a.Name]?.OutlineColor,nativeMetrics:true,vertical:(number(a,'TextFormat')&4)?'middle':'top',inset:0});break;
 case 'UiButton':el.remove();await button(parent,/cancel/i.test(a.Name)?'Cancel':'Ok',x,y,w,h,text||(/cancel/i.test(a.Name)?'取消':'确认'),a.SpriteSet||a.SpriteSetUp);return;
-case 'UiCheckBox':{el.classList.add('bf-check');const input=document.createElement('input');input.type='checkbox';input.checked=a.Check==='1';input.ariaLabel=a.Name||text;const draw=async()=>{el.querySelectorAll('.tile').forEach(t=>t.remove());const p=a.SpriteSet||'Images/Ui/UiCheckBoxSkin.smf';await tile(el,p,manifest.sprites[p][input.checked?1:0],0,0,21,18);};el.setValue=value=>{input.checked=Boolean(value);draw();};el.append(input);input.onchange=()=>{draw();parent.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:input.checked}}));};await draw();break;}
+case 'UiCheckBox':{el.classList.add('bf-check');const input=document.createElement('input');input.type='checkbox';input.checked=a.Check==='1';input.ariaLabel=a.Name||text;const draw=async()=>{el.querySelectorAll('.tile').forEach(t=>t.remove());const p=a.SpriteSet||'Images/Ui/UiCheckBoxSkin.smf';await tile(el,p,manifest.sprites[p][input.checked?1:0],0,0,21,18);};el.setValue=value=>{input.checked=Boolean(value);draw();};el.append(input);input.onchange=()=>{draw();el.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:input.checked}}));};await draw();break;}
 case 'UiTrackBar':{el.classList.add('bf-track');const input=document.createElement('input');input.type='range';input.min=a.Min??0;input.max=a.Max??100;input.value=a.Position??75;input.ariaLabel=a.Name;const path='Images/Ui/TrackBar.smf',frames=manifest.sprites[path],railY=h-35;
 await tile(el,path,frames[0],15,railY,7,31);await tile(el,path,frames[1],22,railY,w-44,31);await tile(el,path,frames[2],w-22,railY,7,31);
 const geometry=trackGeometry(w,h,Number(input.min),Number(input.max),Number(a.Interval)||1);
@@ -165,7 +176,7 @@ const geometry=trackGeometry(w,h,Number(input.min),Number(input.max),Number(a.In
 for(const tickX of geometry.ticks)await tile(el,path,frames[7],tickX,railY,1,31);
 const knob=place(document.createElement('span'),geometry.knobX(Number(input.value)),railY,12,31);knob.className='control';await tile(knob,path,frames[3],0,0,12,31);el.append(knob,input);
 if(a.MinText)label(el,a.MinText==='작게'?'缩小':a.MinText,0,h-50,50,15,'#808080',{size:Number(a.FontSize)||Number(manifest.scheme.TrackBar.FontSize),family:'BF',align:'center'});if(a.MaxText)label(el,a.MaxText==='크게'?'放大':a.MaxText,w-50,h-52,50,15,'#808080',{size:Number(a.FontSize)||Number(manifest.scheme.TrackBar.FontSize),family:'BF',align:'center'});
-el.setValue=value=>{input.value=String(value);knob.style.left=geometry.knobX(Number(input.value))+'px';};input.oninput=()=>{knob.style.left=geometry.knobX(Number(input.value))+'px';parent.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:Number(input.value)}}));};break;}
+el.setValue=value=>{input.value=String(value);knob.style.left=geometry.knobX(Number(input.value))+'px';};input.oninput=()=>{knob.style.left=geometry.knobX(Number(input.value))+'px';el.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:Number(input.value)}}));};break;}
 case 'UiEdit':case 'UiEditBox':{const input=document.createElement('input');input.className='control bf-edit';place(input,x,y,w,h);input.value=text;input.ariaLabel=a.Name;el.replaceWith(input);el=input;break;}
 default:throw Error(`Unsupported control: ${node.type} (${a.Name||'unnamed'})`);}
 for(const child of node.children)await renderNode(child,el,overrides);return el;}
@@ -181,7 +192,7 @@ async function renderNodeV3(node,parent,overrides={}){
   switch(node.type){
     case 'UiPanel':case 'UiForm':case 'UiGroupBox':
       if(path)await skin(el,path,w,h);
-      else if(a.SkinImage){const image=new Image();image.src=base()+a.SkinImage;await image.decode();place(image,0,0,image.naturalWidth,image.naturalHeight);el.append(image);}
+      else if(a.SkinImage){const image=Object.assign(new Image(), { crossOrigin: 'anonymous' });image.src=base()+a.SkinImage;await image.decode();place(image,0,0,image.naturalWidth,image.naturalHeight);el.append(image);}
       if(node.type==='UiGroupBox'&&text)label(el,text,9,5,w-18,20,'#29d4ff',{size:14,family:'BF'});
       break;
     case 'UiLabel':{
@@ -195,7 +206,7 @@ async function renderNodeV3(node,parent,overrides={}){
       const art=place(document.createElement('span'),0,0,21,18);art.className='control';el.append(art);
       const draw=async()=>{art.replaceChildren();await tile(art,p,frames[input.checked?1:0],0,0,21,18)};
       el.setValue=value=>{input.checked=Boolean(value);void draw()};
-      input.onchange=()=>{void draw();parent.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:input.checked}}))};
+      input.onchange=()=>{void draw();el.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:input.checked}}))};
       await draw();if(text){const copy=place(document.createElement('span'),30,0,Math.max(1,w-30),h);copy.className='control';el.append(copy);await paintText(copy,text,{...font,vertical:'middle'});}break;
     }
     case 'UiTrackBar':{
@@ -206,7 +217,7 @@ async function renderNodeV3(node,parent,overrides={}){
       if(a.HasPoint!=='False')for(const tickX of geometry.ticks)await tile(el,p,frames[7],tickX,railY,1,18);
       const knob=place(document.createElement('span'),geometry.knobX(Number(input.value)),railY,9,18);knob.className='control';await tile(knob,p,frames[3],0,0,9,18);el.append(knob);
       const update=()=>{knob.style.left=geometry.knobX(Number(input.value))+'px'};
-      el.setValue=value=>{input.value=String(value);update()};input.oninput=()=>{update();parent.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:Number(input.value)}}))};
+      el.setValue=value=>{input.value=String(value);update()};input.oninput=()=>{update();el.dispatchEvent(new CustomEvent('bf-change',{bubbles:true,detail:{name:a.Name,value:Number(input.value)}}))};
       if(hasText){const translate=value=>manifest.translations[value]||({'작게':'小','크게':'大'}[value])||value;
         label(el,translate(a.MinText||''),0,0,50,15,font.color,{size:font.size,family:font.family,align:'center'});label(el,translate(a.MaxText||''),w-50,0,50,15,font.color,{size:font.size,family:font.family,align:'center'});
       }break;
@@ -241,7 +252,7 @@ async function renderV3MessageBox(options){
   else{
     await panel(content,Number(frame.PosX),Number(frame.PosY),contentWidth-6,bodyHeight,frame.SkinSpriteSet);
     const names={notice:0,warning:1,question:2,error:3},iconAttrs=form.children.find(n=>n.attrs.Name==='pnlIcon'&&Number(n.attrs.ArrayIndex)===(names[iconKind]??0)).attrs;
-    const image=new Image();image.src=base()+iconAttrs.SkinImage;await image.decode();image.className='control';place(image,Number(iconAttrs.PosX),Math.floor((bodyHeight-image.naturalHeight)/2),image.naturalWidth,image.naturalHeight);content.append(image);
+    const image=Object.assign(new Image(), { crossOrigin: 'anonymous' });image.src=base()+iconAttrs.SkinImage;await image.decode();image.className='control';place(image,Number(iconAttrs.PosX),Math.floor((bodyHeight-image.naturalHeight)/2),image.naturalWidth,image.naturalHeight);content.append(image);
     const copy=place(document.createElement('div'),Number(textAttrs.PosX),0,textWidth,bodyHeight);copy.className='message-copy';content.append(copy);
     await paintText(copy,lines.join('\n'),{family:'BF',size:14,weight:400,color:'#e4f3f4',align:'center',height:bodyHeight,width:textWidth,decoration:1,lineHeight:15});
   }
@@ -380,7 +391,7 @@ async function message(){
     const path='Images/Ui/Notify_Progress.smf';
     const frames=manifest.sprites[path];
     let frame=0;
-    const draw=async()=>{el.querySelectorAll('.notify-progress').forEach(node=>node.remove());const box=place(document.createElement('span'),w-28,h-28,20,20);box.className='tile notify-progress';const image=new Image();image.src=base()+path.replace(/\.smf$/i,'')+'/'+frame+'.png';Object.assign(image.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(image);el.append(box);};
+    const draw=async()=>{el.querySelectorAll('.notify-progress').forEach(node=>node.remove());const box=place(document.createElement('span'),w-28,h-28,20,20);box.className='tile notify-progress';const image=Object.assign(new Image(), { crossOrigin: 'anonymous' });image.src=base()+path.replace(/\.smf$/i,'')+'/'+image(frame+'.png');Object.assign(image.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(image);el.append(box);};
     await draw();
     window.setInterval(()=>{frame=(frame+1)%frames.length;void draw();},180);
   }
@@ -390,5 +401,5 @@ async function message(){
   const trackBar=(parent,attrs)=>renderNode({type:'UiTrackBar',attrs,children:[]},parent);
   const groupBox=(parent,attrs)=>renderNode({type:'UiGroupBox',attrs,children:[]},parent);
   const ui={theme,manifest,sounds,trackBar,groupBox,windowShell,renderNode,button,panel,label,checkbox,dialog,settings,room,message,customSettings,settingsLabel,settingsPanel,settingsGroup,textTab};
-  return {...ui,extensionSettings:options=>drawExtensionSettings(ui,options)};
+  return {...ui,image,extensionSettings:options=>drawExtensionSettings(ui,options)};
 }

@@ -28,7 +28,9 @@ maximum_vtable_slot = 356
 hud_anchor_offset = 304
 player_capture = "caller_edi"
 hud_register = "ebp"
+white_style_slot = 5
 resource_manager_rva = 0xA7F7A4
+resource_string_abi = "msvc_wstring24"
 resource_string_inline_capacity = 7
 resource_options_size = 88
 construct_options_rva = 0x26D70
@@ -56,8 +58,9 @@ native_style_sprite_index = 2822
 sprite_frames_offset = 48
 sprite_texture_offset = 60
 texture_resident_offset = 72
-resource_string_inline_capacity = 7
-resource_options_size = 32
+# cn-279 sub_52F3F0 reads a COW string header; sub_74DBE0 destroys options +32.
+resource_string_abi = "cow_wstring4"
+resource_options_size = 36
 status = "research"
 player_capture = "hud_owner"
 health_argument_setup_va = 0x71744F
@@ -82,6 +85,43 @@ life_divisor = 20
 hud_register = "ebx"
 hud_anchor_offset = 184
 
+# cn-279 native loading and number-wrapper contracts; retail acceptance remains pending.
+preferred_base = 0x400000
+white_style_slot = 5
+maximum_health_source = "player_field_f32"
+resource_manager_rva = 0x6B4CE4
+construct_options_rva = 0x8D70
+destroy_options_rva = 0x1510
+destroy_options_offset = 32
+construct_string_rva = 0x1570
+release_string_rva = 0x1510
+load_sprite_rva = 0x12F3F0
+measure_number_rva = 0x13AA50
+render_call_rva = 0x3175D0
+current_health_rva = 0x63E0
+original_draw_rva = 0x13AD30
+render_call_bytes = "E8 5B 37 E2 FF 83 C4 1C"
+
+[[builds.resource_signatures]]
+rva = 0x8D70
+bytes = "6A FF 68 0B E3 92 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x1510
+bytes = "6A FF 68 88 A7 92 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x1570
+bytes = "6A FF 68 88 A7 92 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x12F3F0
+bytes = "6A FF 68 1D 13 8C 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x13AA50
+bytes = "83 EC 3C D9 44 24 40 53"
+
 [[builds]]
 id = "cn-324"
 native_style_slot = 21
@@ -89,7 +129,8 @@ native_style_sprite_index = 2822
 sprite_frames_offset = 48
 sprite_texture_offset = 60
 texture_resident_offset = 72
-resource_string_inline_capacity = 7
+# cn-324 sub_8D3110 copies COW strings; sub_401A40 writes options through +36.
+resource_string_abi = "cow_wstring4"
 resource_options_size = 40
 status = "research"
 player_capture = "hud_owner"
@@ -113,6 +154,45 @@ hud_register = "ebp"
 maximum_vtable_slot = 328
 hud_anchor_offset = 224
 
+# cn-324 native loading and number-wrapper contracts; retail acceptance remains pending.
+preferred_base = 0x400000
+white_style_slot = 5
+maximum_health_source = "vtable_f64"
+resource_manager_rva = 0x80AD7C
+construct_options_rva = 0x1A40
+destroy_options_rva = 0x80390
+destroy_options_offset = 32
+construct_string_rva = 0x1C00
+release_string_rva = 0x80390
+load_sprite_rva = 0x4D3110
+measure_number_rva = 0x4F6CE0
+render_call_rva = 0x2D3C36
+current_health_rva = 0xFD50
+original_draw_rva = 0x4F6F50
+maximum_entry_rva = 0x6E0CC4
+maximum_health_rva = 0xA3580
+render_call_bytes = "E8 15 33 22 00 83 C4 1C"
+
+[[builds.resource_signatures]]
+rva = 0x1A40
+bytes = "A1 F8 80 C0 00 53 33 DB"
+
+[[builds.resource_signatures]]
+rva = 0x80390
+bytes = "56 8B 31 83 EE 14 8D 46"
+
+[[builds.resource_signatures]]
+rva = 0x1C00
+bytes = "8B 54 24 04 56 8B F1 33"
+
+[[builds.resource_signatures]]
+rva = 0x4D3110
+bytes = "6A FF 68 05 38 9E 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x4F6CE0
+bytes = "83 EC 3C D9 44 24 40 53"
+
 [[builds]]
 id = "cn-406"
 native_style_slot = 21
@@ -120,6 +200,7 @@ native_style_sprite_index = 2822
 sprite_frames_offset = 120
 sprite_texture_offset = 136
 texture_resident_offset = 144
+resource_string_abi = "msvc_wstring24"
 resource_string_inline_capacity = 7
 resource_options_size = 88
 status = "research"
@@ -143,6 +224,38 @@ life_divisor = 20
 hud_register = "ebp"
 maximum_vtable_slot = 340
 hud_anchor_offset = 248
+
+# cn-406 native loading and number-wrapper contracts; retail acceptance remains pending.
+preferred_base = 0x400000
+white_style_slot = 5
+maximum_health_source = "vtable_f64"
+resource_manager_rva = 0x92BF94
+construct_options_rva = 0x170B0
+destroy_options_rva = 0x17050
+load_sprite_rva = 0x59E930
+measure_number_rva = 0x5CC3E0
+render_call_rva = 0x2E6534
+current_health_rva = 0x1C9F0
+original_draw_rva = 0x5CC640
+maximum_entry_rva = 0x7D5460
+maximum_health_rva = 0x6BD30
+render_call_bytes = "E8 07 61 2E 00 83 C4 1C"
+
+[[builds.resource_signatures]]
+rva = 0x170B0
+bytes = "53 56 8B F1 33 DB 8D 4E"
+
+[[builds.resource_signatures]]
+rva = 0x17050
+bytes = "56 8B F1 83 7E 4C 08 72"
+
+[[builds.resource_signatures]]
+rva = 0x59E930
+bytes = "6A FF 68 43 2D AC 00 64"
+
+[[builds.resource_signatures]]
+rva = 0x5CC3E0
+bytes = "83 EC 3C D9 44 24 40 53"
 
 [[builds]]
 id = "cn-408"
@@ -177,7 +290,27 @@ hud_anchor_offset = 248
 id = "cn-404"
 status = "research"
 pe_timestamp = 0x533CFD5F
-image_sizes = [0xCD5000]
+image_sizes = [0xCD5000, 0xCD8000]
+# cn-404 sub_791CA0 supplies the selected player and Life number call.
+hud_entry_va = 0x791CA0
+health_accessor_va = 0x41F0A0
+health_accessor_abi = "thiscall_f64"
+health_accessor_call_va = 0x791FE1
+health_accessor_call_bytes = "E8 BA D0 C8 FF"
+health_argument_setup_va = 0x791FCF
+health_argument_setup_bytes = "8B 4D 00 8B B5 7C 0A 00 00 BF 01 00 00 00 89 7C 24 10"
+number_wrapper_va = 0xA961F0
+wrapper_call_va = 0x7925D6
+wrapper_call_bytes = "E8 15 3C 30 00"
+life_accessor_va = 0x4AD720
+life_accessor_call_va = 0x792412
+life_accessor_call_bytes = "E8 09 B3 D1 FF"
+life_divisor = 20
+maximum_vtable_slot = 348
+hud_anchor_offset = 248
+hud_register = "ebp"
+player_capture = "hud_owner"
+white_style_slot = 5
 
 [[builds]]
 id = "cn-705"
@@ -241,13 +374,53 @@ hud_anchor_offset = 276
 id = "cn-717"
 status = "research"
 pe_timestamp = 0x5582B5CD
-image_sizes = [0x1090000]
+image_sizes = [0x1090000, 0x1093000]
+# cn-717 sub_85EA50 supplies the selected player and Life number call.
+hud_entry_va = 0x85EA50
+health_accessor_va = 0x42D7C0
+health_accessor_abi = "thiscall_f64"
+health_accessor_call_va = 0x85EDFB
+health_accessor_call_bytes = "E8 C0 E9 BC FF"
+health_argument_setup_va = 0x85EDF9
+health_argument_setup_bytes = "8B CB"
+number_wrapper_va = 0xBB1AF0
+wrapper_call_va = 0x85F459
+wrapper_call_bytes = "E8 92 26 35 00"
+life_accessor_va = 0x537040
+life_accessor_call_va = 0x85F286
+life_accessor_call_bytes = "E8 B5 7D CD FF"
+life_divisor = 20
+maximum_vtable_slot = 356
+hud_anchor_offset = 304
+hud_register = "ebp"
+player_capture = "caller_ebx"
+white_style_slot = 5
 
 [[builds]]
 id = "cn-735"
 status = "research"
 pe_timestamp = 0x5767E697
-image_sizes = [0x17BB000]
+image_sizes = [0x17BB000, 0x17BE000]
+# cn-735 sub_9C80D0 supplies the selected player and Life number call.
+hud_entry_va = 0x9C80D0
+health_accessor_va = 0x445D10
+health_accessor_abi = "thiscall_f64"
+health_accessor_call_va = 0x9C8476
+health_accessor_call_bytes = "E8 95 D8 A7 FF"
+health_argument_setup_va = 0x9C8474
+health_argument_setup_bytes = "8B CF"
+number_wrapper_va = 0xD50E50
+wrapper_call_va = 0x9C8E2A
+wrapper_call_bytes = "E8 21 80 38 00"
+life_field_offset = 8976
+life_divisor = 20
+maximum_vtable_slot = 400
+hud_anchor_offset = 1120
+hud_register = "ebp"
+player_capture = "caller_stack"
+white_style_slot = 5
+# cn-735 9C8121 saves the player at ESP+48; 9C8E2A follows 28 bytes of arguments.
+player_stack_offset = 76
 
 [[builds]]
 id = "cn-738"
@@ -265,5 +438,70 @@ image_sizes = [0x16FD000]
 id = "cn-774"
 status = "research"
 pe_timestamp = 0x5CEF8FF9
-image_sizes = [0x1B7E000]
+image_sizes = [0x1B7E000, 0x1B80000]
+# cn-774 sub_85D830 supplies the selected player and Life number call.
+hud_entry_va = 0x85D830
+health_accessor_va = 0x531A60
+health_accessor_abi = "thiscall_f64"
+# cn-774 sub_531A60 reads the same protected +480 field as the HUD.
+health_accessor_bytes = "51 81 C1 E0 01 00 00 C7 04 24 00 00 00 00 E8 3D B9 A0 00 51 8D 4C 24 04 51 8B C8 E8 30 02 F6 FF 84 C0 74 0A B9 02 00 00 00 E8 C2 5F F9 FF D9 04 24 59 C3"
+health_field_offset = 480
+number_wrapper_va = 0x1004430
+wrapper_call_va = 0x85E5DF
+wrapper_call_bytes = "E8 4C 5E 7A 00"
+life_field_offset = 796
+life_divisor = 20
+maximum_vtable_slot = 420
+hud_anchor_offset = 1116
+hud_register = "edi"
+player_capture = "caller_esi"
+white_style_slot = 6
+
+[[builds]]
+id = "kr-1256"
+status = "research"
+pe_timestamp = 0x69FD90C8
+image_sizes = [0x1B36000]
+# kr-1256 sub_68DD90 supplies the selected player and Life number call.
+hud_entry_va = 0x68DD90
+health_accessor_va = 0x4A1250
+health_accessor_abi = "thiscall_f64"
+health_accessor_call_va = 0x68E287
+health_accessor_call_bytes = "E8 C4 2F E1 FF"
+health_argument_setup_va = 0x68E280
+health_argument_setup_bytes = "8B 4D DC 83 4D BC 04"
+health_result_bytes = "8B 4D DC D9 5D E4"
+number_wrapper_va = 0x106FEF0
+wrapper_call_va = 0x68EAAD
+wrapper_call_bytes = "E8 3E 14 9E 00"
+life_field_offset = 684
+life_divisor = 20
+maximum_vtable_slot = 368
+hud_anchor_offset = 1120
+hud_register = "edi"
+player_capture = "caller_esi"
+white_style_slot = 6
+
+[[builds]]
+id = "tw-454"
+status = "research"
+pe_timestamp = 0x5C0F4941
+image_sizes = [0x1AD5000]
+# tw-454 sub_A2DE60 supplies the selected player and Life number call.
+hud_entry_va = 0xA2DE60
+health_accessor_va = 0x748EC0
+health_accessor_abi = "thiscall_f64"
+# tw-454 sub_748EC0 reads the same protected +480 field as the HUD.
+health_accessor_bytes = "51 81 C1 E0 01 00 00 C7 04 24 00 00 00 00 E8 AD 18 79 00 51 8D 4C 24 04 51 8B C8 E8 A0 26 D5 FF 84 C0 74 0A B9 02 00 00 00 E8 D2 57 D6 FF D9 04 24 59 C3"
+health_field_offset = 480
+number_wrapper_va = 0xF82E90
+wrapper_call_va = 0xA2EDD9
+wrapper_call_bytes = "E8 B2 40 55 00"
+life_field_offset = 800
+life_divisor = 20
+maximum_vtable_slot = 436
+hud_anchor_offset = 1116
+hud_register = "edi"
+player_capture = "caller_esi"
+white_style_slot = 6
 

@@ -1,5 +1,5 @@
 import { computed, watch } from 'vue'
-import { call, inHost, on } from '../bridge'
+import { call, demoMode, inHost, on } from '../bridge'
 import { state } from '../state'
 import { downloads } from '../downloads/live'
 import { i18n } from '../i18n'
@@ -15,11 +15,11 @@ export function canInstallStorePlugin(item: StorePackage): boolean {
 }
 
 /** The shell and store share one catalog and the complete local package inventory. */
-export const liveStoreSession = storeSession(inHost ? 'desktop' : 'browser', {
+export const liveStoreSession = storeSession(inHost || demoMode?.enabled ? 'desktop' : 'browser', {
   sources: () => call('store.sources'),
   catalog: (source, force) => call('store.catalog', { id: source.id, force }),
   plugins: () => call('plugins.list'),
-  error: error => inHost ? (error as Error).message : i18n.global.t('store.browserOnly'),
+  error: error => (inHost || !!demoMode?.enabled) ? (error as Error).message : i18n.global.t('store.browserOnly'),
 })
 
 export const availableStoreUpdates = computed(() => storePluginUpdates(
@@ -28,14 +28,20 @@ export const availableStoreUpdates = computed(() => storePluginUpdates(
 
 /** Checks off the navigation path; failures remain available in the store without blocking launch. */
 export function startStoreUpdateChecks(): () => void {
-  if (!inHost) return () => {}
-  const refresh = () => { if (!liveStoreSession.state.loading) void liveStoreSession.refresh() }
-  const inventory = () => { void liveStoreSession.refreshInventory() }
-  refresh()
+  const active = () => inHost || !!demoMode?.enabled
+  const refresh = () => { if (active() && !liveStoreSession.state.loading) void liveStoreSession.refresh() }
+  const inventory = () => { if (active()) void liveStoreSession.refreshInventory() }
+  if (active()) refresh()
   const timer = window.setInterval(refresh, 5 * 60_000)
   const stopDownloads = watch(() => downloads.tasks.filter(task => task.target.kind === 'plugin'
     && task.stage === 'completed').map(task => task.id).join(','), inventory)
   const stopInventory = watch(() => state.plugins.map(plugin => `${plugin.game}:${plugin.id}:${plugin.version}`).join(','), inventory)
   const stopChanges = on('plugins.changed', inventory)
-  return () => { clearInterval(timer); stopDownloads(); stopInventory(); stopChanges() }
+  const stopModeWatch = demoMode
+    ? watch(() => demoMode.enabled, enabled => {
+        if (enabled) void liveStoreSession.refresh(true)
+        else if (!inHost) liveStoreSession.state.localPlugins = []
+      })
+    : () => {}
+  return () => { clearInterval(timer); stopDownloads(); stopInventory(); stopChanges(); stopModeWatch() }
 }

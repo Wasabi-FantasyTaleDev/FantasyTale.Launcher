@@ -40,7 +40,7 @@ public sealed record PluginPatch(string Id, IReadOnlyList<string> Builds, string
 /// <param name="Id">Globally unique plugin identifier.</param>
 /// <param name="Version">Pinned semantic version.</param>
 /// <param name="Game">Owning game identifier.</param>
-/// <param name="Kind">Patch, native, file replacement, Overlay or launcher-owned service plugin.</param>
+/// <param name="Kind">Patch, native, file replacement, resource, Overlay, launcher-owned service or data-only assets package.</param>
 /// <param name="Runtime">Required hook runtime version range, or empty.</param>
 /// <param name="Folder">Absolute package directory.</param>
 /// <param name="Name">Localized plugin title.</param>
@@ -94,7 +94,52 @@ public sealed record PluginDefinition(string Id, string Version, string Game, st
 
     /// <summary>Optional companion message/schema grants requested by an in-process native plugin.</summary>
     public IReadOnlyDictionary<string, int> CompanionMessages { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>Data folder declared by a data-only assets package; null for every other kind.</summary>
+    public AssetsPluginDefinition? Assets { get; init; }
+
+    /// <summary>
+    /// Other packages this package needs on some build or launcher language: every <c>requires</c> entry and every
+    /// <c>require</c> policy rule. Use the launcher's plugin policy to evaluate them for one client and language.
+    /// </summary>
+    public IReadOnlyList<PluginRequirement> Requires { get; init; } = [];
+
+    /// <summary>
+    /// The package's rules about other packages (<c>[[plugin_policy]]</c>), in manifest order. A legacy <c>requires</c>
+    /// entry is listed here as an unscoped <c>require</c> rule.
+    /// </summary>
+    public IReadOnlyList<PluginPolicyRule> Policy { get; init; } = [];
 }
+
+/// <summary>
+/// One plugin policy rule: how this package relates to another package on the builds and launcher languages it names.
+/// </summary>
+/// <param name="Plugin">Canonical or former identifier of the other package.</param>
+/// <param name="Type"><c>require</c>, <c>recommend</c> or <c>conflict</c>.</param>
+/// <param name="Range">Space-separated version comparisons the other package's version must satisfy, or empty for any version.</param>
+/// <param name="Builds">Build identifiers the rule applies to; empty applies to every build this package supports.</param>
+/// <param name="Languages">Launcher languages the rule applies to (for example <c>zh-CN</c>); empty applies to every language.
+/// A language never forbids a package: outside its languages the rule simply does not apply.</param>
+/// <param name="DefaultSelected">For a recommendation, whether the prompt pre-selects it.</param>
+public sealed record PluginPolicyRule(string Plugin, string Type, string Range, IReadOnlyList<string> Builds,
+    IReadOnlyList<string> Languages, bool DefaultSelected)
+{
+    /// <summary>The rule types a manifest may declare.</summary>
+    public static readonly IReadOnlyList<string> Types = ["require", "recommend", "conflict"];
+}
+
+/// <summary>One declared package requirement.</summary>
+/// <param name="Id">Canonical or former identifier of the required package.</param>
+/// <param name="Range">Space-separated version comparisons that the installed version must satisfy, or empty for any version.</param>
+public sealed record PluginRequirement(string Id, string Range)
+{
+    /// <summary>Formats the requirement in its manifest form, such as <c>id</c> or <c>id@&gt;=1.2.0</c>.</summary>
+    public override string ToString() => Range.Length == 0 ? Id : Id + "@" + Range;
+}
+
+/// <summary>Validated metadata for a data-only package whose files are shared with other packages.</summary>
+/// <param name="Root">Package-relative folder whose files are exposed to dependents; always a safe slash-separated path.</param>
+public sealed record AssetsPluginDefinition(string Root);
 
 /// <summary>Data-selected built-in provider for one optional game-session service plugin.</summary>
 /// <param name="Provider">Registered launcher provider identity; no assembly path or network address is accepted.</param>
@@ -103,7 +148,11 @@ public sealed record LauncherServiceDefinition(string Provider, IReadOnlyDiction
 
 /// <summary>Validated metadata for an optional game-window overlay package.</summary>
 /// <param name="Entry">Optional package-relative HTML entry file used by the overlay broker.</param>
-public sealed record OverlayPluginDefinition(string? Entry);
+public sealed record OverlayPluginDefinition(string? Entry)
+{
+    /// <summary>Gets the game-module controller identity that owns this panel's background behavior; null retains a presentation-only package.</summary>
+    public string? Controller { get; init; }
+}
 
 /// <summary>A hashed package file temporarily replacing a relative client path for selected builds.</summary>
 /// <param name="Source">Relative payload path inside the plugin package.</param>

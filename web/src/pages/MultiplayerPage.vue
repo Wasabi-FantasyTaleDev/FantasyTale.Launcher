@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { mergeServerPresentation } from '../serverDescription'
 import { useRoute, useRouter } from 'vue-router'
-import { call, inHost, on, type DirectoryEntry, type DirectorySource, type Server, type ServerPreset, type ServerCatalog, type ServerProfileImport } from '../bridge'
+import { call, demoMode, inHost, on, type DirectoryEntry, type DirectorySource, type Server, type ServerPreset, type ServerCatalog, type ServerProfileImport } from '../bridge'
 import { policyPlugins, policySources } from '../clientPolicy'
 import type { StoreSource } from '../store/types'
 import { localized } from '../i18n'
@@ -200,7 +200,7 @@ function connectEntry(entry: DirectoryEntry) {
   const build = compatible.find(build => build.id === state.selectedBuildId) ?? (compatible.length === 1 ? compatible[0] : undefined)
   if (!build) { detailsOpen.value = true; return }
   buildId.value = build.id
-  if (inHost) void join(); else detailsOpen.value = true
+  if (inHost || !!demoMode?.enabled) void join(); else detailsOpen.value = true
 }
 function edit(server?: Server) { editing.value = server; serverDialog.value = true }
 function chooseDetails(build: string) {
@@ -240,7 +240,7 @@ onBeforeUnmount(() => { disposed = true; generation++; contextRevision++; catalo
 </script>
 <template>
   <section class="page">
-    <header class="page-header"><div><h1 class="page-title">{{ t('multiplayer.title') }}</h1><p class="page-desc">{{ t('multiplayer.description') }}</p></div><div class="page-actions"><Transition name="submit-action"><WButton v-if="kind === 'server'" :disabled="busy || !inHost || !source?.baseUrl || source.storeSourceId != null" @click="submit">{{ t('multiplayer.submit') }}</WButton></Transition><WButton variant="accent" :disabled="busy || state.busy || kind === 'room' && !hostingEnabled" @click="kind === 'server' ? edit() : hostingDialog = true"><FluentIcon glyph="add" /><WAnimatedSize axis="width" class="primary-label"><Transition name="action-label"><span :key="kind" class="action-text">{{ t(kind === 'server' ? 'service.addServer' : 'multiplayer.create') }}</span></Transition></WAnimatedSize></WButton></div></header>
+    <header class="page-header"><div><h1 class="page-title">{{ t('multiplayer.title') }}</h1><p class="page-desc">{{ t('multiplayer.description') }}</p></div><div class="page-actions"><Transition name="submit-action"><WButton v-if="kind === 'server'" :disabled="busy || !(inHost || !!demoMode?.enabled) || !source?.baseUrl || source.storeSourceId != null" @click="submit">{{ t('multiplayer.submit') }}</WButton></Transition><WButton variant="accent" :disabled="busy || state.busy || kind === 'room' && !hostingEnabled" @click="kind === 'server' ? edit() : hostingDialog = true"><FluentIcon glyph="add" /><WAnimatedSize axis="width" class="primary-label"><Transition name="action-label"><span :key="kind" class="action-text">{{ t(kind === 'server' ? 'service.addServer' : 'multiplayer.create') }}</span></Transition></WAnimatedSize></WButton></div></header>
     <PageBody>
       <p v-if="multiplayerPreview" class="development-notice">{{ t('serverInfo.preview') }}</p>
       <div class="directory-toolbar">

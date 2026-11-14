@@ -12,7 +12,7 @@
 // 4. Context changes clear displayed account state and invalidate pending results.
 //    Authenticated transport and renewal ownership remain in the host.
 import { computed, reactive, watch } from 'vue'
-import { call, inHost, on, type PluginRecoveryNotice, type LaunchCleanupFailure, type IpPreference, type Server, type ServerCatalog, type AccountProfile, type AccountSessionInfo, type GameSummary, type BuildSummary, type Instance, type PluginSummary, type RunningClient } from './bridge'
+import { call, demoMode, inHost, on, type PluginRecoveryNotice, type LaunchCleanupFailure, type IpPreference, type Server, type ServerCatalog, type AccountProfile, type AccountSessionInfo, type GameSummary, type BuildSummary, type Instance, type PluginSummary, type RunningClient } from './bridge'
 import { prefs } from './theme'
 import { supportedClientLanguages, clientLanguageInstalled } from './clientLanguages'
 import { accountExpiryDelay, liveAccountSessions } from './accounts/expiry'
@@ -237,6 +237,8 @@ export async function deletePluginScheme(id: string): Promise<void> {
   persistSchemes(state.selectedGameId)
 }
 export const serverPreset = computed(() => state.catalog?.instances.find(p => p.build === selectedBuild.value?.id))
+// The server lists every build it knows, but a cluster serves only the union of its nodes' builds; the rest stay visible, disabled.
+export const buildNotServed = computed(() => serverPreset.value?.clusterServed === false)
 export const supportsPlugins = computed(() => state.catalog?.supportsPlugins ?? selectedGame.value?.supportsPlugins ?? true)
 export const navigationEntries = computed(() => selectedGame.value?.navigationEntries ?? ['home', 'downloads', 'accounts'])
 export const supportsInstances = computed(() => state.catalog?.supportsInstances ?? selectedGame.value?.supportsInstances ?? false)
@@ -279,11 +281,11 @@ export async function refreshAccounts(): Promise<void> {
     if (request === accountRequest && serverId === state.selectedServerId) { state.accountsLoading = false; state.accountRestoring = false }
   }
 }
-export async function selectAccount(username: string): Promise<void> {
+export async function selectAccount(username: string, section?: string | null): Promise<void> {
   const serverId = state.selectedServerId
   await perform(async () => {
     ++accountRequest
-    try { await call('accounts.select', { serverId, username }) }
+    try { await call('accounts.select', { serverId, username, section: section ?? undefined }) }
     finally { if (serverId === state.selectedServerId) await refreshAccounts() }
   })
 }
@@ -298,7 +300,7 @@ export async function refreshServers({ refreshSelectedServices = true }: { refre
 export async function setClientLanguage(language: string): Promise<void> {
   if (!clientLanguages.value.includes(language) || !isClientLanguageInstalled(language)) return
   const instance = selectedInstance.value
-  if (instance && inHost) {
+  if (instance && (inHost || !!demoMode?.enabled)) {
     if (!await perform(() => call('instances.update', { id: instance.id, name: instance.name, endpoint: instance.endpoint, language, serverId: state.selectedServerId || undefined }))) return
   }
   state.clientLanguage = language; localStorage.setItem(`clientLanguage.${state.selectedGameId}`, language)
@@ -329,19 +331,31 @@ async function readRunning(): Promise<void> {
 }
 /** Maintains one process-status request at a time for the lifetime of the application shell. */
 export function pollRunning(): () => void {
-  if (!inHost) return () => {}
   let stopped = false, timer: ReturnType<typeof setTimeout> | undefined
+  const active = () => inHost || !!demoMode?.enabled
   const focus = () => {
-    if (!stopped) void refreshRunning(true).catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
+    if (!stopped && active()) void refreshRunning(true).catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
   }
   async function poll() {
+    if (!active()) { timer = undefined; return }
     try { await refreshRunning() }
     catch (error) { if (!stopped) { state.requestFailure = error as Error; state.error = (error as Error).message } }
-    if (!stopped) timer = setTimeout(poll, 2000)
+    if (!stopped && active()) timer = setTimeout(poll, 2000)
   }
+  const stopModeWatch = demoMode
+    ? watch(() => demoMode.enabled, enabled => {
+        if (stopped) return
+        if (enabled && !timer) void poll()
+        else if (!enabled && !inHost) {
+          clearTimeout(timer)
+          timer = undefined
+          state.running = []
+        }
+      })
+    : () => {}
   window.addEventListener('focus', focus)
-  void poll()
-  return () => { stopped = true; clearTimeout(timer); window.removeEventListener('focus', focus) }
+  if (active()) void poll()
+  return () => { stopped = true; clearTimeout(timer); stopModeWatch(); window.removeEventListener('focus', focus) }
 }
 
 /** Refreshes persisted instances and process status. */
@@ -388,7 +402,7 @@ export async function refreshPlugins(): Promise<void> {
   }
   const request = ++pluginRequest
   const id = selectedInstance.value?.id
-  const plugins = await call('plugins.list', { instanceId: id, serverId: state.selectedServerId || undefined })
+  const plugins = await call('plugins.list', { instanceId: id, serverId: state.selectedServerId || undefined, language: i18n.global?.locale ? String(i18n.global.locale.value) : undefined })
   if (request === pluginRequest) state.plugins = plugins
 }
 export async function loadGames(): Promise<void> {
@@ -430,7 +444,7 @@ async function loadWorkspace(): Promise<void> {
   finally {
     state.loaded = true
     void refreshPlugins().catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
-    if (inHost) void call('instances.recoverStopped').catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
+    if (inHost || !!demoMode?.enabled) void call('instances.recoverStopped').catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
   }
 }
 export async function perform(action: () => Promise<unknown>): Promise<boolean> {

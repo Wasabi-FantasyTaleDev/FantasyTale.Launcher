@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call } from '../bridge'
+import { call, on, onDemoModeChange } from '../bridge'
 import WDialog from '../controls/WDialog.vue'
 import WSettingsCard from '../controls/WSettingsCard.vue'
 import WToggleSwitch from '../controls/WToggleSwitch.vue'
@@ -44,8 +44,14 @@ watch(open, visible => {
     if (!disposed) error.value = (e as Error).message
   })
 }, { flush: 'post' })
-onMounted(refresh)
-onBeforeUnmount(() => { disposed = true; ++revision; clearTimeout(timer) })
+let stopNetwork: (() => void) | undefined
+let stopDemoMode: (() => void) | undefined
+onMounted(() => {
+  void refresh()
+  stopNetwork = on?.('settings.network', () => void refresh())
+  stopDemoMode = onDemoModeChange?.(() => { pending.value = false; void refresh() })
+})
+onBeforeUnmount(() => { disposed = true; ++revision; clearTimeout(timer); stopNetwork?.(); stopDemoMode?.() })
 </script>
 
 <template>

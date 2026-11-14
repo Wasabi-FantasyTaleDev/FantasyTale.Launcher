@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { downloadTasks, downloadAction, trackDownload } from '../downloads/live'
 import type { StorePackage, StoreSource } from '../store/types'
 import DownloadTaskProgress from './DownloadTaskProgress.vue'
@@ -21,7 +21,7 @@ watch(() => props.open, () => { revision++; busy.value = false; error.value = ''
 function close() { revision++; busy.value = false; emit('close') }
 async function install() {
   if (finished.value) { close(); return }
-  if (busy.value || !inHost || task.value && !retryable.value) return
+  if (busy.value || !(inHost || !!demoMode?.enabled) || task.value && !retryable.value) return
   const current = revision, item = props.item, source = props.source, original = task.value
   busy.value = true; error.value = ''
   try {
@@ -36,7 +36,7 @@ async function install() {
 </script>
 <template>
   <WDialog :open="open" :title="t('serverPackages.install')" :primary-text="t(finished ? 'updates.close' : retryable ? 'updates.retry' : busy ? 'install.starting' : 'install.install')" :close-text="t('dialog.cancel')"
-    :primary-disabled="busy || !inHost || !!taskId && !finished && !retryable" :primary-busy="busy" @primary="install" @close="close">
+    :primary-disabled="busy || !(inHost || !!demoMode?.enabled) || !!taskId && !finished && !retryable" :primary-busy="busy" @primary="install" @close="close">
     <div class="form-stack">
       <StorePluginInstallList :items="[{ item, source }]"><DownloadTaskProgress :task-id="taskId" :pending="busy" /></StorePluginInstallList>
       <p class="package-note">{{ t('serverPackages.note') }}</p>

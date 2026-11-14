@@ -5,6 +5,11 @@ export type {UiSoundEvent as BfUiSoundEvent} from '../ui-sounds.js';
 export type BfTheme='v1'|'v2'|'v3';
 export type BfRenderer=Awaited<ReturnType<typeof createGameUi>>;
 const key:InjectionKey<Ref<BfRenderer|undefined>>=Symbol('bf-ui');
+/** Surfaces still drawing under one provider, so a window can stay hidden until it is complete. */
+export type BfDrawTracker={pending:Ref<number>};
+const drawKey:InjectionKey<BfDrawTracker>=Symbol('bf-ui-draws');
+/** The provider's draw tracker; absent outside a provider. */
+export function useDrawTracker(){return inject(drawKey,undefined)}
 /** Load original theme resources once per provider and reject stale theme loads. */
 export function provideGameUi(theme:()=>BfTheme,resourceRoot:()=>string,sound:()=>boolean=()=>true,volume:()=>number=()=>DEFAULT_UI_VOLUME){
 const renderer=shallowRef<BfRenderer>();const error=shallowRef<Error>();let revision=0;
@@ -22,7 +27,7 @@ watch(()=>[theme(),resourceRoot()] as const,async([selected,root])=>{
 watch(sound,value=>sounds?.setEnabled(value));
 watch(volume,value=>{try{sounds?.setVolume(value)}catch(reason){error.value=reason instanceof Error?reason:new Error(String(reason))}});
 onBeforeUnmount(()=>{revision++;sounds?.dispose()});
-provide(key,renderer);return {renderer,error};
+provide(key,renderer);const pending=shallowRef(0);provide(drawKey,{pending});return {renderer,error,pending};
 }
 /** Resolve the enclosing resource provider for an independently reusable control. */
 export function useGameUi(){const value=inject(key);if(!value)throw Error('Game UI controls require BfUiProvider');return computed(()=>value.value);}
@@ -30,8 +35,11 @@ export function useGameUi(){const value=inject(key);if(!value)throw Error('Game 
 /** Keep font locations external so a host can provide its own unpacked Chinese resources. */
 async function loadFonts(root:string){
 const prefix=root.replace(/\/?$/,'/');
+// A packaged resource set may store fonts compressed; its optional fonts.json maps each original file name to the stored one.
+const response=await fetch(prefix+'fonts/fonts.json').catch(()=>null);
+const stored:Record<string,string>=response?.ok?await response.json():{};
 await Promise.all([['BF','GB13000.ttf'],['BFMalgun','DF_GB_Y9.TTF']].map(async([family,file])=>{
 if(document.fonts.check(`13px ${family}`)&&Array.from(document.fonts).some(font=>font.family===family))return;
-const font=await new FontFace(family!,`url("${prefix}fonts/${file}")`,{weight:'400'}).load();document.fonts.add(font);
+const font=await new FontFace(family!,`url("${prefix}fonts/${stored[file!]??file}")`,{weight:'400'}).load();document.fonts.add(font);
 }));
 }

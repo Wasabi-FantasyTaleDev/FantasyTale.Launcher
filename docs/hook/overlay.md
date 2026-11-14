@@ -8,6 +8,13 @@ the game hides the overlay. It is enabled only when the selected client
 instance has an installed and enabled package with `kind = "overlay"`, or the
 local developer startup test is enabled.
 
+Managed controller diagnostics are retained separately in `overlay-controller.jsonl`
+and one rotated file, each bounded to 64 KiB. Frequent Launcher page polling cannot
+evict these records. Entries contain fixed stage, status and reason identifiers,
+without native text, room names or exception messages. Mode observation waits for
+transient channel contention and native UI readiness; accepted mutations are never
+resubmitted while their result is pending or unknown.
+
 Window tracking selects the largest visible game render window with `CS_OWNDC`,
 excluding the separate splash class. The launch-bound process id survives the
 initial window handle becoming invalid. Physical client-area pixels are converted
@@ -40,6 +47,33 @@ Component mount readiness also waits for the asynchronous native surface to
 attach after its theme sprites and fonts load. An empty Vue mount point is not
 a successful `game-ui.mounted` event; resource failures or the readiness deadline
 produce `game-ui.error` instead.
+
+## Package files
+
+An overlay page can load files that belong to packages of the current launch, such as images and JSON, from
+`https://packages.fantasytale.local/<package id>/<relative path>`. The overlay process answers these requests itself
+and never contacts a network. The launcher sends the id-to-folder map over the existing pipe (`package-roots`
+command) before any page is registered, so a page can use the URLs from its first script. Folders served:
+
+- every enabled `kind = "overlay"` package of the launch, relative to its package folder;
+- every `kind = "assets"` package that one of those packages requires, directly or through other assets
+  packages, relative to its `[assets] root`. See [shared data packages](../plugin-management.md#shared-data-packages-and-requirements).
+
+Only `GET` is answered. Traversal, encoded or absolute paths, drive or stream names, links and reparse points,
+unknown ids and directories are refused (`400`, `403` or `404`); missing files are `404`; other methods are `405`.
+Files are streamed from disk, never buffered whole. `Content-Type` is set for `.json`, `.webp`, `.png`, `.jpg`,
+`.svg`, `.css`, `.js`, `.woff2`, `.otf` and `.ttf` (other files are `application/octet-stream`). A file whose name
+is at least 16 lower-case hexadecimal characters names its own content and is cached as immutable; every other
+file is revalidated on each use because a package update may change it.
+
+```js
+const url = overlayBus.packageUrl('bubblefighter.fantasy.item-previews', 'atlas/0123456789abcdef.webp');
+const pack = await (await fetch(overlayBus.packageUrl('bubblefighter.fantasy.item-previews', 'pack.json'))).json();
+// In a mounted game UI component: const packages = inject('fantasyTalePackages'); packages.url(id, path)
+```
+
+`packageUrl(packageId, path)` throws a `TypeError` unless the id is 1 to 96 characters of `a-z 0-9 . -` and the
+path is slash-separated without empty, `.` or `..` segments, backslashes, colons or control characters.
 
 ## Local developer test
 
@@ -127,6 +161,48 @@ controls; browser font rasterization remains approximate.
 
 Enabled overlay packages may declare a package-relative HTML `overlay.entry`. After the launch-bound handshake, the launcher registers each entry **hidden**. Only an explicit event-driven `Show` or dialog request displays content. A root with `data-game-ui-root`, `data-game-ui-component` and optional JSON `data-game-ui-props` mounts a library component without executing inline scripts. Local tests provide resources under the overlay page directory at `resources/`; resource distribution remains a separate packaging requirement.
 
+Package modules subscribe through `on(name, handler)` and emit user actions through
+`emit(name, data)`. The generic `overlayBus.on(panelId, name, handler)` returns an
+idempotent unsubscribe function; a component must invoke it on unmount. Each
+subscription owns its original panel and handler, so disposal cannot remove a
+replacement panel's listener. Event delivery uses a snapshot while checking that
+each subscription is still active.
+
+An `overlay.controller` declaration delegates feature state and native observation
+to the game module's managed controller for the launch. Its frontend renders
+backend snapshots, keeps temporary visual selection, and submits user intent.
+Native discovery, availability decisions, mutation and recovery belong to the
+controller. A hidden or suspended browser therefore cannot stop native entry
+creation. The controller retains the current state until the module subscribes
+and announces readiness; ordinary visibility and suspension behavior still applies.
+See the [Mode Extension protocol](../../store-plugins/BubbleFighter/bubblefighter.fantasy.mode-extension/README.md#display-state-protocol)
+for a concrete feature contract.
+
+Controllers may receive an owner-scoped `ICompanionChannel` through
+`GameOverlayControllerContext.Companion`. The channel exists before connection
+startup and remains stable across reconnects. `ConnectionSnapshot` and
+`SubscribeState` provide an atomic state/capability view with ordered revisions;
+state subscriptions replay immediately. Controlled packages expose neither the
+raw Companion bridge nor the raw native bridge to their HTML. Missing optional
+transport services resolve to an absent channel, so dependent controllers remain
+dormant without delaying panel startup.
+
+Companion events and received operation results also expose `ConnectionEpoch`
+and `ReceiveSequence`. Sequences increase within one transport epoch at receipt,
+before asynchronous event dispatch. A consumer combining a push feed with request
+snapshots uses these identities to reject stale data, even when callback dispatch
+lags behind a response. Local outcomes without a received frame have no receive
+identity. The receiver never waits for callbacks to finish before completing a
+response, so an event callback can safely await its own request.
+
+Mode Extension requires an active room-create context and the `plaza` scene.
+It subscribes to both events before requesting initial snapshots. Disconnects,
+login replacement and scene exit invalidate pending native reads and dialog
+actions. Observation retains at most one queued read with its original purpose
+and operation ID. Read polling does not cancel the shared framed transport;
+confirmation obtains a new native snapshot after the user action. Owned entry
+cleanup retains ownership through admission contention and precedes reactivation.
+
 ## Event-driven UI and idle state
 
 `IOverlayHost.IsReady` / `WaitUntilReadyAsync` report the installed page listener.
@@ -211,6 +287,33 @@ converts source pixels to overlay CSS pixels, independently of desktop DPI.
 Placement supports cover, center, left, right, above and below. Source visibility
 controls the attached panel. Source moves are pushed; anchored HTML does not
 detach when dragged. Null removes the binding and restores its original layout.
+
+### Following a native form and waiting for native operations
+
+Three public SDK helpers cover what every native-dialog plugin otherwise rewrites.
+
+`GameNativeUiFormWatcher` follows the forms one `.ui` resource loads, through the
+cheap `GetFormsAsync` read. `ObserveAsync(watch)` returns the status (`Open`,
+`NotOpen`, `Dormant`, `Busy`, `ReadFailed`, `Unsupported`), the changes since the
+last read (`Opened`, `Moved`, `SelectionChanged`, `Clicked`, `Closed`) and a session
+id. Every form the game loads is a new session, and so is watching again after a
+pause, so an action from an earlier view can be rejected by comparing sessions.
+Passing `watch: false` reads nothing and ends the session; use it to watch only in
+the scenes where the dialog matters. A busy channel or a failed read keeps the
+previous state; a build without form tracking reports `Unsupported` and is not read
+again. `RunAsync(interval, changed, shouldWatch)` runs the same loop and calls back
+only when something changed.
+
+`form.Region(x, y, width, height)` turns a rectangle relative to the form's top
+left into an `OverlayAnchor` in client pixels, so a plugin can pin a panel inside a
+dialog from data and move it with the dialog.
+
+`native.InvokeUntilDoneAsync(request, new GameNativeUiWaitOptions(timeout, poll))`
+submits one operation, retries while the channel answers `channelBusy` (nothing
+was submitted), then reads its result until it is no longer `queued`. An admitted
+operation is never submitted again: if the budget runs out while it is queued the
+result is `outcomeUnknown`/`nativeReplyUnavailable`, because the game may still
+perform it.
 
 **TODO:** verified per-build control locators, image capture/template tracking,
 confidence/lost-target policy, and a rate/region budget for each image locator.

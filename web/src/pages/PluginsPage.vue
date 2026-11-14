@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import PageBody from '../components/PageBody.vue'
+import MarkdownText from '../components/MarkdownText.vue'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { call, inHost, type OptionValue, type PluginSummary, type PluginUpdateState, type PluginLoadIssue } from '../bridge'
+import { call, demoMode, inHost, type OptionValue, type PluginSummary, type PluginUpdateState, type PluginLoadIssue } from '../bridge'
 import { downloadAction, downloads, trackDownload } from '../downloads/live'
 import { downloadStageKey, isTerminal } from '../downloads/model'
 import { localized } from '../i18n'
@@ -13,7 +14,8 @@ import { capturePluginScheme, selectedGame, selectedPluginScheme, pluginSchemesB
 import { libraryCards, libraryRelease, libraryUpdate, pluginId } from '../plugins/library'
 import { settingsPages } from '../plugins/configuration'
 import { showPluginNotice } from '../plugins/notices'
-import { newestFirst } from '../store/versions'
+import { newestFirst, satisfiesRange } from '../store/versions'
+import { matchesPluginIdentity } from '../store/updates'
 import { gameInstances, supportsPlugins, isRunning, perform, refreshPlugins, selectedInstance, state } from '../state'
 import WButton from '../controls/WButton.vue'
 import WComboBox from '../controls/WComboBox.vue'
@@ -21,6 +23,7 @@ import WToggleSwitch from '../controls/WToggleSwitch.vue'
 import WDialog from '../controls/WDialog.vue'
 import WTextBox from '../controls/WTextBox.vue'
 import FluentIcon from '../controls/FluentIcon.vue'
+import { requestPluginPolicy } from '../plugins/pluginPolicy'
 import PluginImportDialog from '../components/PluginImportDialog.vue'
 import PluginConfigurationPage from '../components/PluginConfigurationPage.vue'
 import WAnimatedSize from '../controls/WAnimatedSize.vue'
@@ -125,7 +128,7 @@ const plugins = computed(() => libraryCards(preview.value ? updatePreview.plugin
   // Keep packages usable for the selected client at the top while preserving
   // the catalog order within each group.
   .sort((left, right) => Number(!left.available) - Number(!right.available)))
-const locked = computed(() => !inHost || !supportsPlugins.value || state.busy || pluginSchemesBusy.value || activeDownload.value || !selectedInstance.value)
+const locked = computed(() => !(inHost || demoMode?.enabled) || !supportsPlugins.value || state.busy || pluginSchemesBusy.value || activeDownload.value || !selectedInstance.value)
 function nextLaunchNotice(instanceId = selectedInstance.value?.id) {
   if (instanceId && isRunning(instanceId)) showPluginNotice('next-launch', 'info', t('pluginUpdates.nextLaunch'))
 }
@@ -148,7 +151,13 @@ watch([() => state.selectedInstanceId, () => state.selectedServerId, selectedPlu
 watch([() => selectedInstance.value?.id, supportsPlugins], () => {
   if (selectedInstance.value && supportsPlugins.value) void loadPluginList()
 }, { flush: 'post' })
-onMounted(() => { if (inHost) void pollSnapshot() })
+onMounted(() => { if (inHost || demoMode?.enabled) void pollSnapshot() })
+watch(() => Boolean(demoMode?.enabled), enabled => {
+  if (enabled) {
+    if (!snapshotTimer) void pollSnapshot()
+    if (selectedInstance.value && supportsPlugins.value) void loadPluginList()
+  }
+})
 onBeforeUnmount(() => { checkRevision++; contextRevision++; closeEditor(); updatePreview.stop(); stopped = true; if (snapshotTimer) clearTimeout(snapshotTimer) })
 async function pollSnapshot() {
   const game = state.selectedGameId
@@ -175,7 +184,7 @@ async function pollSnapshot() {
 }
 async function checkUpdates() {
   const id = selectedInstance.value?.id
-  if (!id || checking.value || !inHost || stopped) return
+  if (!id || checking.value || !(inHost || demoMode?.enabled) || stopped) return
   const revision = ++checkRevision; checking.value = true
   checkNotice.value = false; dismissedNotices.clear()
   try {
@@ -260,6 +269,7 @@ async function activateUpdate(plugin: PluginSummary) {
   const target = libraryRelease(state.plugins, plugin, offer?.version)
   if (target) {
     const previous = selectedInstance.value?.plugins.find(entry => entry.id === plugin.id)
+    if (previous?.enabled && selectedInstance.value && !await requestPluginPolicy(selectedInstance.value.id, { enabling: { id: target.id, version: target.version } })) return
     await configure(target, previous?.enabled ?? false, previous?.options, true)
   }
 }
@@ -365,27 +375,55 @@ async function save() {
   } finally { state.busy = false }
 }
 async function selectVersion(plugin: PluginSummary, version: string) {
-  const target = libraryRelease(state.plugins, plugin, version), revision = contextRevision
+  const target = libraryRelease(state.plugins, plugin, version), revision = contextRevision, instance = selectedInstance.value
   if (!target) return
-  if (!selectedInstance.value || !supportsPlugins.value || !target.available) {
+  if (!instance || !supportsPlugins.value || !target.available) {
     libraryVersions[pluginId(plugin)] = version; return
   }
   if (locked.value) return
-  const previous = selectedInstance.value.plugins.find(p => p.id === plugin.id)
+  const previous = instance.plugins.find(p => p.id === plugin.id)
+  if (previous?.enabled && !await requestPluginPolicy(instance.id, { enabling: { id: target.id, version: target.version } },
+    () => !stopped && revision === contextRevision && selectedInstance.value?.id === instance.id)) return
   if (await configure(target, previous?.enabled ?? false, undefined, true)
     && !stopped && revision === contextRevision) libraryVersions[pluginId(plugin)] = version
 }
 async function toggle(plugin: PluginSummary, enabled: boolean) {
-  const previous = selectedInstance.value?.plugins.find(p => p.id === plugin.id)
+  const instance = selectedInstance.value, revision = contextRevision
+  const previous = instance?.plugins.find(p => p.id === plugin.id)
   if (enabled && previous && previous.version !== plugin.version) {
     preserveOptions.value = true
-    switching.value = { plugin, from: previous.version, instanceId: selectedInstance.value!.id }; return
+    switching.value = { plugin, from: previous.version, instanceId: instance!.id }; return
   }
+  // Turning a plugin on checks its unmet requirements, recommendations and conflicts; turning it off checks active dependents.
+  if (instance && !await requestPluginPolicy(instance.id, enabled
+    ? { enabling: { id: plugin.id, version: plugin.version } }
+    : { disabling: { id: plugin.id, version: plugin.version } },
+    () => !stopped && revision === contextRevision && selectedInstance.value?.id === instance.id)) return
   await configure(plugin, enabled)
+}
+/** Whether a policy rule chip is currently satisfied on the selected client or library. */
+function ruleMet(rule: NonNullable<PluginSummary['policy']>[number]) {
+  if (typeof rule.satisfied === 'boolean') return rule.satisfied
+  const targetPackages = state.plugins.filter(item => matchesPluginIdentity(item, rule.plugin) && (!rule.range || satisfiesRange(item.version, rule.range)))
+  const enabled = !!selectedInstance.value?.plugins.some(selection => selection.enabled
+    && (!rule.range || satisfiesRange(selection.version, rule.range))
+    && (selection.id === rule.plugin || targetPackages.some(item => item.id === selection.id && item.version === selection.version)))
+  if (rule.type === 'conflict') return !enabled
+  if (targetPackages.some(item => item.kind === 'assets' && (!selectedInstance.value || item.available))) return true
+  return enabled
+}
+function policyName(other: string) {
+  const found = state.plugins.find(item => matchesPluginIdentity(item, other))
+  return found ? localized(found.name) : other
 }
 async function switchVersion() {
   const change = switching.value, revision = contextRevision
   if (!change || change.instanceId !== selectedInstance.value?.id) { switching.value = undefined; return }
+  if (!await requestPluginPolicy(change.instanceId, { enabling: { id: change.plugin.id, version: change.plugin.version } },
+    () => !stopped && revision === contextRevision && switching.value === change && selectedInstance.value?.id === change.instanceId)) {
+    if (switching.value === change) switching.value = undefined
+    return
+  }
   if (await configure(change.plugin, true, preserveOptions.value ? undefined : {})
     && !stopped && revision === contextRevision && switching.value === change) switching.value = undefined
 }
@@ -395,7 +433,7 @@ function imported(name: string, version: string) { importedMessage.value = t('pl
 <template>
   <section class="page plugin-page">
     <header class="page-header"><div><h1 class="page-title">{{ t('plugins.title') }}</h1><p class="page-desc">{{ t('pluginImport.library') }}</p></div><div class="plugin-context"><PluginSchemePicker /><WComboBox v-if="choices.length" v-model="state.selectedInstanceId" :options="choices" :placeholder="t('live.selectInstance')" :aria-label="t('live.selectInstance')" :disabled="state.busy" class="instance-picker" /></div></header>
-    <div class="plugin-toolbar"><WTextBox v-model="search" :placeholder="t('plugins.search')" :aria-label="t('plugins.search')" /><span v-if="importedMessage" class="import-result" role="status">{{ importedMessage }}</span><div class="toolbar-actions"><WButton :disabled="!selectedInstance || state.busy" @click="sharingScheme = true"><FluentIcon glyph="share" />{{ t('pluginSchemes.share') }}</WButton><WButton :disabled="!selectedInstance || !supportsPlugins || state.busy" @click="$router.push({ path: '/store', query: { kind: 'plugin' } })"><FluentIcon glyph="download" />{{ t('pluginImport.download') }}</WButton><WButton :disabled="!selectedInstance || !supportsPlugins || !inHost || checking || state.busy" @click="checkUpdates"><FluentIcon glyph="refresh" :class="{ spinning: checking }" />{{ t(checking ? 'pluginUpdates.checking' : 'pluginUpdates.check') }}</WButton><WButton :disabled="!inHost || state.busy || !state.selectedGameId" @click="importing = true; importedMessage = ''"><FluentIcon glyph="add" />{{ t('pluginImport.title') }}</WButton></div></div>
+    <div class="plugin-toolbar"><WTextBox v-model="search" :placeholder="t('plugins.search')" :aria-label="t('plugins.search')" /><span v-if="importedMessage" class="import-result" role="status">{{ importedMessage }}</span><div class="toolbar-actions"><WButton :disabled="!selectedInstance || state.busy" @click="sharingScheme = true"><FluentIcon glyph="share" />{{ t('pluginSchemes.share') }}</WButton><WButton :disabled="!selectedInstance || !supportsPlugins || state.busy" @click="$router.push({ path: '/store', query: { kind: 'plugin' } })"><FluentIcon glyph="download" />{{ t('pluginImport.download') }}</WButton><WButton :disabled="!selectedInstance || !supportsPlugins || !(inHost || !!demoMode?.enabled) || checking || state.busy" @click="checkUpdates"><FluentIcon glyph="refresh" :class="{ spinning: checking }" />{{ t(checking ? 'pluginUpdates.checking' : 'pluginUpdates.check') }}</WButton><WButton :disabled="!(inHost || !!demoMode?.enabled) || state.busy || !state.selectedGameId" @click="importing = true; importedMessage = ''"><FluentIcon glyph="add" />{{ t('pluginImport.title') }}</WButton></div></div>
     <PageBody>
     <WInfoBar v-if="preview" class="plugin-preview-notice" severity="info" :closable="false" :title="t('updates.preview')">{{ t('updates.previewBody') }}</WInfoBar>
     <p v-else-if="!preview && !selectedInstance" class="muted">{{ t('pluginImport.chooseClient') }}</p>
@@ -432,13 +470,19 @@ function imported(name: string, version: string) { importedMessage.value = t('pl
               <span v-if="selectedInstance && !plugin.available" key="unavailable" class="unavailable-badge">{{ t('live.unavailable') }}</span>
               <span v-if="plugin.required || plugin.warningRequired" key="required" class="required">{{ t('live.required') }}</span>
             </TransitionGroup>
-            <p>{{ localized(plugin.description ?? undefined) }}</p>
+            <MarkdownText v-if="localized(plugin.description ?? undefined)" :source="localized(plugin.description ?? undefined)" />
             <p v-if="plugin.authors?.length" class="muted">{{ t('store.authors') }}: {{ plugin.authors.join(', ') }}</p>
+            <ul v-if="plugin.policy?.length" class="policy-rules">
+              <li v-for="rule in plugin.policy" :key="rule.type + rule.plugin" class="policy-rule" :class="[rule.type, { met: ruleMet(rule) }]">
+                <FluentIcon :glyph="ruleMet(rule) ? 'completed' : rule.type === 'conflict' ? 'errorBadge' : rule.type === 'require' ? 'warning' : 'info'" :size="14" />
+                {{ t(`pluginPolicy.chip.${rule.type}`, { name: policyName(rule.plugin) }) }}
+              </li>
+            </ul>
             <span v-if="plugin.minimumLauncherVersion && plugin.launcherCompatible === false" class="unavailable">{{ t('launcherUpdates.pluginMinimum', { version: plugin.minimumLauncherVersion }) }}</span>
           </div>
           <div class="plugin-release-actions">
           <WComboBox v-if="versions(plugin).length > 1" :model-value="plugin.version" :options="versions(plugin).map(p => ({ value: p.version, label: p.version }))" :aria-label="t('pluginImport.packageVersion')" :disabled="state.busy" class="package-version" @update:model-value="selectVersion(plugin, $event)" />
-          <Transition name="update-action"><WButton v-if="hasUpdate(plugin) || updateTaskActive(plugin)" class="plugin-update-action" variant="accent" :disabled="!preview && (!inHost || !supportsPlugins || state.busy || checking || !selectedInstance) || updateTaskActive(plugin)" :aria-busy="updateTaskActive(plugin)" @click="applyUpdate(plugin)"><Transition name="version-swap" mode="out-in"><span :key="String(updateTaskActive(plugin))" class="update-button-content"><WProgressRing v-if="updateTaskActive(plugin)" :size="16" /><FluentIcon v-else glyph="download" :size="14" />{{ t(updateTaskActive(plugin) ? updateTask(plugin)?.target.fromVersion === '' ? 'pluginUpdates.installing' : 'pluginUpdates.updating' : 'pluginUpdates.updateNow') }}</span></Transition></WButton></Transition>
+          <Transition name="update-action"><WButton v-if="hasUpdate(plugin) || updateTaskActive(plugin)" class="plugin-update-action" variant="accent" :disabled="!preview && (!(inHost || !!demoMode?.enabled) || !supportsPlugins || state.busy || checking || !selectedInstance) || updateTaskActive(plugin)" :aria-busy="updateTaskActive(plugin)" @click="applyUpdate(plugin)"><Transition name="version-swap" mode="out-in"><span :key="String(updateTaskActive(plugin))" class="update-button-content"><WProgressRing v-if="updateTaskActive(plugin)" :size="16" /><FluentIcon v-else glyph="download" :size="14" />{{ t(updateTaskActive(plugin) ? updateTask(plugin)?.target.fromVersion === '' ? 'pluginUpdates.installing' : 'pluginUpdates.updating' : 'pluginUpdates.updateNow') }}</span></Transition></WButton></Transition>
           </div>
           <WToggleSwitch :model-value="plugin.selection?.enabled ?? false" :disabled="locked || plugin.required && !!plugin.selection?.enabled || !plugin.available" :aria-label="`${localized(plugin.name)} ${plugin.version}`" @update:model-value="toggle(plugin, $event)" />
           <WButton class="plugin-delete" variant="subtle" :disabled="!plugin.canUninstall || state.busy || uninstallBusy || activeDownload" :aria-label="`${t('pluginLoadIssues.uninstall')} ${localized(plugin.name)}`" :title="t('pluginLoadIssues.uninstall')" @click="uninstalling = plugin"><FluentIcon glyph="delete" /></WButton>
@@ -449,7 +493,7 @@ function imported(name: string, version: string) { importedMessage.value = t('pl
             <FluentIcon :glyph="update(plugin)?.status === 'available' || update(plugin)?.status === 'installed' ? 'download' : 'info'" :size="18" />
             <div class="update-copy"><span>{{ updateTask(plugin) && !isTerminal(updateTask(plugin)!) ? t(downloadStageKey(updateTask(plugin)!)) : t(`pluginUpdates.${update(plugin)?.status}`, { version: update(plugin)?.version }) }}</span><small v-if="['available', 'installed'].includes(update(plugin)!.status)">{{ update(plugin)?.sourceName }}</small></div>
             <WButton v-if="updateTask(plugin) && !isTerminal(updateTask(plugin)!)" variant="subtle" @click="downloads.selectedId = updateTask(plugin)!.id; $router.push({ path: '/downloads', query: { task: updateTask(plugin)!.id } })">{{ t('pluginUpdates.progress') }}</WButton>
-            <WButton v-else-if="update(plugin)?.status === 'available'" :disabled="!inHost || !supportsPlugins || state.busy || checking || !selectedInstance" @click="downloadUpdate(plugin)">{{ t('pluginUpdates.download', { version: update(plugin)?.version }) }}</WButton>
+            <WButton v-else-if="update(plugin)?.status === 'available'" :disabled="!(inHost || !!demoMode?.enabled) || !supportsPlugins || state.busy || checking || !selectedInstance" @click="downloadUpdate(plugin)">{{ t('pluginUpdates.download', { version: update(plugin)?.version }) }}</WButton>
             <WButton v-else-if="update(plugin)?.status === 'installed' && selectedInstance?.plugins.find(p => p.id === plugin.id)?.version !== update(plugin)?.version" :disabled="locked || checking" @click="activateUpdate(plugin)">{{ t('pluginUpdates.activate', { version: update(plugin)?.version }) }}</WButton>
           </div></div></Transition>
           </WAnimatedSize>
@@ -495,6 +539,14 @@ function imported(name: string, version: string) { importedMessage.value = t('pl
 </template>
 
 <style scoped>
+/* Caption-size status lines with Fluent signal glyphs, as Windows Settings lists conditions; no chip outlines. */
+.policy-rules { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0 0; padding: 0; list-style: none; }
+.policy-rule { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: var(--text-secondary); }
+.policy-rule.met > :first-child { color: var(--fill-success); }
+.policy-rule.require:not(.met) > :first-child { color: var(--fill-caution); }
+.policy-rule.recommend:not(.met) > :first-child { color: var(--fill-attention); }
+.policy-rule.conflict:not(.met) > :first-child { color: var(--fill-critical); }
+.policy-rule:not(.met) { color: var(--text-primary); }
 .plugin-preview-notice { margin-bottom: 12px; }
 .plugin-notices { display: grid; gap: 8px; }
 .plugin-notices:not(:empty) { margin-bottom: 14px; }

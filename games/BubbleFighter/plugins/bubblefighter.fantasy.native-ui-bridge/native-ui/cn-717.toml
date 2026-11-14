@@ -17,6 +17,26 @@ chat = 0x446020 # cn-717 sub_642F90 supplies caption/color/body to the local-his
 append_announcement = 0x58C6E0 # cn-717 sub_97E700 appends a deep-copied 76-byte record through cn-717 sub_98F7B0.
 clock = 0xBCF374 # cn-717 sub_97E700 and cn-717 sub_97D570 read the native clock pointer here.
 clock_now = 0x730FD0 # cn-717 sub_B30FD0 returns the clock used by the announcement renderer.
+control_load_form = 0x749170 # cn-717 sub_8F72A0 loads its .ui resource into the DlgCreateRoom form through cn-717 sub_B49170.
+control_initialize = 0x746030 # cn-717 sub_B46030 initializes every Control's base fields.
+control_destroy = 0x7459C0 # cn-717 sub_B46000 calls this Control destructor before freeing 512 bytes.
+control_click = 0x753360 # cn-717 sub_B54630 passes the "clicked" byte to this handler, which returns with RET 4.
+control_get_text = 0x023770 # cn-717 sub_423770 copies Control's native text through vtable slot 28.
+control_set_text = 0x0237E0 # cn-717 sub_4237E0 assigns Control's native text through vtable slot 24.
+edit_get_text = 0x75DD40 # cn-717 sub_B5DD40, UiEdit slot 28, includes the active IME composition in edit text.
+edit_set_text = 0x75DC50 # cn-717 sub_B5DC50, UiEdit slot 24, applies the edit limit and updates caret/selection.
+edit_set_maximum = 0x75BE60 # cn-717 sub_B5BE60 stores the UTF-16 edit length limit at +616.
+control_string_release = 0x001340 # cn-717 sub_401340 frees a copied native wide string.
+control_string_assign = 0x001410 # cn-717 sub_4237E0 copies borrowed strings with cn-717 sub_401410.
+control_button_create = 0x7545D0 # cn-717 sub_B545D0 allocates 0x2F8 bytes and constructs a default UiButton.
+control_parent = 0x7462D0 # cn-717 sub_B462D0 moves a Control between parents' child vectors at +384.
+control_geometry = 0x7409D0 # cn-717 sub_B409D0 centres 0x8000 coordinates on the UI root and applies geometry.
+control_set_enabled = 0x740FF0 # cn-717 sub_B40FF0 clears focus from the control, then writes enabled at +357.
+button_vtable = 0x9A6D2C # cn-717 RTTI identifies Lambda::UiButton's primary vtable.
+edit_vtable = 0x9A716C # cn-717 RTTI identifies Lambda::UiEdit's primary vtable.
+label_vtable = 0x9A6E3C # cn-717 RTTI identifies Lambda::UiLabel's primary vtable.
+create_room_vtable = 0xA9A874 # cn-717 sub_8F72A0 assigns DlgCreateRoom before loading its .ui resource.
+ime_manager = 0xBF5068 # cn-717 sub_B5DD40 reads this instance before including IME composition.
 
 [values]
 message_abi = 1 # cn-717 sub_9255E0 uses the coordinate-based fastcall constructor.
@@ -44,6 +64,34 @@ icon_notice = 0 # cn-717 Ui/DlgMessageBox.ui maps pnlIcon array 0 to MsgBoxIconN
 icon_warning = 1 # cn-717 Ui/DlgMessageBox.ui maps pnlIcon array 1 to MsgBoxIconWarning.png.
 icon_question = 2 # cn-717 Ui/DlgMessageBox.ui maps pnlIcon array 2 to MsgBoxIconQuestion.png.
 icon_error = 3 # cn-717 Ui/DlgMessageBox.ui maps pnlIcon array 3 to MsgBoxIconError.png.
+control_abi = 1 # cn-717 keeps the kr-812 Control layout: vtable text methods and game-allocated strings.
+get_text_slot = 28 # cn-717 sub_423770/sub_B5DD40 occupy the text getter slot after the setter at 24.
+name_offset = 240 # cn-717 sub_B41F40 writes the resource Name from +240.
+visible_offset = 356 # cn-717 sub_B46030 initializes visible and enabled together at +356.
+enabled_offset = 357 # cn-717 sub_B40FF0 writes enabled here.
+array_index_offset = 300 # cn-717 sub_B41F40 writes the resource ArrayIndex from +300.
+children_offset = 384 # cn-717 sub_B414F0 walks child pointers between +384 and +388.
+owner_form_offset = 380 # cn-717 sub_B53360 notifies the owning form at +380 and passes it the button command.
+ime_composition_offset = 2144 # cn-717 sub_B600B0 reads a NUL-terminated composition at this offset.
+x_offset = 308 # cn-717 sub_B46030 initializes native x/y/width/height.
+y_offset = 312 # cn-717 sub_B46030 initializes native x/y/width/height.
+width_offset = 316 # cn-717 sub_B409D0 centres horizontally on the root's width.
+height_offset = 320 # cn-717 sub_B409D0 centres vertically on the root's height.
+edit_maximum_offset = 616 # cn-717 sub_B5BE60 stores the UTF-16 edit length limit at +616.
+control_root_offset = 24 # cn-717 sub_B4A5E0 returns the UI root at manager +24.
+control_layer_offset = 28 # cn-717 sub_B4A640 returns the default control layer at manager +28.
+control_modal_offset = 8 # cn-717 sub_B4A750 installs the active modal form at manager +8.
+click_hook_bytes = 6 # cn-717 sub_B53360 opens with a 6-byte fs:[0] load.
+
+# cn-717 sub_8F72A0, the only DlgCreateRoom constructor, loads Ui/DlgCreateRoom.ui whatever the language.
+[[selection_groups]]
+form = "Ui/DlgCreateRoom.ui"
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 824 # cn-717 sub_6D17A0 allocates 0x338 bytes for DlgCreateRoom.
+value_offset = 720 # cn-717 sub_8FB420 writes the selected mode here; cn-717 sub_6D17A0 reads it after command 257.
+# cn-717 sub_8FB010 maps each resource ArrayIndex to its game mode; cn-717 sub_8FB420 disables the selected member.
+values = [1, 3, 5, 6, 8, 101, 12, 13, 14, 16, 18, 19, 20]
 
 [[signatures]]
 address = "allocate"
@@ -76,3 +124,63 @@ bytes = "64 A1 00 00 00 00 6A FF 68 72 59 CB 00 50 64 89"
 [[signatures]]
 address = "clock_now"
 bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "6A FF 68 D1 12 CA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "51 53 33 DB 56 8B F1 89 9E 28 01 00 00 66 89 9E"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "6A FF 68 95 0D CA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_set_enabled"
+bytes = "6A FF 68 20 04 CA 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 51 A1 D4"
+
+[[signatures]]
+address = "control_click"
+bytes = "64 A1 00 00 00 00 6A FF 68 D0 20 CA 00 50 64 89"
+
+[[signatures]]
+address = "control_get_text"
+bytes = "6A FF 68 F9 DE CA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "8B 44 24 04 6A FF 6A 00 50 81 C1 0C 01 00 00 E8"
+
+[[signatures]]
+address = "edit_get_text"
+bytes = "6A FF 68 29 E3 C9 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "64 A1 00 00 00 00 6A FF 68 38 5E CC 00 50 64 89"
+
+[[signatures]]
+address = "edit_set_maximum"
+bytes = "8B 44 24 04 56 8B F1 83 F8 01 7C 5F 89 86 68 02"
+
+[[signatures]]
+address = "control_string_release"
+bytes = "56 8B F1 83 7E 14 08 72 0B 8B 06 50 E8 B3 96 81"
+
+[[signatures]]
+address = "control_string_assign"
+bytes = "53 8B 5C 24 08 55 8B 6C 24 10 56 57 8B 7B 10 8B"
+
+[[signatures]]
+address = "control_button_create"
+bytes = "6A FF 68 42 23 CA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_parent"
+bytes = "6A FF 68 E8 0D CA 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_geometry"
+bytes = "6A FF 68 20 04 CA 00 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 51 81 7C"

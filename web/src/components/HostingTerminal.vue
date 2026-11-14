@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, hostingPreview, type HostingProfile, type HostingSession } from '../bridge'
+import { call, demoMode, inHost, hostingPreview, type HostingProfile, type HostingSession } from '../bridge'
 import { refreshServers } from '../state'
 import WButton from '../controls/WButton.vue'
 const props = defineProps<{ profile: HostingProfile; session?: HostingSession }>()
@@ -20,7 +20,7 @@ async function refresh() {
 }
 async function poll() { await refresh(); if (!disposed) timer = setTimeout(poll, 1200) }
 async function send() {
-  if (busy.value || !command.value.trim() || !(inHost || hostingPreview)) return
+  if (busy.value || !command.value.trim() || !(inHost || demoMode?.enabled || hostingPreview)) return
   const input = command.value.trim(), id = props.profile.id, current = props.session
   command.value = ''; append(`> ${input}`); busy.value = true
   try {
@@ -43,7 +43,7 @@ onMounted(() => { append(t('localHosting.help')); void poll() })
 onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer) })
 </script>
 <template>
-  <section class="hosting-terminal" :aria-label="t('localHosting.terminal')"><div ref="view" class="terminal-output" role="log" aria-live="off"><pre>{{ [...lines, ...replies].join('\n') || t('hosting.noLogs') }}</pre></div><form class="terminal-input" @submit.prevent="send"><span aria-hidden="true">&gt;</span><input v-model="command" :disabled="busy || !(inHost || hostingPreview)" :maxlength="256" :aria-label="t('localHosting.input')" :placeholder="t('localHosting.input')" autocomplete="off" spellcheck="false" /><WButton :disabled="busy || !(inHost || hostingPreview) || !command.trim()" type="submit">{{ t('localHosting.send') }}</WButton></form></section>
+  <section class="hosting-terminal" :aria-label="t('localHosting.terminal')"><div ref="view" class="terminal-output" role="log" aria-live="off"><pre>{{ [...lines, ...replies].join('\n') || t('hosting.noLogs') }}</pre></div><form class="terminal-input" @submit.prevent="send"><span aria-hidden="true">&gt;</span><input v-model="command" :disabled="busy || !(inHost || demoMode?.enabled || hostingPreview)" :maxlength="256" :aria-label="t('localHosting.input')" :placeholder="t('localHosting.input')" autocomplete="off" spellcheck="false" /><WButton :disabled="busy || !(inHost || demoMode?.enabled || hostingPreview) || !command.trim()" type="submit">{{ t('localHosting.send') }}</WButton></form></section>
 </template>
 <style scoped>
 .hosting-terminal { flex: 1; min-height: 300px; display: flex; flex-direction: column; background: #0c0c0c; color: #d8d8d8; }

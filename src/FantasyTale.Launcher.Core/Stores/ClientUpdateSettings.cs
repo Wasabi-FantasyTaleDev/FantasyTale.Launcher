@@ -42,7 +42,7 @@ public sealed class ClientUpdateSettings
                 file.Write(Encoding.UTF8.GetBytes($"auto_check = {value.AutoCheck.ToString().ToLowerInvariant()}\nauto_download = {value.AutoDownload.ToString().ToLowerInvariant()}\nauto_check_plugins = {value.AutoCheckPlugins.ToString().ToLowerInvariant()}\nauto_update_plugins = {value.AutoUpdatePlugins.ToString().ToLowerInvariant()}\nremove_old_plugin_versions = {value.RemoveOldPluginVersions.ToString().ToLowerInvariant()}\n"));
                 file.Flush(true);
             }
-            File.Move(temporary, _file, true); _value = value;
+            AtomicFile.Replace(temporary, _file); _value = value;
         }
     }
 }

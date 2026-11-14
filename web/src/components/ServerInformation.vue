@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import MarkdownText from './MarkdownText.vue'
 import type { ServerPresentation, PolicyPluginEntry, ServerStoreSource } from '../bridge'
 import { state } from '../state'
 import { localized } from '../i18n'
@@ -22,7 +23,7 @@ const supported = computed(() => props.builds.map(id => {
 </script>
 <template>
   <div class="server-information">
-    <p v-if="descriptionText" class="motd">{{ descriptionText }}</p>
+    <MarkdownText v-if="descriptionText" class="motd" :source="descriptionText" />
     <div class="status-badges"><span v-if="presentation?.state && presentation.state !== 'online'" :class="presentation.state">{{ t(`serverInfo.${presentation.state}`) }}</span><span v-if="presentation?.whitelist">{{ t('serverInfo.whitelist') }}</span></div>
     <dl class="player-counts">
       <div v-if="presentation?.onlinePlayers != null && presentation.onlinePlayers >= 0"><dt :title="presentation?.presenceComplete === false ? t('serverInfo.populationIncomplete') : undefined">{{ t('serverInfo.onlinePlayers') }}</dt><dd>{{ presentation.presenceComplete === false ? '≥ ' : '' }}{{ presentation.onlinePlayers }}</dd></div>
@@ -36,7 +37,7 @@ const supported = computed(() => props.builds.map(id => {
   </div>
 </template>
 <style scoped>
-.server-information { display: grid; gap: 18px; margin-bottom: 24px; }.motd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-secondary); line-height: 1.7; }
+.server-information { display: grid; gap: 18px; margin-bottom: 24px; }.motd { margin: 0; overflow-wrap: anywhere; color: var(--text-secondary); line-height: 1.7; }
 .status-badges { display: flex; flex-wrap: wrap; gap: 8px; }.status-badges:empty { display: none; }.status-badges span { padding: 4px 9px; border-radius: 4px; background: var(--subtle-secondary); font-size: 12px; }.status-badges .online { color: var(--status-success, #298348); }.status-badges .maintenance { color: var(--status-warning, #9d5d00); }
 .player-counts { display: flex; flex-wrap: wrap; gap: 20px; margin: 0; font-size: 13px; }.player-counts div { display: grid; gap: 6px; }.player-counts dt, small { color: var(--text-secondary); }.player-counts dd { margin: 0; }
 .supported h3 { margin: 0 0 10px; font-weight: 600; font-size: 13px; }.supported-build { display: inline-flex; margin: 0 6px 6px 0; padding: 4px 7px; border-radius: 4px; background: var(--subtle-fill-secondary); font-size: 11px; }.information-actions { display: flex; flex-wrap: wrap; gap: 10px; }

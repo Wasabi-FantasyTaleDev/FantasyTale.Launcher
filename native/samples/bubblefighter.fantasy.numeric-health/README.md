@@ -37,12 +37,12 @@ match. This positioning change does not resolve yellow texture visibility.
 
 One plugin identity supports future build descriptors. Runtime addresses are read
 from `client-versions.toml` beside the DLL rather than compiled into the hook.
-The file includes measured CN2011 through CN2019 research rows, including
-separate resource-release identities; currently only the measured fixed-base
+The file includes measured research rows for every visible non-Indonesian build,
+including separate resource-release identities, KR-1256 and TW-454; currently only the measured fixed-base
 kr-812 image is accepted. Timestamp, packed/reconstructed image size,
 HUD call bytes, optional resource signatures and the maximum-health vtable entry
 are verified before patching.
-The selected player is captured from EDI, not the HUD index holder. A not-yet-ready
+KR-812 captures the selected player from EDI, not the HUD index holder. A not-yet-ready
 maximum-health entry retries within the existing bounded unpacking deadline.
 
 Supported descriptors declare `health_accessor_abi = "thiscall_f64"` or
@@ -51,18 +51,22 @@ EDI while retaining the floating return. `maximum_health_source = "vtable_f64"`
 requires `maximum_entry_rva`, `maximum_health_rva` and `maximum_vtable_slot`, a byte
 offset aligned to four bytes in 4..4096. The active KR descriptor uses 356;
 the drawing path no longer assumes that slot for every build. `player_capture`
-selects either preserved caller EDI (`caller_edi`) or the HUD's first pointer
-(`hud_owner`). Owner capture rejects unreadable/null owners instead of falling
-back to EDI. Supported descriptors must declare `hud_register = "ebp"` or
-`"ebx"`; patch staging selects the matching x86 forwarding stub. Both retain
-the seven original argument slots and the caller's callee-saved registers.
+selects preserved caller EDI, EBX or ESI (`caller_edi`, `caller_ebx`, `caller_esi`),
+the HUD's first pointer (`hud_owner`), or a saved pointer after the original
+arguments (`caller_stack`). Stack capture requires a four-byte-aligned
+`player_stack_offset` in 28..4096 measured from the first original argument.
+An unreadable or null selected pointer suppresses additional drawing. Supported
+descriptors declare `hud_register = "ebp"`, `"ebx"` or `"edi"`; one x86 stub
+captures the registers before C++ selection and preserves the seven original
+argument slots. `white_style_slot` selects the build's fallback number style:
+the early clients use 5, while the measured 2019 and current Korean clients use 6.
 Alternatively `maximum_health_source = "player_field_f32"` reads a float at
 player + `maximum_health_field_offset` and forbids the three vtable fields.
 Field offsets must be in 1..65536. Unreadable fields and nonpositive/nonfinite
 maximums suppress additional drawing. Other register or accessor ABIs still
 require their own verified contract.
-Controlled x86 tests use a different vtable slot and invalid EDI to distinguish
-the two capture paths. These tests do not enable any research-only descriptor.
+Controlled x86 tests use different player registers, a saved stack slot and
+invalid pointers to distinguish the capture paths. These tests do not enable any research-only descriptor.
 Distribute the DLL and its matching descriptor together.
 
 Native sprite layout also comes from the descriptor. Supported rows require
@@ -75,12 +79,16 @@ and offsets 120/136/144. Earlier researched clients can select style 21, word
 2822 and offsets 48/60/72 without changing the DLL. This does not replace their
 required sprite loading/string/options ABI verification or retail acceptance.
 
-The descriptor also records `resource_string_inline_capacity` and
-`resource_options_size`. The measured research values are seven UTF-16 code
-units and 32/40/88 bytes for CN2011/CN2012/CN2013 respectively; KR2015 uses
-seven and 88. The loader allocates the selected options size, but the research
-rows remain disabled until their manager and callable entry contracts are
-accepted.
+The descriptor also records `resource_string_abi`, `resource_string_inline_capacity`
+and `resource_options_size`. CN2011/CN2012 use four-byte reference-counted
+strings (`cow_wstring4`) and 36/40-byte options records, respectively. Their
+string headers precede the data and they have no inline capacity. These loaders
+reject the borrowed 24-byte string and remain research-only until native string
+construction and release are implemented. CN2013 and KR2015 use `msvc_wstring24`,
+seven UTF-16 inline code units and 88-byte options. The older CN2011 32-byte
+options record and claim that all these string layouts matched were incorrect.
+Research rows remain disabled until their complete resource and render contracts
+are accepted.
 
 CN research records distinguish floating HP from the original integer Life
 counter divided by 20. The original Life text remains untouched. The EDI HP and

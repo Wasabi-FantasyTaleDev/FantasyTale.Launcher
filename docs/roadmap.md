@@ -1,5 +1,126 @@
 # Roadmap and task cards
 
+## Managed mode-extension controller (2026-11-10)
+
+Move native create-room observation, owned entry buttons, catalogue policy and
+confirmed mutations into the game module, selected by the package's controller
+declaration. The browser receives display snapshots and submits session-bound
+confirm/cancel actions. Hidden WebView suspension remains enabled and no page
+timer drives native work. Registration subscribes the controller before loading
+HTML; session teardown awaits controllers before closing their transports.
+The local 0.1.2 candidate receives an owner-scoped Companion channel, subscribes
+before synchronization, and requires both an active room-create context and the
+`plaza` scene. Main menu, room entry and disconnect remain dormant. Connection
+epochs, context revisions and per-connection receive positions reject retired or
+late state. No periodic server query or plaza waiting deadline is used.
+
+Queued native reads retain their original identity and purpose without canceling
+the shared Hook pipe. Confirmation reads after the user action; accepted mutations
+have bounded result checks and cannot replay an unknown outcome. Cleanup retains
+owned entry handles through temporary contention and precedes reactivation.
+
+Release build: zero warnings and errors. The focused backend suite passes 257
+cases, and the relevant frontend suite passes 31. The full managed run reports
+2435 passed, two store-fixture timeouts and 21 skipped; a separate rerun of the
+two affected methods passes all 16 combinations. This is not a single clean full
+run. Version 0.1.2 and the managed candidate are installed locally. Real kr-812
+acceptance on JD remains open until its server deployment and native entry,
+confirmation and exit lifecycle have been observed.
+
+## Native control activation readiness (2026-11-10)
+
+Live-control activation waits within validated plugin limits for the complete
+descriptor signature set before preparing observers. The loader can start its
+worker while client code is still packed. An isolated harness reproduced the
+production adapter's activation failure with the packed image and successful
+activation with the unpacked image. Exact signature checks and transactional
+patch ownership remain mandatory. Activation errors retain a bounded reason;
+actual mode-entry acceptance remains open.
+
+## Overlay browser profile isolation (2026-11-10)
+
+The renderer clears an inherited WebView2 user-data-folder override so the launcher's
+Photino browser cannot replace its own profile. A live reproduction failed during
+controller creation with HRESULT 8007139F; the same executable initialized after
+removing the override. The repaired installed renderer also initialized with the
+launcher override present, loaded its page and rendered the native-style preview.
+Release compilation has zero warnings and errors. Mode Extension's native entry
+still requires verification in a new game session.
+
+## Room mode extension (2026-11-09)
+
+An optional overlay package presents native mode artwork in the active client's
+window theme, with three-column scrolling and draft/confirm/cancel selection.
+Explicit build allow/hidden rules filter the shared catalogue without treating
+it as a proven compatibility table. The baseline native entry follows current
+selection, uses native mode activation where available and localized room-name
+tags for configured extensions. Controller regressions and browser scrollbar
+checks pass; real-client acceptance and additional native bindings remain open.
+
+Legacy confirmation rows use compact localized widths and original icon-bearing
+skin heights. Shared caption buttons preserve icon proportions in other consumers.
+Ban Pick retains every first page while bounding rolling text work and invalidating
+late drawing, opening and confirmation results after room changes or unload.
+
+## Live native controls (2026-11-09)
+
+The Native UI Bridge exposes visible-control inspection, direct and exact-match
+text assignment, repeated-name array selectors, owned native buttons and bounded
+events. kr-812 selection groups and button activation follow the client's own
+callback and distinguish a selected disabled button from a locked one. Managed,
+overlay, Companion and developer-page surfaces use the same scoped contract.
+Static evidence and synthetic tests cover the baseline; real-client acceptance
+and descriptor ports remain open.
+
+## Ban Pick editor UI (2026-11-08)
+
+Completed the first Vue 3 inventory-style preview with a reusable
+`BfBanPick` component, native window/card assets, four item categories,
+localized search and restriction filters, native category tabs and paging,
+each theme's original description panel, and draft/apply/cancel selection state.
+The three-column, three-row inventory retains 172px slots and 180/178px pitch.
+Official Chinese names and descriptions come from the workbook and translation table.
+Named presets persist locally, including same-name replacement and allow-all schemes.
+Forty-seven transparent ItemViewer samples are generated from local client resources;
+the preparation tool rejects the retired viewer source and records source hashes.
+The original kr-812 item bob uses a 2,000 ms period and 2.5-pixel amplitude.
+Strict Vue typing, the production build, renderer event/preset regression tests and
+browser interaction/layout checks pass for seven locales and a narrow viewport.
+Mounted native controls now emit from themselves so Vue wrappers receive changes
+after adopting them from temporary construction parents. Real-client outline A/B rendering confirms
+the model contour. Private assets remain ignored. Accessory attachment calibration,
+room transport and server enforcement remain open; this card completes only the
+requested UI prototype. See `tools/game-ui/ban-pick-demo/README.md`.
+
+The second presentation pass isolates v1 CN2011 and v2 CN2015 assets, preserves
+32px/27px native tab heights and left-aligned v1 titles, and puts search and the
+native restriction checkbox on the main-category row. The full-width description
+keeps each source form's title and label regions. Presets now open in a separate
+native-theme modal. Captioned buttons use compact measured widths and stable state
+layers; pointer transitions cannot detach a pending click target. The demo maps
+weight 700 to the existing heavier Chinese W9 face. Item names center visible ink
+using the same alphabetic baseline for measurement and drawing; footer text uses
+the atlas's actual status region. Theme archive audits, 19 synthetic regressions,
+strict typing and both UI builds pass; three optional tutorial/audio resource groups
+remain skipped. Browser checks cover preset persistence/replacement/deletion,
+selection restoration, captured scrollbar drags and keyboard paging, theme changes,
+Chinese/Korean/English and 400px width. The complete 1024-by-768 preview uses
+integer final font sizes and browser SVG glyphs rather than resized text bitmaps.
+Titles, name/status bands, compact footer alignment and the search/checkbox order
+follow their isolated theme geometry. Atomic appearance refreshes and propagated
+rendering errors prevent blank captions after resource regeneration. The browser
+font export retains all glyph outlines, hints, advances and kerning while normalizing
+legacy CFF/maxp and kerning records; all-glyph geometry and 16 raster comparisons pass.
+
+The final card pass crops native glow padding without rescaling the interior,
+keeps only the model-region restriction border, insets its upper-left badge and
+uses identical footer colors for allowed and restricted items. Complete canonical
+subtype ordering includes melee/special weapons in the older theme. Samples add
+two hammers, two grenades and three head-accessory crystals. An explicit private
+preview adapter renders crystals alone with a declared angle and proportional fit;
+its manifest records demo framing rather than claiming a verified native camera.
+
+
 ## Native auxiliary protocol readiness (2026-11-08)
 
 Launcher 0.1.69 carries catalog capacities into a bounded Gateway status probe before
@@ -3827,7 +3948,7 @@ and deployed server redemption configuration still need real-account acceptance.
 Release build: zero warnings/errors; full managed regression: 432 passed, five
 gated skips. Native numeric rendering: 90 checks; native messenger: 26 checks.
 Portable x64 `0.1.5-preview.2` contains the fixes, has 510 files and is copied to
-`<local test output>`. Launcher, runtime, Photino and updater
+`D:\Files\Downloads\FantasyTale-x64-test`. Launcher, runtime, Photino and updater
 PE headers are AMD64; injected game DLLs remain x86. ZIP SHA-256:
 `49ab8f2cc0cc21c283a07b578c185d0c5de53ff81b735f454e4c0ab37c22eef8`.
 The preview launcher feed was not published. The already open desktop was not

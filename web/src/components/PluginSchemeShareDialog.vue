@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type InstancePlugin } from '../bridge'
+import { call, demoMode, inHost, type InstancePlugin } from '../bridge'
 import { addPluginScheme, capturePluginScheme, pluginSchemeLibrary, selectedInstance, selectedPluginScheme, state } from '../state'
 import { defaultScheme, type PluginScheme } from '../plugins/schemes'
 import { liveStoreSession } from '../store/background'
@@ -49,7 +49,7 @@ async function exportFile() {
   const name = scheme.value.id === defaultScheme ? t('pluginSchemes.default') : scheme.value.name
   const text = await call('plugins.scheme.format', { document: { schema: 1, game: state.selectedGameId, name, builds: Object.entries(scheme.value.builds).map(([id, plugins]) => ({ id, plugins })) } })
   const fileName = `${name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '-') || 'plugin-scheme'}.toml`
-  if (inHost) { if (!await call('shell.savePluginScheme', { text, fileName, title: t('pluginSchemes.export') })) return }
+  if (inHost || !!demoMode?.enabled) { if (!await call('shell.savePluginScheme', { text, fileName, title: t('pluginSchemes.export') })) return }
   else {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/toml' }))
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = fileName; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -59,7 +59,7 @@ async function exportFile() {
   finally { busy.value = false }
 }
 async function chooseFile() {
-  if (!inHost) { file.value?.click(); return }
+  if (!(inHost || !!demoMode?.enabled)) { file.value?.click(); return }
   try { const text = await call('shell.pickPluginScheme', { title: t('pluginSchemes.import') }); if (text !== null) await inspect(text) }
   catch (e) { error.value = (e as Error).message }
 }

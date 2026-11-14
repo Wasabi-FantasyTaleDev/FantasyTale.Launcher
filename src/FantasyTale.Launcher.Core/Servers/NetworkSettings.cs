@@ -92,7 +92,7 @@ public sealed class NetworkSettings
                     throw new ArgumentException("Invalid mirror provider identity.");
                 File.WriteAllText(temporary, $"ip_preference = \"{preference}\"\ngithub_mirror = {TomlBool(mirror)}\ngithub_mirror_source = \"{source}\"\n" +
                     $"github_mirror_checked = {TomlBool(checkedOnce)}\ngithub_mirror_prompted = {TomlBool(suggestionShown)}\ngithub_mirror_suggestion_pending = {TomlBool(suggestionPending)}\n", new UTF8Encoding(false));
-                File.Move(temporary, _file, true); _preference = preference; _githubMirror = mirror;
+                AtomicFile.Replace(temporary, _file); _preference = preference; _githubMirror = mirror;
                 _githubMirrorSource = source;
                 _mirrorDetectionComplete = checkedOnce; _mirrorSuggestionPending = suggestionPending; _mirrorPrompted = suggestionShown;
             }

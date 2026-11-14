@@ -17,6 +17,26 @@ chat = 0x2D2470 # cn-406 sub_5D94A0 supplies module/body in ECX/EDX and caption/
 append_announcement = 0x3DBD20 # cn-406 sub_7D04F0 appends a 76-byte record through cn-406 sub_7DBD20.
 clock = 0x8C7248 # cn-406 sub_7D04F0 and cn-406 sub_7CFAA0 use this native clock pointer.
 clock_now = 0x548520 # cn-406 sub_948520 reads the announcement clock.
+control_load_form = 0x56C170 # cn-406 sub_96C170 loads a .ui resource into the supplied UiForm.
+control_initialize = 0x569230 # cn-406 sub_969230 initializes every Control's base fields.
+control_destroy = 0x568CA0 # cn-406 sub_969200 calls this Control destructor before freeing 512 bytes.
+control_click = 0x5812D0 # cn-406 sub_9812D0, UiButton slot +0xB4, dispatches the click; cn-406 sub_980110 calls it for Enter.
+control_get_text = 0x0116F0 # cn-406 sub_4116F0 copies Control's native text through vtable slot 24.
+control_set_text = 0x011730 # cn-406 sub_411730 assigns Control's native text through vtable slot 20.
+edit_get_text = 0x577C10 # cn-406 sub_977C10 includes the active IME composition in edit text.
+edit_set_text = 0x577B60 # cn-406 sub_977B60 applies the edit limit and updates caret/selection.
+edit_set_maximum = 0x576070 # cn-406 sub_976070 stores the UTF-16 edit length limit at +580.
+control_string_release = 0x58E300 # cn-406 sub_98E300 frees a copied native wide string.
+control_string_assign = 0x002350 # cn-406 sub_411730 copies borrowed strings with cn-406 sub_402350.
+control_button_create = 0x582240 # cn-406 sub_982240 allocates and constructs a default 680-byte UiButton.
+control_parent = 0x5694D0 # cn-406 sub_9694D0 maintains the parent vector and intrusive references.
+control_geometry = 0x564FA0 # cn-406 sub_964FA0 applies geometry through the native layout callbacks.
+control_set_enabled = 0x565360 # cn-406 sub_965360 clears focus from the control, then writes enabled at +357.
+button_vtable = 0x75625C # cn-406 sub_980950 assigns the UiButton primary vtable.
+edit_vtable = 0x7551DC # cn-406 RTTI identifies Lambda::UiEdit's primary vtable.
+label_vtable = 0x7550B4 # cn-406 RTTI identifies Lambda::UiLabel's primary vtable.
+create_room_vtable = 0x811584 # cn-406 sub_76D710 assigns DlgCreateRoom before loading its .ui resource.
+ime_manager = 0x92B9D0 # cn-406 sub_977C10 reads this instance before including IME composition.
 
 [values]
 message_abi = 3 # cn-406 sub_6BD750 supplies five stack arguments; cn-406 sub_78E8A0 returns with RET 20.
@@ -43,6 +63,40 @@ icon_notice = 0 # cn-406 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.
 icon_warning = 1 # cn-406 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
 icon_question = 2 # cn-406 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
 icon_error = 3 # cn-406 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+control_abi = 1 # cn-406 keeps the kr-812 Control layout: vtable text methods and game-allocated strings.
+click_abi = 2 # cn-406 sub_9812D0 takes no argument and returns with a plain RET.
+get_text_slot = 24 # cn-406 sub_4116F0/sub_977C10 occupy the text getter slot.
+name_offset = 240 # cn-406 sub_966480 matches the resource name copied from +240 by cn-406 sub_5B2170.
+visible_offset = 356 # cn-406 sub_964C40 skips invisible controls and their descendants.
+enabled_offset = 357 # cn-406 sub_965360 updates enabled; cn-406 sub_770E80 reads it to find the chosen mode.
+array_index_offset = 300 # cn-406 sub_966480 matches resource Name plus the native ArrayIndex.
+children_offset = 384 # cn-406 sub_966480 traverses child pointers between +384 and +388.
+owner_form_offset = 380 # cn-406 sub_965530 propagates the owning form pointer to descendants.
+ime_composition_offset = 2144 # cn-406 sub_97DB10 reads a NUL-terminated composition at this offset.
+x_offset = 308 # cn-406 sub_964FA0 updates native x/y/width/height.
+y_offset = 312 # cn-406 sub_964FA0 updates native x/y/width/height.
+width_offset = 316 # cn-406 sub_964FA0 updates native x/y/width/height.
+height_offset = 320 # cn-406 sub_964FA0 updates native x/y/width/height.
+edit_maximum_offset = 580 # cn-406 sub_976070 stores the UTF-16 edit length limit at +580.
+control_root_offset = 24 # cn-406 sub_970AE0 resizes the native form root at manager +24.
+control_layer_offset = 28 # cn-406 sub_96CC30 uses the default control layer at manager +28.
+control_modal_offset = 8 # cn-406 sub_96A450 registers the active modal form here.
+
+# cn-406 Config/Lambient.xml selects language 2; cn-406 sub_946E80 enables features 11, 13 and 62 for it, so
+# cn-406 sub_76D710 loads Ui/DlgCreateRoom8.ui.
+[[selection_groups]]
+form = "Ui/DlgCreateRoom8.ui"
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 760 # cn-406 sub_56EEC0 allocates 0x2F8 bytes for DlgCreateRoom.
+# cn-406 sub_76D710 keys each btnGameMode by ArrayIndex in the map whose header pointer is at +712; cn-406 sub_7711C0
+# disables the clicked member and cn-406 sub_770E80 returns the first disabled key on submission.
+members_offset = 712
+member_key_offset = 12
+member_control_offset = 16
+member_nil_offset = 21
+# cn-406 sub_56EEC0 maps the key returned by cn-406 sub_770E80 to the requested game mode.
+values = [1, 3, 5, 6, 8, 101, 12, 13, 14, 16, 18]
 
 [[signatures]]
 address = "allocate"
@@ -75,3 +129,63 @@ bytes = "64 A1 00 00 00 00 6A FF 68 C2 E8 AD 00 50 64 89"
 [[signatures]]
 address = "clock_now"
 bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "6A FF 68 71 F5 AB 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "51 53 33 DB 56 8B F1 89 9E 28 01 00 00 66 89 9E"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "6A FF 68 85 F1 AB 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_set_enabled"
+bytes = "A1 30 B9 D2 00 39 48 14 75 14 C7 40 14 00 00 00"
+
+[[signatures]]
+address = "control_click"
+bytes = "51 53 56 8B F1 83 BE 44 02 00 00 01 57 75 10 80"
+
+[[signatures]]
+address = "control_get_text"
+bytes = "51 56 8B 74 24 0C 33 C0 6A FF 81 C1 0C 01 00 00"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "8B 44 24 04 6A FF 6A 00 50 81 C1 0C 01 00 00 E8"
+
+[[signatures]]
+address = "edit_get_text"
+bytes = "6A FF 68 B9 00 AC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "8B 44 24 04 56 57 6A FF 8B F1 6A 00 50 8D 8E 0C"
+
+[[signatures]]
+address = "edit_set_maximum"
+bytes = "8B 44 24 04 56 8B F1 83 F8 01 7C 5F 89 86 44 02"
+
+[[signatures]]
+address = "control_string_release"
+bytes = "56 8B F1 83 7E 14 08 72 0B 8B 06 50 E8 63 C7 09"
+
+[[signatures]]
+address = "control_string_assign"
+bytes = "53 8B 5C 24 08 55 8B 6C 24 10 56 57 8B 7B 10 8B"
+
+[[signatures]]
+address = "control_button_create"
+bytes = "6A FF 68 C2 01 AC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_parent"
+bytes = "6A FF 68 C8 F1 AB 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_geometry"
+bytes = "51 81 7C 24 08 00 80 00 00 53 8B 1D 14 E2 B4 00"

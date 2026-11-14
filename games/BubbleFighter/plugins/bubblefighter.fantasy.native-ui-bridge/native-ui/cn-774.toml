@@ -18,6 +18,17 @@ append_announcement = 0x62DFD0 # cn-774 sub_A1D9D0 supplies vector/end/record; c
 clock_now = 0xB40160 # cn-774 sub_F40160 returns the paused or running game clock without arguments.
 
 set_text = 0xB505A0 # cn-774 sub_F505A0 invokes the text callback and copies text when it declines.
+control_load_form = 0xB571F0 # cn-774 sub_F571F0 loads a .ui resource into the supplied UiForm (kr-1256 sub_FBA9F0).
+control_initialize = 0xB4F6C0 # cn-774 sub_F4F070 initializes every Control through sub_F4F6C0 (kr-1256 sub_FB4D80).
+control_destroy = 0xB4F140 # cn-774 sub_F4F5C0 calls this Control destructor before freeing 984 bytes.
+control_click = 0xB736C0 # cn-774 sub_F736C0 fires the click event, the owner form and the command (kr-1256 sub_FD7890).
+control_set_text = 0xB505E0 # cn-774 sub_F505E0 copies borrowed text into the Control's string at +596 (kr-1256 sub_FB5E70).
+edit_set_text = 0xB68290 # cn-774 sub_F68290 (UiEdit vtable +244) copies text, truncates to +1112 and clamps the caret.
+control_focus = 0xB5C2B0 # cn-774 sub_F5C2B0 is the stdcall focus setter; cn-774 sub_6B9940 passes 0 before disabling.
+button_vtable = 0x10DA070 # cn-774 RTTI Lambda::UiButton primary vtable (single base).
+edit_vtable = 0x10D94F4 # cn-774 RTTI Lambda::UiEdit primary vtable.
+label_vtable = 0x10D9DBC # cn-774 RTTI Lambda::UiLabel primary vtable.
+create_room_vtable = 0x102E190 # cn-774 sub_6B5370 assigns DlgCreateRoom before loading its .ui resource.
 
 [values]
 message_abi = 2 # cn-774 sub_C76760 passes four stack arguments to the thiscall constructor.
@@ -45,6 +56,42 @@ icon_notice = 0 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.
 icon_warning = 1 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
 icon_question = 2 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
 icon_error = 3 # cn-774 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+control_abi = 2 # cn-774 Controls keep text in place and inline their enable setter, as kr-1256 does.
+edit_text_abi = 2 # cn-774 sub_F68290 takes the text alone and returns with RET 4.
+text_offset = 596 # cn-774 sub_F505E0 and sub_F68290 store the Control's text string here.
+name_offset = 572 # cn-774 sub_F96CD0 copies the resource attribute Name to +572.
+array_index_offset = 712 # cn-774 sub_F96CD0 reads ArrayIndex to +712; cn-774 sub_F51980 matches children by it.
+x_offset = 732 # cn-774 sub_F96CD0 reads PosX, PosY, Width and Height to +732..+744.
+y_offset = 736
+width_offset = 740 # cn-774 sub_F50B00 centers against the root's width at +740.
+height_offset = 744
+enabled_offset = 788 # cn-774 sub_6B9940 writes +788 to show the selected btnGameMode; cn-774 sub_F52430 ignores input while it is clear.
+owner_form_offset = 820 # cn-774 sub_F52430 walks owners through +820 as kr-1256 sub_FB8120 walks +948.
+children_offset = 840 # cn-774 sub_F51980 iterates child pointers between +840 and +844.
+visible_offset = 980 # cn-774 sub_F96CD0 reads the resource attribute Visible to +980.
+edit_maximum_offset = 1112 # cn-774 sub_F68290 truncates edit text to the limit at +1112.
+focus_offset = 20 # cn-774 sub_F5C2B0 stores the focused control at UI manager +20.
+control_root_offset = 28 # cn-774 sub_F50B00 reads the UI root from manager +28.
+control_layer_offset = 8 # cn-774 sub_F5C330 stores the active form at manager +8.
+control_modal_offset = 4 # cn-774 sub_F5C560 installs the modal form at manager +4.
+# Observer prologue lengths that end on an instruction boundary in cn-774.
+load_hook_bytes = 5 # cn-774 sub_F571F0: push ebp; mov ebp,esp; push -1.
+initialize_hook_bytes = 5 # cn-774 sub_F4F6C0: push ebp; mov ebp,esp; push -1.
+destroy_hook_bytes = 5 # cn-774 sub_F4F140: push ebp; mov ebp,esp; push -1.
+click_hook_bytes = 9 # cn-774 sub_F736C0: push ebp; mov ebp,esp; mov eax,fs:[0].
+
+[[selection_groups]]
+form = "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui" # cn-774 sub_6B5370 loads this resource for DlgCreateRoom.
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 1680 # cn-774 sub_9EF180 allocates 0x690 bytes for DlgCreateRoom.
+value_offset = 1664 # cn-774 sub_6B9D00 stores the selected game mode here.
+# cn-774 sub_6B5370 keeps 56-byte mode records between +1584 and +1588: record +0 is the btnGameMode ArrayIndex
+# (cn-774 sub_6B9940 matches the map key with it) and record +4 the game mode it passes to cn-774 sub_6B9D00.
+records_offset = 1584
+record_size = 56
+record_key_offset = 0
+record_value_offset = 4
 
 [[signatures]]
 address = "construct_message"
@@ -77,3 +124,31 @@ bytes = "80 3D D8 E0 77 01 00 74 06 A1 CC E0 77 01 C3 FF"
 [[signatures]]
 address = "set_text"
 bytes = "56 8B 74 24 08 57 8B F9 56 8B 07 8B 80 F4 00 00"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "55 8B EC 6A FF 68 70 9F 35 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "55 8B EC 6A FF 68 4A BC 35 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "55 8B EC 6A FF 68 1A BA 35 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_click"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 90 FE 23 01"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "55 8B EC 6A FF 68 81 BD 35 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 48 30 1F 01"
+
+[[signatures]]
+address = "control_focus"
+bytes = "55 8B EC 6A FF 68 98 7D 1C 01 64 A1 00 00 00 00"

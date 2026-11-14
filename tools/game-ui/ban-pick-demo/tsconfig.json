@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "vue": ["../../../web/node_modules/vue"],
+      "vue-i18n": ["../../../web/node_modules/vue-i18n"]
+    },
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["*.ts", "*.vue", "../src/**/*.ts", "../src/**/*.vue", "../*.js"]
+}

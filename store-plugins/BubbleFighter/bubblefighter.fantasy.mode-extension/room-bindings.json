@@ -1,0 +1,142 @@
+{
+  "format": 1,
+  "builds": {
+    "kr-812": {
+      "form": "Ui/DlgCreateRoom.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 623, "width": 139, "height": 27 }
+    },
+    "kr-1256": {
+      "form": "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 8, "y": 480, "width": 180, "height": 34 }
+    },
+    "cn-406": {
+      "form": "Ui/DlgCreateRoom8.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 526, "width": 139, "height": 27 }
+    },
+    "cn-774": {
+      "form": "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 8, "y": 473, "width": 180, "height": 33 }
+    },
+    "cn-324": {
+      "form": "Ui/DlgCreateRoom5.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 8, "y": 478, "width": 180, "height": 25 }
+    },
+    "cn-279": {
+      "form": "Ui/DlgCreateRoom2.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 8, "y": 386, "width": 180, "height": 25 }
+    },
+    "cn-404": {
+      "form": "Ui/DlgCreateRoom13.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 618, "width": 139, "height": 27 }
+    },
+    "cn-408": {
+      "form": "Ui/DlgCreateRoom.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 623, "width": 139, "height": 27 }
+    },
+    "cn-706": {
+      "form": "Ui/DlgCreateRoom.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 623, "width": 137, "height": 27 }
+    },
+    "cn-717": {
+      "form": "Ui/DlgCreateRoom.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 623, "width": 137, "height": 27 }
+    },
+    "id-400": {
+      "form": "Ui/DlgCreateRoom12.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 380, "width": 139, "height": 27 }
+    },
+    "id-1809": {
+      "form": "Ui/DlgCreateRoom.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 7, "y": 479, "width": 139, "height": 27 }
+    },
+    "tw-454": {
+      "form": "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui",
+      "roomName": "edtRoomTitle",
+      "modeButton": "btnGameMode",
+      "descriptionLabel": "lblGameModeDescription",
+      "createButton": "btnCreate",
+      "cancelButton": "btnCancel",
+      "entry": { "x": 8, "y": 591, "width": 180, "height": 33 }
+    },
+    "cn-735": [
+      {
+        "form": "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui",
+        "roomName": "edtRoomTitle",
+        "modeButton": "btnGameMode",
+        "descriptionLabel": "lblGameModeDescription",
+        "createButton": "btnCreate",
+        "cancelButton": "btnCancel",
+        "entry": { "x": 8, "y": 535, "width": 180, "height": 27 }
+      },
+      {
+        "form": "Ui/Stages/Lobby/DlgCreateRoom.ui",
+        "roomName": "edtRoomTitle",
+        "modeButton": "btnGameMode",
+        "descriptionLabel": "lblGameModeDescription",
+        "createButton": "btnCreate",
+        "cancelButton": "btnCancel",
+        "entry": { "x": 8, "y": 475, "width": 180, "height": 27 }
+      }
+    ]
+  }
+}

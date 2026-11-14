@@ -11,6 +11,10 @@ from native session entries. Service packages use the normal library/options UI,
 cannot carry patches/DLLs/file replacements, and are optional unless an explicit
 trusted policy declares otherwise.
 
+`kind = "assets"` is a data-only package that other packages share; it is launcher-owned, never a native
+session entry, and is described in [shared data packages](../plugin-management.md#shared-data-packages-and-requirements).
+Any package may declare `requires` in `[plugin]` as described there.
+
 A hook plugin is a folder whose root holds `plugin.toml`. The FtHook runtime
 reads it inside the game process; the launcher reads the same file to show the
 plugin, check compatibility and render its options. Adding a plugin never

@@ -29,6 +29,31 @@ WebView2 控制器延后到正式图形窗口可见、WPF 完成客户区布局�
 组件挂载就绪还会等待主题图片和字体异步加载后生成实际渲染表面。空的 Vue 挂载容器
 不再产生成功的 `game-ui.mounted` 事件；资源加载失败或超时会产生 `game-ui.error`。
 
+## 插件包文件
+
+Overlay 页面可以从 `https://packages.fantasytale.local/<插件 ID>/<相对路径>` 读取当前启动所涉及的插件包中的
+文件，例如图片和 JSON。请求由 Overlay 进程自己应答，不访问网络。启动器在注册任何页面之前，通过现有管道
+（`package-roots` 命令）发送 ID 到文件夹的映射，因此页面从第一个脚本起就可以使用这些地址。可读取的文件夹：
+
+- 本次启动已启用的每个 `kind = "overlay"` 包，相对其包文件夹；
+- 这些包直接或经其他数据包间接依赖的每个 `kind = "assets"` 包，相对其 `[assets] root`。
+  参见[共享数据包](../plugin-management.zh.md#共享数据包与依赖)。
+
+只应答 `GET`。越级、编码后的或绝对路径、盘符或数据流名称、链接和重解析点、未知 ID 以及目录都会被拒绝
+（`400`、`403` 或 `404`）；缺失文件返回 `404`；其他方法返回 `405`。文件按流从磁盘读取，不会整体缓冲。
+`.json`、`.webp`、`.png`、`.jpg`、`.svg`、`.css`、`.js`、`.woff2`、`.otf`、`.ttf` 有对应的 `Content-Type`
+（其他文件为 `application/octet-stream`）。文件名至少为 16 位小写十六进制的文件，其名称即内容标识，
+按不可变内容缓存；其余文件每次使用都重新验证，因为插件包更新可能改变它们。
+
+```js
+const url = overlayBus.packageUrl('bubblefighter.fantasy.item-previews', 'atlas/0123456789abcdef.webp');
+const pack = await (await fetch(overlayBus.packageUrl('bubblefighter.fantasy.item-previews', 'pack.json'))).json();
+// 在挂载的游戏界面组件中：const packages = inject('fantasyTalePackages'); packages.url(id, path)
+```
+
+`packageUrl(packageId, path)` 在 ID 不是 1 到 96 个 `a-z 0-9 . -` 字符，或路径含空段、`.`、`..`、反斜杠、冒号、
+控制字符时抛出 `TypeError`。
+
 ## 本机开发者测试
 
 在“开发者 → 开发者选项”中开启“UI Overlay 测试”，下次启动游戏会显示
@@ -137,6 +162,25 @@ Tab 保持在最上层模态内。可选全客户区半透明遮罩只取最高�
 `ReferenceWidth` / `ReferenceHeight` 可声明设计视口，页面再转换到当前 CSS 像素。
 支持覆盖、居中、左、右、上、下附着。源目标隐藏时面板隐藏，源坐标推送改变时一起移动；
 附着面板不单独拖离源目标。传入 null 可解除锚点并恢复原布局。
+
+### 跟踪原生窗口与等待原生操作
+
+三个公开 SDK 辅助类型覆盖了每个原生对话框插件原本都要自己重写的逻辑。
+
+`GameNativeUiFormWatcher` 通过开销很小的 `GetFormsAsync` 读取，跟踪某个 `.ui` 资源加载出的窗口。
+`ObserveAsync(watch)` 返回状态（`Open`、`NotOpen`、`Dormant`、`Busy`、`ReadFailed`、`Unsupported`）、
+与上次读取相比的变化（`Opened`、`Moved`、`SelectionChanged`、`Clicked`、`Closed`）以及会话 ID。
+游戏每加载一次窗口就是一个新会话，暂停后重新跟踪也是新会话，因此比较会话即可拒绝来自旧界面的操作。
+传入 `watch: false` 时不读取并结束当前会话，用于只在该对话框有意义的场景中跟踪。通道繁忙或读取失败时保持
+原状态；不支持窗口跟踪的版本报告 `Unsupported`，之后不再读取。`RunAsync(interval, changed, shouldWatch)`
+执行同样的循环，仅在有变化时回调。
+
+`form.Region(x, y, width, height)` 把相对窗口左上角的矩形转换为客户区像素的 `OverlayAnchor`，
+插件可以按数据把面板固定在对话框内部，并随对话框移动。
+
+`native.InvokeUntilDoneAsync(request, new GameNativeUiWaitOptions(timeout, poll))` 提交一个操作；
+通道回答 `channelBusy`（尚未提交）时重试，之后读取结果直到不再是 `queued`。已被接受的操作绝不重复提交：
+如果在排队时预算用尽，结果为 `outcomeUnknown`/`nativeReplyUnavailable`，因为游戏仍可能执行它。
 
 TODO：经验证的各版本控件定位、图像截取/模板追踪、置信度与目标丢失策略、限定搜索区域
 和频率。基础层当前没有持续图像扫描；未来扫描需排除自身 Overlay，并在游戏最小化时停止。

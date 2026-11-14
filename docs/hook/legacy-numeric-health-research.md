@@ -91,10 +91,54 @@ The `cn-705` HUD (`sub_769BE0`) and the later `cn-706` HUD
 respective timestamps are `0x53DA0A65` and `0x5420DCC3`, both with measured
 unpacked image size `0xC79000`. The HUD is retained in EBP.
 
-`cn-404` (CN2014 0.2.46.001) retains image identity evidence (`0x533CFD5F`, `0xCD5000`)
-without a measured accessor/render contract. Resource releases must keep their
+`cn-404` (CN2014 0.2.46.001) uses `sub_41F0A0` from `sub_791CA0`, maximum-HP
+slot 348 and the number call at `0x7925D6` to `sub_A961F0`. Its measured unpacked
+image has timestamp `0x533CFD5F` and size `0xCD8000`; the earlier `0xCD5000`
+identity remains recorded separately. Resource releases must keep their
 own PE preflight until executable equivalence and wire/build aliases are proven.
 A resource-only change does not by itself imply a new executable build.
+
+## Later visible builds
+
+The descriptor now covers every visible non-Indonesian build. These additional
+rows remain research-only. Exact native getter or HUD call bytes, image identity
+and the seven-slot number call were checked against each unpacked executable.
+
+| Build | HUD / HP getter | Maximum HP slot | Number call / target | HUD / selected player at number call | Anchor / white style |
+| --- | --- | --- | --- | --- | --- |
+| cn-404 | cn-404 sub_791CA0 / cn-404 sub_41F0A0 | 348 | 0x7925D6 / 0xA961F0 | EBP / first HUD pointer | 248 / 5 |
+| cn-717 | cn-717 sub_85EA50 / cn-717 sub_42D7C0 | 356 | 0x85F459 / 0xBB1AF0 | EBP / EBX | 304 / 5 |
+| cn-735 | cn-735 sub_9C80D0 / cn-735 sub_445D10 | 400 | 0x9C8E2A / 0xD50E50 | EBP / saved stack slot | 1120 / 5 |
+| cn-774 | cn-774 sub_85D830 / cn-774 sub_531A60 | 420 | 0x85E5DF / 0x1004430 | EDI / ESI | 1116 / 6 |
+| kr-1256 | kr-1256 sub_68DD90 / kr-1256 sub_4A1250 | 368 | 0x68EAAD / 0x106FEF0 | EDI / ESI | 1120 / 6 |
+| tw-454 | tw-454 sub_A2DE60 / tw-454 sub_748EC0 | 436 | 0xA2EDD9 / 0xF82E90 | EDI / ESI | 1116 / 6 |
+
+CN-717 `sub_85EA50` resolves the HUD's index holder through the player table and
+retains the selected object in EBX. Its first HUD pointer is not the player.
+CN-735 `0x9C8121` saves its resolved player at the function's working ESP+48;
+the number call adds 28 bytes of arguments, so the saved pointer is 76 bytes
+past the first original argument. EDI is reused for timer values before this
+call. `caller_stack` must read that saved pointer and never fall back to EDI.
+The shared interception stub captures the registers before C++ runs and preserves
+all original argument slots. Controlled tests exercise EBX/ESI selection, the
+saved stack slot, rejected pointers and the later white style 6.
+
+CN-774 and TW-454 inline protected HP reads in their HUDs. Their native `GetHp`
+functions read the same player +480 field, validate it through the client's own
+helper and return the float through ST(0). The descriptor retains the entire
+getter bytes instead of inventing a direct HUD call. KR-1256 `sub_4A1250` reads
+its protected field at +496. At `0x68E28C` the HUD reloads ECX before storing
+ST(0), so `health_result_bytes` pins both that MOV and the following FSTP.
+The offline checker rejects a missing, changed or nonfloating consumer.
+
+Life becomes a direct integer field in the later builds: CN-735 +8976,
+CN-774 +796, KR-1256 +684 and TW-454 +800, each divided by 20. It remains
+independent of the floating HP getter.
+
+Measured reconstructed sizes are `0x1093000` for CN-717, `0x17BE000` for
+CN-735 and `0x1B80000` for CN-774. The earlier recorded identities remain
+separate entries in each research row. TW-454 is timestamp `0x5C0F4941`, size
+`0x1AD5000`; KR-1256 is timestamp `0x69FD90C8`, size `0x1B36000`.
 
 ## Native digit and sprite layouts
 
@@ -133,16 +177,21 @@ the active borrowed string/options contracts remain KR-specific.
 
 ### Resource path and options evidence
 
-The early resource loaders use the same MSVC-style UTF-16 string object as the
-active client: its inline capacity is seven code units, with the data pointer,
-length and capacity occupying the usual 24-byte representation. The options
-object passed beside that path is build-specific. CN2011 `sub_52F3F0` prepares a
-32-byte record through `sub_408D70`; CN2012 `sub_8D3110` consumes the 40-byte
-record initialized by `sub_401A40`; CN2013 `sub_99E930` consumes the 88-byte
-record initialized by `sub_4170B0`. These are recorded as descriptor evidence,
-not as a claim that the complete loader entry ABI is interchangeable.
+CN-279 `sub_52F3F0` and CN-324 `sub_8D3110` consume a four-byte reference-counted
+UTF-16 string object. Both access the length at string data -20; their copies
+retain or release the preceding header. This is `resource_string_abi =
+"cow_wstring4"`, with no inline capacity. A borrowed MSVC string cannot be
+passed to these functions. The runtime rejects this ABI for supported rows
+and suppresses the resource call if it reaches the loader without an adapter.
 
-The runtime now reads the string inline-capacity and options-size fields from a
+CN-279's options object is 36 bytes: `sub_408D70` initializes the trailing
+string at +32, and `sub_74DBE0` destroys that member through `sub_401510`.
+The earlier 32-byte record and shared-string claim were incorrect. CN-324
+`sub_401A40` additionally writes the flag at +36, requiring 40 bytes.
+CN-406 `sub_99E930` uses `msvc_wstring24`, with inline capacity seven, and
+the 88-byte options record initialized by CN-406 `sub_4170B0`.
+
+The runtime reads the string ABI, inline capacity and options size from a
 descriptor. KR2015 remains the only supported row and continues to use its
 verified 88-byte options contract. The CN rows retain research status because
 their manager globals, callable entry signatures, resource residency paths and
@@ -163,8 +212,8 @@ contains the supported KR row and research-only CN rows through the 2019 corpus.
 The loader rejects research rows before registering a locator. Earlier Life/HP
 mislabeling therefore did not activate an incorrect CN hook.
 
-Six measured CN images pass 30 offline checks and retain six deferred runtime
-checks. The runtime now selects thiscall or EDI-field floating HP and virtual or
+Thirteen measured images pass 61 offline checks. The CLI retains fourteen
+deferred runtime checks, including the manifest locator. The runtime selects thiscall or EDI-field floating HP and virtual or
 player-field maximum HP from explicit supported-row fields. The EDI stub preserves
 EDI and returns ST(0); controlled x86 tests verify fractional values, repeated
 calls, original Life text and failure suppression. These adapters do not prove

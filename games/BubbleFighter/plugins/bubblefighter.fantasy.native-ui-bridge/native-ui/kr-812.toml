@@ -17,6 +17,26 @@ chat = 0x3C9360             # kr-812 sub_7C9360 copies caption, ARGB color and b
 append_announcement = 0x4EFF90 # kr-812 sub_8E3350 appends a 76-byte record through sub_8EFF90.
 clock = 0xA56264            # kr-812 sub_8E3350 reads the native clock pointer here.
 clock_now = 0x663180        # kr-812 sub_A63180 returns the clock used by the announcement renderer.
+control_load_form = 0x688160 # kr-812 sub_A88160 loads a .ui resource into the supplied UiForm.
+control_initialize = 0x6851A0 # kr-812 sub_A85620 initializes every Control through sub_A851A0.
+control_destroy = 0x684C10  # kr-812 sub_A85170 calls this Control destructor before freeing 512 bytes.
+control_click = 0x691840    # kr-812 sub_A91840 converges mouse, Enter and Space button activation.
+control_get_text = 0x020C30 # kr-812 sub_420C30 copies Control's native text through vtable slot 28.
+control_set_text = 0x020C70 # kr-812 sub_420C70 assigns Control's native text through vtable slot 24.
+edit_get_text = 0x69A7A0    # kr-812 sub_A9A7A0 includes the active IME composition in edit text.
+edit_set_text = 0x69A6F0    # kr-812 sub_A9A6F0 applies the edit limit and updates caret/selection.
+edit_set_maximum = 0x698A90 # kr-812 sub_A9ACA0 and sub_86D310 set edit limits through sub_A98A90.
+control_string_release = 0x143060 # kr-812 sub_543060 frees a copied native wide string.
+control_string_assign = 0x001300 # kr-812 sub_420C70 copies borrowed strings with sub_401300.
+control_button_create = 0x6927F0 # kr-812 sub_A927F0 allocates and constructs a default 760-byte UiButton.
+control_parent = 0x685440   # kr-812 sub_A85440 maintains the parent vector and intrusive references.
+control_geometry = 0x680D20 # kr-812 sub_A80D20 applies geometry through the native layout callbacks.
+control_set_enabled = 0x681270 # kr-812 sub_A81270 clears focus from the control, then writes enabled at +357.
+button_vtable = 0x885154    # kr-812 sub_A90DE0 assigns the UiButton primary vtable.
+edit_vtable = 0x8854A4      # kr-812 original PE RTTI identifies Lambda::UiEdit's primary vtable.
+label_vtable = 0x8855B4     # kr-812 original PE RTTI identifies Lambda::UiLabel's primary vtable.
+create_room_vtable = 0x9724F4 # kr-812 sub_86D310 assigns DlgCreateRoom before loading its .ui resource.
+ime_manager = 0xA7EE98      # kr-812 sub_A9A7A0 reads this instance before including IME composition.
 
 [values]
 message_abi = 1            # kr-812 sub_896B00 uses the coordinate-based fastcall constructor.
@@ -40,11 +60,38 @@ chat_offset = 520          # kr-812 sub_8176D0 passes MainApp's chat module to s
 chat_view_offset = 132     # kr-812 sub_7CD8D0 uses the active chat view.
 announcement_offset = 368 # kr-812 sub_8E3350 owns the notice vector at +368/+372/+376.
 announcement_limit = 7    # kr-812 sub_8E3350 removes the oldest before the eighth notice.
+control_abi = 1             # kr-812 Control layout and methods verified in the original client.
+get_text_slot = 28          # kr-812 sub_420C30/sub_A9A7A0 occupy the text getter slot.
+name_offset = 240           # kr-812 sub_6A8210 copies Control's resource name from +240.
+visible_offset = 356        # kr-812 sub_A80850 skips invisible controls and their descendants.
+enabled_offset = 357        # kr-812 sub_A81270 updates enabled; kr-812 sub_A90710 renders disabled buttons with state 3.
+array_index_offset = 300    # kr-812 sub_A823F0 matches resource Name plus the native ArrayIndex.
+children_offset = 384       # kr-812 sub_A823F0 traverses child pointers between +384 and +388.
+owner_form_offset = 380     # kr-812 sub_A81490 propagates the owning form pointer to descendants.
+ime_composition_offset = 2144 # kr-812 sub_A9CE10 reads a NUL-terminated composition at this +1072 UTF-16 units.
+x_offset = 308              # kr-812 sub_A80D20 updates native x/y/width/height.
+y_offset = 312              # kr-812 sub_A80D20 updates native x/y/width/height.
+width_offset = 316          # kr-812 sub_A80D20 updates native x/y/width/height.
+height_offset = 320         # kr-812 sub_A80D20 updates native x/y/width/height.
+edit_maximum_offset = 616   # kr-812 sub_A98A90 stores the UTF-16 edit length limit at +616.
+control_root_offset = 24    # kr-812 sub_A897D0 returns the native form root.
+control_layer_offset = 28   # kr-812 sub_A89800 returns the default control layer.
+control_modal_offset = 8    # kr-812 sub_A863C0 registers the active modal form here.
 # kr-812 Ui/DlgMessageBox.ui in Ui/Ui.bfz maps pnlIcon ArrayIndex to these images.
 icon_notice = 0            # MsgBoxIconNotice.png
 icon_warning = 1           # MsgBoxIconWarning.png
 icon_question = 2          # MsgBoxIconQuestion.png
 icon_error = 3             # MsgBoxIconError.png
+
+[[selection_groups]]
+form = "Ui/DlgCreateRoom.ui"
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 840            # kr-812 sub_677390 allocates 0x348 bytes for DlgCreateRoom.
+value_offset = 736         # kr-812 sub_870ED0 writes the selected mode here; kr-812 sub_677390 reads it on submission.
+# kr-812 sub_870B10 maps each resource ArrayIndex to its actual game mode value.
+# kr-812 sub_86D310 and kr-812 sub_870ED0 disable the selected member; channel restrictions can disable others too.
+values = [1, 3, 5, 6, 8, 101, 12, 13, 14, 16, 18, 19, 20]
 
 [[signatures]]
 address = "allocate"
@@ -77,3 +124,63 @@ bytes = "64 A1 00 00 00 00 6A FF 68 02 B1 C0 00 50 64 89"
 [[signatures]]
 address = "clock_now"
 bytes = "83 EC 0C 56 8B F1 80 7E 0C 00 74 07 8B 06 5E 83"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "6A FF 68 B1 E8 BC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "51 53 33 DB 56 8B F1 89 9E 28 01 00 00 66 89 9E"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "6A FF 68 A5 E4 BC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_set_enabled"
+bytes = "A1 0C EE E7 00 39 48 14 75 14 C7 40 14 00 00 00"
+
+[[signatures]]
+address = "control_click"
+bytes = "80 7C 24 04 00 53 56 57 8B F1 75 33 83 BE 60 02"
+
+[[signatures]]
+address = "control_get_text"
+bytes = "51 56 8B 74 24 0C 33 C0 6A FF 81 C1 0C 01 00 00"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "8B 44 24 04 6A FF 6A 00 50 81 C1 0C 01 00 00 E8"
+
+[[signatures]]
+address = "edit_get_text"
+bytes = "6A FF 68 19 FA BC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "8B 44 24 04 56 57 6A FF 8B F1 6A 00 50 8D 8E 0C"
+
+[[signatures]]
+address = "edit_set_maximum"
+bytes = "8B 44 24 04 56 8B F1 83 F8 01 7C 5F 89 86 68 02"
+
+[[signatures]]
+address = "control_string_release"
+bytes = "56 8B F1 83 7E 14 08 72 0B 8B 06 50 E8 D3 6E 60"
+
+[[signatures]]
+address = "control_string_assign"
+bytes = "53 8B 5C 24 08 55 8B 6C 24 10 56 57 8B 7B 10 8B"
+
+[[signatures]]
+address = "control_button_create"
+bytes = "6A FF 68 D2 1D BD 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_parent"
+bytes = "6A FF 68 E8 E4 BC 00 64 A1 00 00 00 00 50 64 89"
+
+[[signatures]]
+address = "control_geometry"
+bytes = "51 81 7C 24 08 00 80 00 00 53 8B 1D 98 E0 C7 00"

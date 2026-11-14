@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks } from '../../src/FantasyTale.Launcher.Overlay/overlay/panel-stack.js';
+import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks, subscribePanel } from '../../src/FantasyTale.Launcher.Overlay/overlay/panel-stack.js';
 import { resolveAnchor } from '../../src/FantasyTale.Launcher.Overlay/overlay/anchors.js';
 
 function panel(layer = 0, interactive = false, modal = false, visible = true) {
@@ -68,4 +68,41 @@ test('reference coordinates survive resolution changes and adjacent panels remai
   assert.equal(result.y, 312.5);
   assert.equal(result.width,100);
   assert.throws(() => resolveAnchor({...anchor,width:NaN},{width:640,height:480},{width:100,height:30}));
+});
+
+test('panel subscriptions have independent, idempotent cleanup', () => {
+  const entry = { listeners: new Map() }, panels = new Map([['a', entry]]), received = [];
+  const handler = value => received.push(value);
+  const first = subscribePanel(panels, 'a', 'state', handler);
+  const second = subscribePanel(panels, 'a', 'state', handler);
+  first(); first();
+  entry.listeners.get('state').slice().forEach(callback => callback(1));
+  assert.deepEqual(received, [1]);
+  second();
+  assert.equal(entry.listeners.has('state'), false);
+  assert.doesNotThrow(subscribePanel(panels, 'missing', 'state', handler));
+  assert.throws(() => subscribePanel(panels, 'a', 'state', null), TypeError);
+});
+
+test('cleanup after panel replacement cannot remove the replacement listener', () => {
+  const firstEntry = { listeners: new Map() }, panels = new Map([['a', firstEntry]]), received = [];
+  const dispose = subscribePanel(panels, 'a', 'state', () => received.push('old'));
+  const queued = firstEntry.listeners.get('state').slice();
+  const replacement = { listeners: new Map() };
+  panels.set('a', replacement);
+  subscribePanel(panels, 'a', 'state', () => received.push('new'));
+  dispose();
+  queued.forEach(callback => callback());
+  replacement.listeners.get('state').slice().forEach(callback => callback());
+  assert.deepEqual(received, ['new']);
+});
+
+test('unsubscribing during snapshot dispatch suppresses removed callbacks without skipping active callbacks', () => {
+  const entry = { listeners: new Map() }, panels = new Map([['a', entry]]), received = [];
+  let removeSecond;
+  subscribePanel(panels, 'a', 'state', () => { received.push('first'); removeSecond(); });
+  removeSecond = subscribePanel(panels, 'a', 'state', () => received.push('second'));
+  subscribePanel(panels, 'a', 'state', () => received.push('third'));
+  entry.listeners.get('state').slice().forEach(callback => callback());
+  assert.deepEqual(received, ['first', 'third']);
 });

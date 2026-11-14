@@ -9,8 +9,11 @@ import * as model from '../src/downloads/model.ts'
 import * as clientVersion from '../src/clientVersion.ts'
 import { clientLanguageInstalled } from '../src/clientLanguages.ts'
 
-const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve() }
+const flush = async () => { for (let i = 0; i < 40; i++) await Promise.resolve() }
 const task = () => ({ id: 'plugin-download', stage: 'downloading', target: { kind: 'plugin', gameId: 'fixture', instanceId: 'one' } })
+// The plugin policy prompt's answer: false is an unmet requirement the user did not resolve.
+let policyAllows = true
+
 function setup(recommended = false, pending = false, requiredAnswer = { keys: [], tasks: [] }, respond, mounted = false, timers = { setTimeout: () => 1, clearTimeout() {} }) {
   const state = vue.reactive({ servers: [], selectedGameId: 'fixture', selectedServerId: 'server', selectedInstanceId: 'one', account: { username: 'account' }, clientLanguage: 'id', plugins: [], running: [] })
   const tasks = vue.ref([]), updates = vue.ref([]), calls = [], launches = [], routes = [], scope = vue.effectScope(), events = new Map()
@@ -34,6 +37,11 @@ function setup(recommended = false, pending = false, requiredAnswer = { keys: []
     if (id === 'vue-i18n') return { useI18n: () => ({ t: key => key, locale: vue.ref('zh-CN') }) }
     if (id === 'vue-router') return { useRouter: () => ({ push: route => routes.push(route) }) }
     if (id === '../state') return dependencies
+    // Ungrouped servers: no sections, so the section helpers change nothing.
+    if (id === '../servers/sections') return { serverStatus: { serverId: '', value: null }, pendingAuthSection: { value: null },
+      loadServerStatus: async () => ({ sections: [], servers: [] }), sectionsShown: () => false, accountSectionsShown: () => false,
+      signInSections: () => [], accountSection: () => null, defaultSection: () => null, sectionName: id => id ?? '',
+      accountKey: account => account ? `${account.section ?? ''}\u0000${account.username}` : '' }
     if (id === '../store/background') return { availableStoreUpdates: updates }
     if (id === '../theme') return { prefs: vue.reactive({ nsfw: false }) }
     if (id === '../i18n') return { localized: value => value, clientRegion: value => value }
@@ -50,6 +58,7 @@ function setup(recommended = false, pending = false, requiredAnswer = { keys: []
     if (id === '../plugins/resourceConflicts') return { launchWithResourceChoices: async (launch, valid) => valid() ? launch([]) : { cancelled: true }, finishResourceConflicts() {} }
     if (id === '../plugins/launchWarnings') return { requestLaunchWarnings: async () => [], finishLaunchWarnings() {} }
     if (id === '../plugins/launchUpdates') return { requestRequiredUpdates: async () => requiredAnswer, finishRequiredUpdates() {} }
+    if (id === '../plugins/pluginPolicy') return { requestPluginPolicy: async () => policyAllows, cancelPolicy() {} }
     if (id === '../plugins/recommendations') return { dismissRecommendations() {}, requestRecommendations: async () => {
       if (recommended) { recommended = false; trackDownload(task()); return false }
       return true
@@ -235,6 +244,13 @@ test('canceling required update confirmation does not launch', async () => {
   finally { fixture.dispose() }
 })
 
+test('an unresolved plugin requirement blocks the launch', async () => {
+  const fixture = setup()
+  policyAllows = false
+  try { await fixture.bindings.launch(); assert.equal(fixture.launches.length, 0) }
+  finally { policyAllows = true; fixture.dispose() }
+})
+
 for (const answer of ['wait', 'now', 'cancel']) test(`pending optional plugin confirmation supports ${answer}`, async () => {
   const fixture = setup(false, true)
   try {
@@ -418,6 +434,8 @@ for (const blockedPhase of ['scheme', 'update', 'launch']) {
       const starting = fixture.bindings.launch()
       await flush()
       assert.equal(fixture.bindings.launchPreparing.value, true)
+      // The start clock runs only while the host starts the client, never while the launch is still being prepared.
+      if (blockedPhase === 'scheme') { assert.equal(expire, undefined); return }
       expire()
       await starting
       assert.equal(fixture.bindings.launchPreparing.value, false)
@@ -457,7 +475,8 @@ for (const blockedPhase of ['scheme', 'update', 'launch']) {
       release({ instanceId: 'one', processId: 2 })
       await flush()
       assert.equal(fixture.calls.filter(method => method === 'instances.launch').length, count)
-      assert.ok(fixture.calls.includes('instances.cancelLaunch'))
+      // Before the host starts anything there is nothing to cancel there; the launch is simply abandoned.
+      assert.equal(fixture.calls.includes('instances.cancelLaunch'), blockedPhase !== 'scheme')
     } finally { release([]); fixture.dispose() }
   })
 }

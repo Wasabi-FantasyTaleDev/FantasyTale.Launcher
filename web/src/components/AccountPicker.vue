@@ -9,10 +9,11 @@ import { characterName } from '../accounts/identity'
 import { call, type AccountProfile } from '../bridge'
 import WDialog from '../controls/WDialog.vue'
 import WProgressRing from '../controls/WProgressRing.vue'
+import { accountKey, accountSectionsShown, loadServerStatus, sectionName } from '../servers/sections'
 const { t } = useI18n()
 const open = ref(false), menu = ref<HTMLElement>()
 const connecting = computed(() => !state.account && (state.accountRestoring || state.serverLoading))
-const removal = ref<{ serverId: string; username: string; name: string } | null>(null)
+const removal = ref<{ serverId: string; username: string; section?: string | null; name: string } | null>(null)
 const removing = ref(false), removalError = ref('')
 let request = 0
 function close() { ++request; open.value = false }
@@ -24,18 +25,18 @@ async function toggle() {
   if (open.value) { close(); return }
   const revision = ++request, serverId = state.selectedServerId
   try {
-    await refreshAccounts()
+    await Promise.all([refreshAccounts(), loadServerStatus().catch(() => null)])
     if (revision !== request || serverId !== state.selectedServerId) return
     open.value = true
     await nextTick()
     if (revision === request && open.value) menu.value?.querySelector<HTMLButtonElement>('[aria-checked="true"],button')?.focus()
   } catch (error) { if (revision === request && serverId === state.selectedServerId) state.error = (error as Error).message }
 }
-async function choose(username: string) { close(); await selectAccount(username) }
+async function choose(account: AccountProfile) { close(); await selectAccount(account.username, account.section) }
 function requestRemoval(account: AccountProfile) {
   close()
   removalError.value = ''
-  removal.value = { serverId: state.selectedServerId, username: account.username, name: characterName(account) ?? t('service.noCharacter') }
+  removal.value = { serverId: state.selectedServerId, username: account.username, section: account.section, name: characterName(account) ?? t('service.noCharacter') }
 }
 async function confirmRemoval() {
   const target = removal.value
@@ -43,7 +44,7 @@ async function confirmRemoval() {
   removing.value = true
   removalError.value = ''
   try {
-    await call('accounts.logout', { serverId: target.serverId, username: target.username })
+    await call('accounts.logout', { serverId: target.serverId, username: target.username, section: target.section ?? undefined })
     if (removal.value === target) clearRemoval()
   } catch (error) {
     if (removal.value === target) removalError.value = (error as Error).message
@@ -51,7 +52,7 @@ async function confirmRemoval() {
     if (target.serverId === state.selectedServerId) {
       try { await refreshAccounts() }
       catch (error) { if (removal.value === target) removalError.value = (error as Error).message }
-      if (removal.value === target && !state.accounts.some(entry => entry.account.username === target.username)) clearRemoval()
+      if (removal.value === target && !state.accounts.some(entry => accountKey(entry.account) === accountKey(target))) clearRemoval()
     }
     removing.value = false
   }
@@ -69,8 +70,9 @@ function move(event: KeyboardEvent) {
   <WFlyout :open="open" :min-width="300" @close="close">
     <template #anchor><button class="account-trigger" type="button" :disabled="state.busy || connecting || state.serverLoading || !state.selectedServerId" :aria-busy="connecting" :aria-label="t('multiAccount.choose')" aria-haspopup="menu" :aria-expanded="open" @click="toggle"><Transition name="account-connection" mode="out-in"><span v-if="connecting" key="connecting" class="account-connecting" role="status"><WProgressRing :size="16" /><span>{{ t('service.currentAccount') }}</span><span>{{ t('service.connecting') }}</span></span><AccountSummary v-else key="account" compact><FluentIcon glyph="chevronDown" :size="10" /></AccountSummary></Transition></button></template>
     <div ref="menu" class="account-menu" role="menu" :aria-label="t('multiAccount.choose')" @keydown="move">
-      <div v-for="entry in state.accounts" :key="entry.account.username" class="account-row" :class="{ selected: entry.account.username === state.account?.username }" role="none">
-        <button class="account-choice" type="button" role="menuitemradio" :aria-checked="entry.account.username === state.account?.username" :disabled="state.busy" @click="choose(entry.account.username)"><span>{{ characterName(entry.account) ?? t('service.noCharacter') }}</span></button>
+      <div v-for="entry in state.accounts" :key="accountKey(entry.account)" class="account-row" :class="{ selected: accountKey(entry.account) === accountKey(state.account) }" role="none">
+        <button class="account-choice" type="button" role="menuitemradio" :aria-checked="accountKey(entry.account) === accountKey(state.account)" :disabled="state.busy" @click="choose(entry.account)"><span>{{ characterName(entry.account) ?? t('service.noCharacter') }}</span></button>
+        <span v-if="accountSectionsShown() && entry.account.section" class="account-section">{{ sectionName(entry.account.section) }}</span>
         <button class="account-remove" type="button" role="menuitem" :disabled="state.busy || removing" :aria-label="t('multiAccount.deleteNamed', { name: characterName(entry.account) ?? t('service.noCharacter') })" :title="t('multiAccount.deleteRecord')" @click.stop="requestRemoval(entry.account)"><FluentIcon glyph="cancel" :size="12" /></button>
       </div>
       <button type="button" role="menuitem" class="add-account" @click="close(); state.authOpen = true"><FluentIcon glyph="add" :size="14" />{{ t('multiAccount.add') }}</button>
@@ -94,11 +96,19 @@ function move(event: KeyboardEvent) {
 .account-menu { min-width: 280px; max-height: 380px; overflow-y: auto; }
 .account-menu button { position: relative; display: flex; align-items: center; gap: 4px; border-radius: var(--radius-control); color: var(--text-primary); text-align: left; transition: background-color var(--duration-fast) linear; }
 .account-row { position: relative; display: flex; align-items: center; min-height: 40px; border-radius: var(--radius-control); }
+/* The section badge sits just left of the remove button; one username in two sections is two separate rows. */
+.account-section { flex: none; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--subtle-secondary); color: var(--text-secondary); font-size: 11px; line-height: 16px; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--stroke-control, rgb(0 0 0 / .06)); }
+.account-row.selected .account-section { background: var(--accent-default); color: var(--text-on-accent, #fff); box-shadow: none; }
 .account-choice { flex: 1; min-width: 0; align-self: stretch; padding: 10px 10px 10px 16px; overflow-wrap: anywhere; }
 .account-menu .account-remove { flex: none; width: 30px; height: 30px; margin: 0 5px; padding: 0; justify-content: center; color: var(--text-secondary); }
 .account-menu .account-remove:hover:not(:disabled) { color: var(--text-primary); }
 .account-menu button:disabled { opacity: 0.5; }
-.account-menu .selected { background: var(--solid-bg-tertiary); }
+/* Hover and selection colour the whole row (name, section badge and remove button), never the name button alone. */
+.account-menu .account-row > .account-choice:hover { background: transparent; }
+.account-menu .account-row { transition: background-color var(--duration-fast) linear; }
+.account-menu .account-row:hover { background: var(--subtle-secondary); }
+.account-menu .selected { background: var(--subtle-secondary); }
+.account-menu .account-row.selected:hover { background: var(--subtle-tertiary); }
 .account-menu .selected::before { content: ''; position: absolute; left: 6px; top: 50%; width: 3px; height: 16px; border-radius: 1.5px; background: var(--accent); transform: translateY(-50%); pointer-events: none; }
 .account-menu .add-account { width: 100%; padding: 10px 14px 10px 16px; gap: 10px; border-top: 1px solid var(--stroke-divider); margin-top: 6px; }
 .removal-error { color: var(--system-critical); }

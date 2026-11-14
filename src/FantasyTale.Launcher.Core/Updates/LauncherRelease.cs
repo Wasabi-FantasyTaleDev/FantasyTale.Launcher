@@ -13,8 +13,8 @@ public sealed class LauncherRelease
     public const string Executable = "FantasyTale.Launcher.exe";
     /// <summary>Packaged helper required so an installed release retains its next-update capability.</summary>
     public const string UpdaterExecutable = "updater/FantasyTale.Launcher.Updater.exe";
-    /// <summary>Inclusive semantic-version boundary below which installation is required.</summary>
-    public string? DeprecatedMaxVersion { get; private set; }
+    /// <summary>Every launcher version below this one must install the release before it can be used; null requires none.</summary>
+    public string? DeprecatedBeforeVersion { get; private set; }
     /// <summary>Strictly increasing release number, independent of the optional display label.</summary>
     public long Revision { get; }
     /// <summary>Optional release name shown in progress and settings.</summary>
@@ -58,17 +58,19 @@ public sealed class LauncherRelease
         if (!paths.Contains(Executable) || !paths.Contains("wwwroot/index.html") || !paths.Contains(UpdaterExecutable))
             throw new InvalidDataException("Launcher release is incomplete.");
         var release = new LauncherRelease(revision, version, Convert.ToHexString(SHA256.HashData(manifest)).ToLowerInvariant(), files.AsReadOnly());
-        if (root.Has("deprecated_max_version")) release.SetDeprecation(root.String("deprecated_max_version", true));
+        // Launchers before 0.2.0 read the inclusive deprecated_max_version the publisher still writes for them; this
+        // launcher follows the exclusive deprecated_before_version only.
+        if (root.Has("deprecated_before_version")) release.SetDeprecation(root.String("deprecated_before_version", true));
         return release;
     }
 
     private void SetDeprecation(string threshold)
     {
-        if (PluginCatalog.CompareVersions(threshold, Version) >= 0)
-            throw new InvalidDataException("The deprecated version boundary must precede the published release.");
-        DeprecatedMaxVersion = threshold;
+        if (PluginCatalog.CompareVersions(threshold, Version) > 0)
+            throw new InvalidDataException("The deprecated version boundary cannot exceed the published release.");
+        DeprecatedBeforeVersion = threshold;
     }
 
-    internal bool RequiresUpdate(string currentVersion) => DeprecatedMaxVersion is not null &&
-        PluginCatalog.CompareVersions(currentVersion, DeprecatedMaxVersion) <= 0;
+    internal bool RequiresUpdate(string currentVersion) => DeprecatedBeforeVersion is not null &&
+        PluginCatalog.CompareVersions(currentVersion, DeprecatedBeforeVersion) < 0;
 }

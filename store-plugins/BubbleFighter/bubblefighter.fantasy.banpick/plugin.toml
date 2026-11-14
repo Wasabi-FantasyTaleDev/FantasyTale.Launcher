@@ -1,0 +1,52 @@
+schema = 2
+
+[plugin]
+id = "bubblefighter.fantasy.banpick"
+version = "0.2.2"
+game = "bubblefighter"
+kind = "overlay"
+minimum_launcher_version = "0.1.71"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Ban Rules"
+"zh-CN" = "禁用规则"
+"zh-TW" = "禁用規則"
+ko = "금지 규칙"
+id = "Aturan Larangan"
+vi = "Quy tắc cấm"
+th = "กฎการแบน"
+
+[plugin.description]
+en = "Choose which weapons, characters, outfits, accessories and other items are banned in a room; other players in the room can view the ban list. Requires server support."
+"zh-CN" = "可在房间内自选禁用的武器、角色、服装、饰品等物品，同房玩家可随时查看当前禁用列表。需要服务器支持。"
+"zh-TW" = "可在房間內自選禁用的武器、角色、服裝、飾品等物品，同房玩家可隨時查看目前的禁用清單。需要伺服器支援。"
+ko = "방 안에서 사용할 수 없는 무기, 캐릭터, 의상, 액세서리 등을 직접 정할 수 있으며, 같은 방의 플레이어도 금지 목록을 확인할 수 있습니다. 서버 지원이 필요합니다."
+id = "Pilih senjata, karakter, pakaian, aksesori, dan item lain yang dilarang di dalam ruangan; pemain lain di ruangan dapat melihat daftarnya. Memerlukan dukungan server."
+vi = "Tự chọn vũ khí, nhân vật, trang phục, phụ kiện và vật phẩm bị cấm ngay trong phòng; người chơi cùng phòng có thể xem danh sách hiện tại. Cần máy chủ hỗ trợ."
+th = "เลือกอาวุธ ตัวละคร ชุด เครื่องประดับ และไอเทมอื่นๆ ที่ห้ามใช้ภายในห้องได้เอง โดยผู้เล่นในห้องเดียวกันสามารถดูรายการที่ถูกแบนได้ ต้องใช้กับเซิร์ฟเวอร์ที่รองรับ"
+
+[[plugin_policy]]
+plugin = "bubble.fighter.fantasy.nirinsoulink"
+type = "require"
+
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.item-previews"
+type = "require"
+
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.game-ui-resources"
+type = "require"
+
+[compatibility]
+builds = ["*"]
+
+[overlay]
+entry = "ban-pick.html"
+
+[companion.messages]
+"game.ban.list.changed" = 1
+"game.ban.start.confirm" = 1
+"game.ban.list.get" = 1
+"game.command.execute" = 1

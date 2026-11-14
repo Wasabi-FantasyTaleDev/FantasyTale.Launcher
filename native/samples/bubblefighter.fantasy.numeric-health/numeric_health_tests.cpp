@@ -7,10 +7,12 @@
 #include <limits>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 
 namespace {
 std::array<uint8_t, 400> fake_hud{}, fake_table{};
 std::array<uint8_t, 16> fake_player{};
+std::array<uint8_t, 100> fake_draw_frame{};
 std::array<uint8_t, 140> fake_sprite{};
 std::array<uint8_t, 148> fake_texture{};
 std::array<uint32_t, 8> fake_frame{};
@@ -50,7 +52,7 @@ double __fastcall get_maximum(void* player, void*) {
     return test_maximum;
 }
 void __cdecl draw(void* numbers, float x, float y, int style, float depth, float scale, const wchar_t* text) {
-    CHECK(style == 5 || style == fixture_style_slot);
+    CHECK(style == 5 || style == 6 || style == fixture_style_slot);
     if (style == fixture_style_slot) {
         const auto* table = static_cast<uint32_t*>(numbers);
         if (std::wstring(text) == L"%%") {
@@ -79,6 +81,7 @@ int32_t FTHOOK_CALL read_fixture(uintptr_t address, void* destination, uint32_t 
         return FTHOOK_OK;
     }
     for (const auto& range : {std::pair{fake_hud.data(), fake_hud.size()},
+        std::pair{fake_draw_frame.data(), fake_draw_frame.size()},
         std::pair{fake_table.data(), fake_table.size()}, std::pair{fake_player.data(), fake_player.size()},
         std::pair{fake_sprite.data(), fake_sprite.size()}, std::pair{fake_texture.data(), fake_texture.size()},
         std::pair{fake_health_sprite.data(), fake_health_sprite.size()}, std::pair{fake_health_texture.data(), fake_health_texture.size()},
@@ -109,6 +112,109 @@ void __fastcall measure_percent(void*, void*, float, float, int style, const wch
     CHECK((style == 5 || style == fixture_style_slot) && flags == 0x400 && scale_x == scale_y);
     size[0] = static_cast<float>(wcslen(text)) * 8.0f * scale_x;
     size[1] = 18.0f * scale_y;
+}
+
+struct CowFixture {
+    uint32_t length = 0, capacity = 0, references = 0, hash = 0, flags = 0;
+    std::array<wchar_t, 128> text{};
+};
+static_assert(offsetof(CowFixture, text) == 20);
+CowFixture path_cow{}, options_cow{};
+std::wstring cow_path;
+std::string resource_events;
+uint8_t* options_address = nullptr;
+bool fail_string = false, fail_sprite = false, throw_sprite = false;
+
+void* __fastcall construct_cow(const wchar_t** target, void*, const wchar_t* value) {
+    resource_events += 'P';
+    if (fail_string) { *target = nullptr; return target; }
+    CHECK(wcslen(value) < path_cow.text.size());
+    path_cow = {};
+    wcscpy_s(path_cow.text.data(), path_cow.text.size(), value);
+    path_cow.length = path_cow.capacity = static_cast<uint32_t>(wcslen(value));
+    path_cow.references = 1;
+    *target = path_cow.text.data();
+    return target;
+}
+void __fastcall release_cow(const wchar_t** target, void*) {
+    CHECK(*target == path_cow.text.data());
+    CHECK(path_cow.references == 1 && options_cow.references == 0);
+    --path_cow.references;
+    resource_events += 'p';
+}
+void* __fastcall construct_cow_options(void* address, void*) {
+    resource_events += 'O';
+    options_address = static_cast<uint8_t*>(address);
+    std::fill(options_address, options_address + client_descriptor.resource_options_size, uint8_t{0xA5});
+    options_cow = {};
+    options_cow.references = 1;
+    const auto text = options_cow.text.data();
+    std::memcpy(options_address + 32, &text, sizeof(text));
+    return address;
+}
+void __fastcall destroy_cow_options(void* address, void*) {
+    CHECK(address == options_address + 32);
+    const wchar_t* text = nullptr;
+    std::memcpy(&text, address, sizeof(text));
+    CHECK(text == options_cow.text.data() && options_cow.references == 1);
+    --options_cow.references;
+    CHECK(path_cow.references == 1);
+    resource_events += 'o';
+}
+uintptr_t __fastcall load_cow_sprite(void* manager, void*, const void* path, void* options) {
+    resource_events += 'L';
+    CHECK(manager == reinterpret_cast<void*>(fixture_resource_manager));
+    const auto text = *static_cast<const wchar_t* const*>(path);
+    CHECK(std::wstring(text) == cow_path && text != cow_path.c_str());
+    const auto* header = reinterpret_cast<const uint32_t*>(text) - 5;
+    CHECK(header[0] == cow_path.size() && header[2] == 1);
+    CHECK(options == options_address && options_address[31] == 0xA5);
+    if (client_descriptor.resource_options_size == 40) CHECK(options_address[39] == 0xA5);
+    if (throw_sprite) throw std::runtime_error("synthetic sprite load failure");
+    return fail_sprite ? 0 : reinterpret_cast<uintptr_t>(fake_sprite.data());
+}
+
+void test_cow_resources(const std::string& descriptor_text) {
+    const auto saved = client_descriptor;
+    const auto saved_construct = native_style::construct_options;
+    const auto saved_destroy = native_style::destroy_options;
+    const auto saved_load = native_style::load_sprite;
+    native_style::construct_string = reinterpret_cast<native_style::ConstructString>(&construct_cow);
+    native_style::release_string = reinterpret_cast<native_style::ReleaseString>(&release_cow);
+    native_style::construct_options = reinterpret_cast<native_style::ConstructOptions>(&construct_cow_options);
+    native_style::destroy_options = reinterpret_cast<native_style::DestroyOptions>(&destroy_cow_options);
+    native_style::load_sprite = reinterpret_cast<native_style::LoadSprite>(&load_cow_sprite);
+    cow_path = L"D:/\u6D4B\u8BD5/\uD55C\uAD6D/assets/percent_indonesia.smf";
+    for (const auto build : {"cn-279", "cn-324"}) {
+        auto candidate = descriptor_text;
+        const auto row = candidate.find(std::string("id = \"") + build + "\"");
+        const auto status = candidate.find("status = \"research\"", row);
+        candidate.replace(status, std::strlen("status = \"research\""), "status = \"supported\"");
+        std::string error;
+        CHECK(numeric_health::load_client_descriptor(candidate, "client-versions.toml", build, client_descriptor, error));
+        CHECK(client_descriptor.complete && client_descriptor.construct_string_rva && client_descriptor.release_string_rva);
+        fixture_resource_manager_rva = client_descriptor.resource_manager_rva;
+        for (int scenario = 0; scenario < 4; ++scenario) {
+            fail_string = scenario == 1; fail_sprite = scenario == 2; throw_sprite = scenario == 3;
+            resource_events.clear(); path_cow = {}; options_cow = {};
+            bool caught = false;
+            try {
+                const auto result = native_style::load(cow_path.c_str());
+                CHECK(result == (scenario == 0 ? reinterpret_cast<uintptr_t>(fake_sprite.data()) : 0));
+            } catch (const std::runtime_error&) { caught = true; }
+            CHECK(caught == throw_sprite);
+            CHECK(resource_events == (fail_string ? "P" : "POLop"));
+            CHECK(path_cow.references == 0 && options_cow.references == 0);
+        }
+    }
+    fail_string = fail_sprite = throw_sprite = false;
+    native_style::construct_string = nullptr;
+    native_style::release_string = nullptr;
+    native_style::construct_options = saved_construct;
+    native_style::destroy_options = saved_destroy;
+    native_style::load_sprite = saved_load;
+    client_descriptor = saved;
+    fixture_resource_manager_rva = saved.resource_manager_rva;
 }
 template<typename T> void put(uint8_t* storage, size_t offset, T value) {
     std::memcpy(storage + offset, &value, sizeof(value));
@@ -156,7 +262,7 @@ __declspec(naked) uint32_t __cdecl invoke_intercept_ebx(const DrawArguments*, ui
         push dword ptr [esi + 8]
         push dword ptr [esi + 4]
         push dword ptr [esi]
-        call draw_intercept_ebx
+        call draw_intercept
         add esp, 28
         xor eax, eax
         cmp ebp, 1
@@ -175,6 +281,51 @@ __declspec(naked) uint32_t __cdecl invoke_intercept_ebx(const DrawArguments*, ui
         je edi_preserved
         or eax, 8
     edi_preserved:
+        pop edi
+        pop esi
+        pop ebx
+        pop ebp
+        ret
+    }
+}
+
+__declspec(naked) uint32_t __cdecl invoke_intercept_edi(const DrawArguments*, uintptr_t, uintptr_t) {
+    __asm {
+        push ebp
+        push ebx
+        push esi
+        push edi
+        mov edx, [esp + 20]
+        mov edi, [esp + 24]
+        mov esi, [esp + 28]
+        mov ebp, 1
+        mov ebx, 2
+        push dword ptr [edx + 24]
+        push dword ptr [edx + 20]
+        push dword ptr [edx + 16]
+        push dword ptr [edx + 12]
+        push dword ptr [edx + 8]
+        push dword ptr [edx + 4]
+        push dword ptr [edx]
+        call draw_intercept
+        add esp, 28
+        xor eax, eax
+        cmp ebp, 1
+        je ebp_preserved
+        or eax, 1
+    ebp_preserved:
+        cmp ebx, 2
+        je ebx_preserved
+        or eax, 2
+    ebx_preserved:
+        cmp edi, [esp + 24]
+        je edi_preserved
+        or eax, 4
+    edi_preserved:
+        cmp esi, [esp + 28]
+        je esi_preserved
+        or eax, 8
+    esi_preserved:
         pop edi
         pop esi
         pop ebx
@@ -208,6 +359,7 @@ int main() {
     };
     CHECK(rejects_register(""));
     CHECK(rejects_register("hud_register = \"eax\""));
+    CHECK(rejects_register("hud_register = \"\""));
     CHECK(rejects_register("hud_register = 0"));
     {
         auto changed = descriptor_text;
@@ -256,6 +408,13 @@ int main() {
     CHECK(rejects_runtime_contract("resource_string_inline_capacity = 7", "resource_string_inline_capacity = 0", "resource_string_inline_capacity"));
     CHECK(rejects_runtime_contract("resource_options_size = 88", "resource_options_size = 3", "resource_options_size"));
     CHECK(rejects_runtime_contract("resource_options_size = 88", "resource_options_size = 4097", "resource_options_size"));
+    CHECK(rejects_runtime_contract("resource_string_abi = \"msvc_wstring24\"", "", "resource_string_abi"));
+    CHECK(rejects_runtime_contract("resource_string_abi = \"msvc_wstring24\"", "resource_string_abi = \"unknown\"", "resource_string_abi"));
+    CHECK(rejects_runtime_contract("white_style_slot = 5", "white_style_slot = 31", "white_style_slot"));
+    CHECK(rejects_runtime_contract("player_capture = \"caller_edi\"", "player_capture = \"caller_stack\"", "player_stack_offset"));
+    CHECK(rejects_runtime_contract("player_capture = \"caller_edi\"", "player_capture = \"\"", "player_capture"));
+    CHECK(rejects_runtime_contract("player_capture = \"caller_edi\"", "player_capture = \"caller_stack\"\nplayer_stack_offset = 24", "player_stack_offset"));
+    CHECK(rejects_runtime_contract("player_capture = \"caller_edi\"", "player_capture = \"caller_esi\"\nplayer_stack_offset = 76", "player_stack_offset"));
     {
         auto changed = descriptor_text;
         const auto replace = [&](const std::string& before, const std::string& after) { changed.replace(changed.find(before), before.size(), after); };
@@ -285,7 +444,8 @@ int main() {
         parsed_descriptor.wrapper_call_bytes == cn2011_wrapper_call &&
         parsed_descriptor.life_accessor_va == 0x4066D0 && parsed_descriptor.maximum_vtable_slot == 0 && parsed_descriptor.maximum_health_field_offset == 5184 &&
         parsed_descriptor.life_field_offset == 4732 && parsed_descriptor.life_divisor == 20 && parsed_descriptor.hud_register == "ebx" &&
-        parsed_descriptor.resource_string_inline_capacity == 7 && parsed_descriptor.resource_options_size == 32);
+        parsed_descriptor.resource_string_abi == "cow_wstring4" && parsed_descriptor.resource_string_inline_capacity == 0 &&
+        parsed_descriptor.resource_options_size == 36);
         CHECK(numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", "cn-408", parsed_descriptor, descriptor_error));
     CHECK(!parsed_descriptor.complete && parsed_descriptor.status == "research" &&
         parsed_descriptor.timestamp == 0x5383216F && parsed_descriptor.image_sizes == std::vector<uint32_t>{0xCDC000} &&
@@ -345,6 +505,12 @@ int main() {
     CHECK(rejects_health_contract("player_capture = \"hud_owner\"", "player_capture = \"eax\"", "player_capture"));
     CHECK(!numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", "unknown", parsed_descriptor, descriptor_error));
     CHECK(!descriptor_error.empty());
+    for (const auto* build : {"cn-404", "cn-717", "cn-735", "cn-774", "kr-1256", "tw-454"}) {
+        CHECK(numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", build, parsed_descriptor, descriptor_error));
+        CHECK(!parsed_descriptor.complete && parsed_descriptor.status == "research" && parsed_descriptor.health_accessor_va != 0);
+    }
+    CHECK(!numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", "id-400", parsed_descriptor, descriptor_error));
+    CHECK(!numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", "id-1809", parsed_descriptor, descriptor_error));
     const auto temporary = std::filesystem::temp_directory_path() / (L"ft-percent-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64()));
     CHECK(std::filesystem::create_directory(temporary));
     CHECK(!native_style::validate_percent_assets(temporary.wstring()));
@@ -396,6 +562,9 @@ int main() {
     client_descriptor.player_capture = numeric_health::PlayerCapture::CallerEdi;
     client_descriptor.hud_register = "ebp";
     client_descriptor.resource_manager_rva = 0xA7F7A4;
+    client_descriptor.resource_string_abi = "msvc_wstring24";
+    client_descriptor.resource_string_inline_capacity = 7;
+    client_descriptor.resource_options_size = 88;
     client_descriptor.construct_options_rva = 0x26D70;
     client_descriptor.destroy_options_rva = 0x26D10;
     client_descriptor.load_sprite_rva = 0x6C4D60;
@@ -436,7 +605,7 @@ int main() {
     CHECK(forwarded[1].numbers == args.numbers && forwarded[1].depth == args.depth && forwarded[1].scale == args.scale);
     CHECK(intercept_address() == reinterpret_cast<uintptr_t>(&draw_intercept));
     client_descriptor.hud_register = "ebx";
-    CHECK(intercept_address() == reinterpret_cast<uintptr_t>(&draw_intercept_ebx));
+    CHECK(intercept_address() == reinterpret_cast<uintptr_t>(&draw_intercept));
     drawings.clear(); forwarded.clear();
     CHECK(invoke_intercept_ebx(&args, reinterpret_cast<uintptr_t>(fake_hud.data()), reinterpret_cast<uintptr_t>(fake_player.data())) == 0);
     CHECK(drawings.size() == 2 && drawings[0] == L"3" && drawings[1] == L"50");
@@ -454,6 +623,42 @@ int main() {
     drawings.clear(); last_health_player = 0;
     CHECK(invoke_intercept_ebx(&args, uintptr_t{1}, reinterpret_cast<uintptr_t>(fake_player.data())) == 0);
     CHECK(drawings.size() == 1 && last_health_player == 0);
+    client_descriptor.hud_register = "edi";
+    client_descriptor.player_capture = numeric_health::PlayerCapture::CallerEsi;
+    client_descriptor.white_style_slot = 6;
+    for (int iteration = 0; iteration < 16; ++iteration) {
+        drawings.clear(); forwarded.clear();
+        CHECK(invoke_intercept_edi(&args, reinterpret_cast<uintptr_t>(fake_hud.data()), reinterpret_cast<uintptr_t>(fake_player.data())) == 0);
+        CHECK(drawings.size() == 2 && drawings[0] == L"3" && drawings[1] == L"50");
+        CHECK(forwarded[0].text == args.text && forwarded[0].style == 5 && forwarded[1].style == 6);
+        CHECK(last_health_player == reinterpret_cast<uintptr_t>(fake_player.data()));
+    }
+    CapturedRegisters captured{1, 1, reinterpret_cast<uintptr_t>(fake_hud.data()), 0,
+        reinterpret_cast<uintptr_t>(fake_player.data()), 0, 0, 0};
+    client_descriptor.hud_register = "ebp";
+    client_descriptor.player_capture = numeric_health::PlayerCapture::CallerEbx;
+    drawings.clear();
+    draw_captured(&args, &captured);
+    CHECK(drawings.size() == 2 && drawings[1] == L"50");
+    client_descriptor.player_capture = numeric_health::PlayerCapture::CallerStack;
+    client_descriptor.player_stack_offset = 76;
+    std::memcpy(fake_draw_frame.data(), &args, sizeof(args));
+    put(fake_draw_frame.data(), 76, reinterpret_cast<uintptr_t>(fake_player.data()));
+    captured.ebx = 1;
+    drawings.clear();
+    draw_captured(reinterpret_cast<const DrawArguments*>(fake_draw_frame.data()), &captured);
+    CHECK(drawings.size() == 2 && drawings[1] == L"50");
+    put(fake_draw_frame.data(), 76, uintptr_t{0});
+    captured.edi = reinterpret_cast<uintptr_t>(fake_player.data());
+    drawings.clear(); last_health_player = 0;
+    draw_captured(reinterpret_cast<const DrawArguments*>(fake_draw_frame.data()), &captured);
+    CHECK(drawings.size() == 1 && last_health_player == 0);
+    client_descriptor.player_stack_offset = 100;
+    drawings.clear();
+    draw_captured(reinterpret_cast<const DrawArguments*>(fake_draw_frame.data()), &captured);
+    CHECK(drawings.size() == 1 && last_health_player == 0);
+    client_descriptor.player_stack_offset = 0;
+    client_descriptor.white_style_slot = 5;
     client_descriptor.hud_register = "ebp";
     failure_reported = false;
     // A non-baseline slot and deliberately invalid EDI distinguish the configured owner path.
@@ -499,8 +704,10 @@ int main() {
     }
     CHECK(repeated_current == 4024 && repeated_maximum == 8048);
     drawings.clear();
+    client_descriptor.hud_register = "ebx";
     CHECK(invoke_intercept_ebx(&args, reinterpret_cast<uintptr_t>(fake_hud.data()), reinterpret_cast<uintptr_t>(fake_player.data())) == 0);
     CHECK(drawings.size() == 2 && drawings[0] == L"3" && drawings[1] == L"50");
+    client_descriptor.hud_register = "ebp";
     raw_health = true; drawings.clear();
     invoke_intercept(&args, reinterpret_cast<uintptr_t>(fake_hud.data()), reinterpret_cast<uintptr_t>(fake_player.data()));
     CHECK(drawings.size() == 2 && drawings[1] == L"125");
@@ -545,6 +752,7 @@ int main() {
     CHECK(last_x == 100 && last_y == 40);
     native_placement = true;
     percent_fixture = true; show_percent = true;
+    test_cow_resources(descriptor_text);
     native_style::percent_path = L"D:/plugin/assets/percent_indonesia.smf";
     native_style::construct_options = reinterpret_cast<native_style::ConstructOptions>(&construct_options);
     native_style::destroy_options = reinterpret_cast<native_style::DestroyOptions>(&destroy_options);
@@ -594,6 +802,11 @@ int main() {
         {"cn-706", 22, 3079, 120, 136, 144}
     };
     health_fixture = true;
+    client_descriptor.resource_string_abi = "cow_wstring4";
+    const auto load_calls_before_cow = sprite_load_calls;
+    CHECK(native_style::load(L"Images/GameStage/myHP/myHPtext00.smf") == 0);
+    CHECK(sprite_load_calls == load_calls_before_cow);
+    client_descriptor.resource_string_abi = "msvc_wstring24";
     for (const auto& resource : resource_cases) {
         CHECK(numeric_health::load_client_descriptor(descriptor_text, "client-versions.toml", resource.id, parsed_descriptor, descriptor_error));
         CHECK(parsed_descriptor.native_style_slot == static_cast<uint32_t>(resource.slot) &&

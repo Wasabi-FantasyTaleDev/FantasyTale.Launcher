@@ -26,7 +26,8 @@
     "installed": "Terpasang"
   },
   "dialog": {
-    "cancel": "Batal"
+    "cancel": "Batal",
+    "close": "Tutup"
   },
   "home": {
     "launch": "Mainkan",
@@ -178,6 +179,7 @@
     "clientUnavailable": "Belum ada versi klien yang dapat ditambahkan.",
     "previousGame": "Game sebelumnya: {name}",
     "nextGame": "Game berikutnya: {name}",
+    "buildNotServed": "Belum ada node server yang mendukung versi klien ini.",
     "gameComingSoon": "Sedang disiapkan",
     "gamePending": "Game ini sedang disiapkan. Beralih ke game lain untuk mulai bermain.",
     "subtitle": "Game favorit Anda dimulai di sini.",
@@ -283,7 +285,8 @@
     "loginNeeded": "Masuk ke server ini untuk melanjutkan.",
     "unknown": "Belum tersedia",
     "removeServerTitle": "Hapus server ini?",
-    "removeServerBody": "Hapus “{name}” dari perangkat ini? Klien yang terpasang tetap disimpan."
+    "removeServerBody": "Hapus “{name}” dari perangkat ini? Klien yang terpasang tetap disimpan.",
+    "serverSection": "Server"
   },
   "updates": {
     "totalSpeed": "Total kecepatan unduh",
@@ -478,7 +481,8 @@
     "description": "Aktifkan fitur eksperimental atau konfigurasi dan kelola sumber toko.",
     "tabs": {
       "options": "Opsi pengembang",
-      "sources": "Kelola sumber toko"
+      "sources": "Kelola sumber toko",
+      "demo": "Mode demo"
     },
     "pending": "Segera hadir",
     "nsfw": {
@@ -490,6 +494,69 @@
       "description": "Tampilkan dialog Overlay Test setelah game dimulai. Berlaku pada peluncuran game berikutnya.",
       "passThrough": "Teruskan klik di luar dialog",
       "passThroughDescription": "Izinkan klik pada game di luar kotak pesan. Berlaku pada peluncuran game berikutnya."
+    },
+    "demo": {
+      "title": "Mode Demo UI",
+      "description": "Diaktifkan secara otomatis selama pengembangan browser (npm run dev). Menyediakan data tiruan dan animasi interaktif tanpa menampilkan indikator apa pun di luar tab ini.",
+      "disabledNotice": "Mode Demo UI sedang dimatikan. Aktifkan kembali di atas untuk menguji dialog dan animasi tiruan.",
+      "reset": "Atur ulang data tiruan",
+      "resetDone": "Data ruang kerja tiruan telah dipulihkan.",
+      "activeTransfers": "Transfer demo aktif",
+      "groups": {
+        "store": "Animasi toko & unduhan",
+        "storeDesc": "Buka dialog instalasi toko dan jalankan progres unduhan langsung di seluruh halaman.",
+        "instances": "Klien, multipemain & hosting",
+        "instancesDesc": "Buka editor klien, dialog masuk, detail server, daftar pemain online, dan pengaturan hosting lokal.",
+        "plugins": "Plugin, kebijakan & konflik",
+        "pluginsDesc": "Uji resolusi dependensi, rekomendasi, peringatan peluncuran, konflik sumber daya, dan notifikasi pemulihan.",
+        "updates": "Pembaruan peluncur & cermin",
+        "updatesDesc": "Uji dialog pembaruan tersedia, animasi unduhan, konfirmasi mulai ulang, pembaruan wajib, dan panduan kegagalan.",
+        "notices": "Notifikasi & spanduk kesalahan",
+        "noticesDesc": "Tampilkan notifikasi shell dan spanduk kesalahan dengan rincian diagnostik."
+      },
+      "actions": {
+        "storeClient": "Dialog instal klien",
+        "storePlugin": "Dialog instal plugin",
+        "storeServer": "Dialog paket server",
+        "storePluginUpdates": "Pembaruan massal plugin",
+        "storeSources": "Dialog sumber toko",
+        "animateClient": "Animasikan instal klien",
+        "animatePlugin": "Animasikan unduhan plugin",
+        "animateServer": "Animasikan unduhan server",
+        "instanceAdd": "Dialog tambah klien",
+        "instanceEdit": "Dialog sunting klien",
+        "stopGame": "Dialog hentikan game",
+        "auth": "Dialog masuk",
+        "serverDetails": "Detail server & prasetel",
+        "serverEdit": "Dialog tambah/ubah server",
+        "onlinePlayers": "Daftar pemain online",
+        "serverPlugins": "Plugin rekomendasi server",
+        "directorySources": "Dialog direktori server",
+        "hostingSetup": "Dialog pengaturan server lokal",
+        "hostingLog": "Log runtime hosting",
+        "pluginPolicy": "Dialog kebijakan plugin",
+        "pluginRecommend": "Dialog rekomendasi plugin",
+        "pluginLaunchWarning": "Peringatan peluncuran plugin",
+        "pluginConflict": "Dialog konflik sumber daya",
+        "pluginRequiredUpdate": "Pembaruan plugin wajib",
+        "pluginSupport": "Tawaran dukungan klien baru",
+        "pluginImport": "Dialog impor plugin",
+        "pluginSchemeShare": "Dialog bagikan skema",
+        "pluginRecovery": "Notifikasi pemulihan plugin",
+        "pluginDeprecation": "Notifikasi plugin dihentikan",
+        "updateAvailable": "Dialog pembaruan tersedia",
+        "updateProgress": "Animasikan unduhan pembaruan",
+        "updateReady": "Dialog siap mulai ulang",
+        "updateMandatory": "Dialog pembaruan wajib",
+        "updateFailure": "Panduan kegagalan pembaruan",
+        "githubMirror": "Saran cermin GitHub",
+        "noticeSuccess": "Notifikasi sukses plugin",
+        "noticeWarning": "Notifikasi peringatan plugin",
+        "serverError": "Spanduk kesalahan server",
+        "launchFailure": "Spanduk kegagalan peluncuran",
+        "instanceBusy": "Spanduk klien sedang digunakan",
+        "clearNotices": "Bersihkan notifikasi & kesalahan"
+      }
     }
   },
   "nativeUi": {
@@ -913,6 +980,18 @@
   "featureAvailability": {
     "development": "Sedang dikembangkan. Akan tersedia pada versi mendatang."
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "Server ini memerlukan plugin \"{plugin}\". Aktifkan untuk klien ini, lalu jalankan lagi.",
+    "server_plugin_version_low": "Versi \"{plugin}\" yang terpasang lebih lama dari yang diizinkan server ini. Perbarui, lalu jalankan lagi.",
+    "server_plugin_version_high": "Versi \"{plugin}\" yang terpasang lebih baru dari yang diizinkan server ini. Pilih versi yang diizinkan, lalu jalankan lagi.",
+    "server_plugin_policy_conflict": "Server ini menonaktifkan \"{plugin}\", tetapi klien ini memerlukannya. Tanyakan aturan ini kepada operator server.",
+    "client_policy_conflict": "Aturan untuk \"{plugin}\" saling bertentangan. Tanyakan aturan ini kepada operator server.",
+    "client_policy_source_conflict": "Aturan untuk \"{plugin}\" menyebut sumber unduhan yang tidak memiliki kesamaan. Tanyakan aturan ini kepada operator server.",
+    "client_policy_disabled": "Server ini menonaktifkan \"{plugin}\". Matikan untuk klien ini, lalu coba lagi.",
+    "plugin_policy_require_unmet": "Pasang atau aktifkan \"{plugin}\" terlebih dahulu.",
+    "plugin_policy_required_by": "\"{plugin}\" memerlukan plugin ini. Nonaktifkan \"{plugin}\" terlebih dahulu.",
+    "plugin_policy_conflict_active": "Plugin ini bertentangan dengan \"{plugin}\". Nonaktifkan \"{plugin}\" terlebih dahulu."
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "Hasil pemasangan terakhir",
     "phase": "Tahap pemasangan",
@@ -1219,5 +1298,86 @@
     "message": "Operasi lain sedang memakai konfigurasi klien ini. Coba lagi sebentar.",
     "title": "Detail penggunaan klien",
     "explanation": "Kunci mencegah peluncuran, unduhan, dan perubahan pengaturan mengubah klien yang sama bersamaan. Operasi latar belakang dapat memegangnya tanpa jendela game. Detail menampilkan operasi yang terhalang dan jalur kunci, bukan identitas proses pemegang."
+  },
+  "pluginPolicy": {
+    "title": "Plugin prasyarat tidak tersedia",
+    "launchTitle": "Plugin prasyarat tidak tersedia",
+    "disableTitle": "Plugin lain memerlukan plugin ini",
+    "body": "Plugin ini memerlukan plugin prasyarat. Pasang atau aktifkan plugin prasyarat sebelum melanjutkan.",
+    "launchBody": "Plugin ini memerlukan plugin prasyarat. Pasang atau aktifkan plugin prasyarat sebelum melanjutkan.",
+    "disableBody": "Plugin aktif berikut memerlukan plugin yang akan Anda nonaktifkan. Nonaktifkan plugin tersebut terlebih dahulu atau batalkan.",
+    "group": {
+      "require": "Diperlukan oleh {name}",
+      "conflict": "Bertentangan dengan {name}"
+    },
+    "rule": {
+      "require": "{plugin} memerlukan {other}",
+      "recommend": "{plugin} merekomendasikan {other}",
+      "conflict": "{plugin} tidak dapat berjalan bersama {other}"
+    },
+    "status": {
+      "missing": "{name} belum terpasang.",
+      "disabled": "{name} {version} terpasang tetapi nonaktif.",
+      "version": "Hanya {name} {version} yang terpasang; diperlukan {range}.",
+      "unavailable": "{name} tidak tersedia untuk klien ini.",
+      "conflict": "{name} sedang aktif."
+    },
+    "install": "Pasang",
+    "update": "Perbarui",
+    "installing": "Memasang",
+    "updating": "Memperbarui",
+    "enable": "Aktifkan",
+    "enabledDone": "Aktif",
+    "disableAction": "Nonaktifkan",
+    "disabledDone": "Nonaktif",
+    "notInstalled": "Belum terpasang",
+    "notEnabled": "Belum aktif",
+    "disableOther": "Nonaktifkan {name}",
+    "dependentSwitch": "Gunakan {name}",
+    "confirm": "Konfirmasi",
+    "continue": "Konfirmasi",
+    "resolveFirst": "Konfirmasi",
+    "recommendedLabel": "Direkomendasikan",
+    "blockedHint": "Pasang atau aktifkan yang diperlukan, atau nonaktifkan plugin ini, sebelum melanjutkan.",
+    "notInStore": "{name} tidak ditawarkan oleh toko yang aktif untuk klien ini.",
+    "importEnable": "Aktifkan di semua klien yang didukung setelah pemasangan",
+    "supportTitle": "{name} mendukung lebih banyak klien",
+    "supportBody": "Versi {version} dari {name} kini mendukung klien berikut. Pilih tempat untuk mengaktifkannya.",
+    "supportEnable": "Aktifkan",
+    "supportLater": "Nanti",
+    "chip": {
+      "require": "Memerlukan {name}",
+      "recommend": "Merekomendasikan {name}",
+      "conflict": "Bertentangan dengan {name}"
+    }
+  },
+  "maintenance": {
+    "title": "Beberapa server sedang dalam pemeliharaan",
+    "titleAll": "Server sedang dalam pemeliharaan",
+    "intro": "Server yang sedang dalam pemeliharaan belum bisa dimasuki. Anda tetap bisa bermain di server bertanda Tersedia.",
+    "introAll": "Semua server sedang dalam pemeliharaan. Silakan coba lagi nanti.",
+    "introSection": "Semua server {section} sedang dalam pemeliharaan. Masuk ke bagian server lain untuk bermain sekarang, atau coba lagi nanti.",
+    "continue": "Lanjutkan",
+    "window": "{start} – {end}",
+    "until": "Hingga {end}",
+    "from": "Mulai {start}",
+    "players": "{players} / {capacity} pemain",
+    "canEnter": "Bisa dimasuki",
+    "offlineHint": "Saat ini tidak dapat dijangkau.",
+    "state": {
+      "maintenance": "Pemeliharaan",
+      "online": "Tersedia",
+      "offline": "Offline"
+    },
+    "playHere": "Main di sini",
+    "selected": "Dipilih"
+  },
+  "notices": {
+    "title": "Pemberitahuan",
+    "next": "Berikutnya",
+    "start": "Mengerti",
+    "showAll": "Lihat Semua",
+    "allTitle": "Pengumuman",
+    "none": "Belum ada pengumuman."
   }
 }

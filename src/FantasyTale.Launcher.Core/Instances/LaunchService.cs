@@ -95,8 +95,8 @@ public sealed class LaunchService
         IReadOnlyList<GameServerTarget>? gameTargets = null, IProgress<GameResourceProgress>? resourceProgress = null,
         IReadOnlyList<GameServerChoice>? gameChoices = null, IAutomaticServerSelection? automaticSelection = null,
         IReadOnlyList<GameResourceConflictChoice>? resourceConflictChoices = null,
-        TimeSpan? startupTimeout = null, CancellationToken preparationCancellation = default) =>
-        Task.Run(() => Start(id, game, module, packages, account, ticket, server, useServerOverride, confirmedWarnings, requiredPlugins, enableOverlayBroker, enableCompanionBroker, disabledPlugins, messenger, nameLogin, gameLogin, gameEndpoint, gameTargets, resourceProgress, gameChoices, automaticSelection, resourceConflictChoices, startupTimeout, preparationCancellation));
+        TimeSpan? startupTimeout = null, string? launcherLanguage = null, CancellationToken preparationCancellation = default) =>
+        Task.Run(() => Start(id, game, module, packages, account, ticket, server, useServerOverride, confirmedWarnings, requiredPlugins, enableOverlayBroker, enableCompanionBroker, disabledPlugins, messenger, nameLogin, gameLogin, gameEndpoint, gameTargets, resourceProgress, gameChoices, automaticSelection, resourceConflictChoices, startupTimeout, launcherLanguage, preparationCancellation));
 
     /// <summary>
     /// Validates and starts one instance. Credentials remain local to the session-writing call. When resource plugins
@@ -110,7 +110,7 @@ public sealed class LaunchService
         IReadOnlyList<GameServerTarget>? gameTargets = null, IProgress<GameResourceProgress>? resourceProgress = null,
         IReadOnlyList<GameServerChoice>? gameChoices = null, IAutomaticServerSelection? automaticSelection = null,
         IReadOnlyList<GameResourceConflictChoice>? resourceConflictChoices = null,
-        TimeSpan? startupTimeout = null, CancellationToken preparationCancellation = default)
+        TimeSpan? startupTimeout = null, string? launcherLanguage = null, CancellationToken preparationCancellation = default)
     {
         var startupClock = Stopwatch.StartNew();
         var startupBudget = startupTimeout ?? _startupTimeout;
@@ -193,6 +193,8 @@ public sealed class LaunchService
                 instance = ClientLanguagePolicy.ForLaunch(game, build, instance);
                 var endpoint = useServerOverride ? server : instance.Endpoint;
                 var plugins = game.SupportsPlugins ? PluginResolver.Resolve(instance, build, packages) : [];
+                // Shared data a package declared with `requires` must be installed and compatible before any client file is touched.
+                if (game.SupportsPlugins) _ = Plugins.PluginRequirements.RequireSatisfied(instance, build, packages, launcherLanguage);
                 var filePlugins = FilePluginResolver.Resolve(instance, build, packages);
                 var client = _store.ClientFolder(id);
                 if (File.Exists(Path.Combine(client, Stores.ClientInstallTransaction.DirectoryName, "journal.json")))

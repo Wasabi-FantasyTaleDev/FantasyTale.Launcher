@@ -3,13 +3,15 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FluentIcon from './FluentIcon.vue'
+import MarkdownText from '../components/MarkdownText.vue'
 import type { GlyphName } from '../icons'
 
 export type InfoBarSeverity = 'info' | 'success' | 'warning' | 'error'
 
 const props = withDefaults(
-  defineProps<{ severity?: InfoBarSeverity; title?: string; closable?: boolean; open?: boolean }>(),
-  { severity: 'info', title: '', closable: true, open: true },
+  // markdown: a server or plugin message in Markdown, shown instead of the default slot.
+  defineProps<{ severity?: InfoBarSeverity; title?: string; closable?: boolean; open?: boolean; markdown?: string }>(),
+  { severity: 'info', title: '', closable: true, open: true, markdown: undefined },
 )
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
@@ -33,7 +35,7 @@ const glyph = computed<GlyphName>(() => {
     <FluentIcon :glyph="glyph" :size="16" class="w-infobar-icon" />
     <div class="w-infobar-content">
       <span v-if="title" class="w-infobar-title">{{ title }}</span>
-      <p class="w-infobar-message"><slot /></p>
+      <MarkdownText v-if="markdown" class="w-infobar-message" :source="markdown" /><p v-else class="w-infobar-message"><slot /></p>
       <slot name="action" />
     </div>
     <button v-if="closable" type="button" class="w-infobar-close" :aria-label="t('titlebar.close')" @click="emit('close')">

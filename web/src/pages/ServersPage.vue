@@ -3,7 +3,7 @@
 import PageBody from '../components/PageBody.vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Server, type ServerPreset } from '../bridge'
+import { call, demoMode, inHost, type Server, type ServerPreset } from '../bridge'
 import { gameServers, perform, refreshServers, refreshServices, selectedGame, state } from '../state'
 import { localized } from '../i18n'
 import ServerDialog from '../components/ServerDialog.vue'
@@ -25,7 +25,7 @@ async function remove() {
     <PageBody class="server-list-viewport">
     <div class="server-list"><article v-for="server in gameServers" :key="server.id" class="server-row surface" :class="{ selected: server.id === state.selectedServerId }">
       <button class="server-select" :disabled="state.busy" :aria-pressed="server.id === state.selectedServerId" @click="state.selectedServerId = server.id"><FluentIcon glyph="globe" :size="24" /><span><strong>{{ server.name }}</strong><small>{{ server.apiUrl || server.endpoint?.host || t('service.noApi') }}</small></span></button>
-      <span v-if="server.id === state.selectedServerId" class="selected-label">{{ t('live.selected') }}</span><WButton variant="subtle" :disabled="state.busy" :aria-label="t('service.editServer')" @click="edit(server)"><FluentIcon glyph="edit" /></WButton><WButton v-if="!server.builtIn" variant="subtle" :disabled="state.busy || !inHost" :aria-label="t('service.remove')" @click="deleting = server"><FluentIcon glyph="delete" /></WButton>
+      <span v-if="server.id === state.selectedServerId" class="selected-label">{{ t('live.selected') }}</span><WButton variant="subtle" :disabled="state.busy" :aria-label="t('service.editServer')" @click="edit(server)"><FluentIcon glyph="edit" /></WButton><WButton v-if="!server.builtIn" variant="subtle" :disabled="state.busy || !(inHost || demoMode?.enabled)" :aria-label="t('service.remove')" @click="deleting = server"><FluentIcon glyph="delete" /></WButton>
     </article></div>
     </PageBody>
     <section class="server-presets surface">

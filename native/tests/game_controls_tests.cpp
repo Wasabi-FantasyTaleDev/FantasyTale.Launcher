@@ -2,6 +2,9 @@
 #include "../../games/BubbleFighter/native/game-controls/ui_service.h"
 #include "../../games/BubbleFighter/native/game-controls/presentation.h"
 #include "../../games/BubbleFighter/native/game-controls/native_calls.h"
+#include "../../games/BubbleFighter/native/game-controls/control_registry.h"
+#include "../../games/BubbleFighter/native/game-controls/signature_readiness.h"
+#include "../../games/BubbleFighter/native/game-controls/selection_records.h"
 #include <array>
 #include <stdexcept>
 
@@ -18,6 +21,211 @@ struct NativeArguments {
     uint32_t color = 0;
 } arguments;
 unsigned legacy_releases = 0;
+// kr-1256 DlgCreateRoom keeps 56-byte mode records: +0 the btnGameMode ArrayIndex, +4 the game mode.
+void selection_record_tests() {
+    struct Record { int32_t key, value; uint8_t rest[48]; };
+    static_assert(sizeof(Record) == 56);
+    const Record records[] = {{0, 1, {}}, {1, 3, {}}, {6, 101, {}}, {24, 40, {}}};
+    const auto begin = reinterpret_cast<uintptr_t>(records), end = begin + sizeof(records);
+    const game_controls::SelectionRecords layout{56, 0, 4};
+    const auto read = [](uintptr_t location) { return *reinterpret_cast<const int32_t*>(location); };
+    CHECK(layout.valid());
+    CHECK(game_controls::record_value(begin, end, layout, 6, 64, read) == 101);
+    CHECK(game_controls::record_value(begin, end, layout, 0, 64, read) == 1);
+    CHECK(game_controls::record_value(begin, end, layout, 24, 64, read) == 40);
+    CHECK(!game_controls::record_value(begin, end, layout, 7, 64, read).has_value());
+    CHECK(!game_controls::record_value(begin, begin, layout, 0, 64, read).has_value());
+    // The value and key may swap places; the layout says which field is which.
+    CHECK(game_controls::record_value(begin, end, game_controls::SelectionRecords{56, 4, 0}, 101, 64, read) == 6);
+    const auto fails = [&](uintptr_t first, uintptr_t last, game_controls::SelectionRecords shape, size_t limit) {
+        try { (void)game_controls::record_value(first, last, shape, 0, limit, read); return false; }
+        catch (const std::exception&) { return true; }
+    };
+    CHECK(fails(begin, end - 4, layout, 64));    // not a whole number of records
+    CHECK(fails(end, begin, layout, 64));        // reversed vector
+    CHECK(fails(begin, end, layout, 3));         // more records than the tree limit
+    CHECK(fails(begin, end, {56, 0, 0}, 64));    // key and value cannot share a field
+    CHECK(fails(begin, end, {56, 54, 4}, 64));   // a field must fit inside its record
+    CHECK(fails(begin, end, {6, 0, 4}, 64));     // records hold at least two fields
+    CHECK(!game_controls::SelectionRecords{}.valid());
+}
+
+// cn-406 DlgCreateRoom maps each btnGameMode ArrayIndex to its button in an ordered map (node +0x0C key, +0x10 button,
+// +0x15 nil byte); the selection is the first disabled member in key order.
+void selection_member_tests() {
+    constexpr uint32_t base = 0x1000, node_size = 24, enabled = 4;
+    std::vector<uint8_t> memory(1024);
+    const auto at = [&](uintptr_t location, size_t size) -> uint8_t* {
+        if (location < base || location - base + size > memory.size()) throw std::runtime_error("unmapped");
+        return memory.data() + (location - base);
+    };
+    const auto put = [&](uintptr_t location, uint32_t value) { std::memcpy(at(location, 4), &value, 4); };
+    const auto pointer = [&](uintptr_t location) { uint32_t value; std::memcpy(&value, at(location, 4), 4); return static_cast<uintptr_t>(value); };
+    const auto byte = [&](uintptr_t location) { return *at(location, 1); };
+    const auto integer = [&](uintptr_t location) { int32_t value; std::memcpy(&value, at(location, 4), 4); return value; };
+    const uintptr_t header = base;
+    const auto node = [&](int key) { return static_cast<uintptr_t>(base + node_size * (key + 1)); };
+    const auto control = [&](int key) { return static_cast<uintptr_t>(base + 512 + 8 * key); };
+    // Keys 0..4: root 2, its left 1 with left 0, its right 3 with right 4.
+    const auto link = [&](int key, uintptr_t left, uintptr_t parent, uintptr_t right) {
+        put(node(key), static_cast<uint32_t>(left)); put(node(key) + 4, static_cast<uint32_t>(parent)); put(node(key) + 8, static_cast<uint32_t>(right));
+        put(node(key) + 12, static_cast<uint32_t>(key)); put(node(key) + 16, static_cast<uint32_t>(control(key)));
+        memory[control(key) + enabled - base] = 1;
+    };
+    link(2, node(1), header, node(3));
+    link(1, node(0), node(2), header);
+    link(0, header, node(1), header);
+    link(3, header, node(2), node(4));
+    link(4, header, node(3), header);
+    put(header, static_cast<uint32_t>(node(0))); put(header + 4, static_cast<uint32_t>(node(2))); put(header + 8, static_cast<uint32_t>(node(4)));
+    memory[header + 21 - base] = 1;
+    const game_controls::SelectionMembers layout{12, 16, 21};
+    const auto chosen = [&](size_t limit = 64) { return game_controls::disabled_member(header, layout, enabled, limit, pointer, byte, integer); };
+    CHECK(layout.valid());
+    CHECK(!chosen().has_value());
+    memory[control(3) + enabled - base] = 0;
+    CHECK(chosen() == 3);
+    // The client reports the lowest disabled key, so a second disabled member does not change the choice.
+    memory[control(4) + enabled - base] = 0;
+    CHECK(chosen() == 3);
+    memory[control(0) + enabled - base] = 0;
+    CHECK(chosen() == 0);
+    memory[control(0) + enabled - base] = 1; memory[control(3) + enabled - base] = 1;
+    CHECK(chosen() == 4);
+    const auto fails = [&](auto call) {
+        try { (void)call(); return false; }
+        catch (const std::exception&) { return true; }
+    };
+    CHECK(fails([&] { return chosen(3); }));              // longer than the tree limit
+    put(node(3) + 16, 0);
+    CHECK(fails([&] { return chosen(); }));               // a member without a control
+    put(node(3) + 16, static_cast<uint32_t>(control(3)));
+    put(node(1) + 8, 0);
+    CHECK(fails([&] { return chosen(); }));               // a null link
+    put(node(1) + 8, static_cast<uint32_t>(header));
+    put(header, static_cast<uint32_t>(header));
+    CHECK(!chosen().has_value());                         // an empty map
+    CHECK(fails([&] { return game_controls::disabled_member(header, {12, 12, 21}, enabled, 64, pointer, byte, integer); }));
+    CHECK(fails([&] { return game_controls::disabled_member(header, {12, 16, 13}, enabled, 64, pointer, byte, integer); }));
+    CHECK(!game_controls::SelectionMembers{}.valid());
+}
+
+// cn-324 DlgCreateRoom keeps the header node itself at +352 (parent/root +4, left/smallest +8, right/largest +12); each
+// node holds parent +4, left +8, right +12, key +16 and button +20, and a missing child is a null link.
+void inline_selection_member_tests() {
+    constexpr uint32_t base = 0x1000, node_size = 24, enabled = 4;
+    std::vector<uint8_t> memory(1024);
+    const auto at = [&](uintptr_t location, size_t size) -> uint8_t* {
+        if (location < base || location - base + size > memory.size()) throw std::runtime_error("unmapped");
+        return memory.data() + (location - base);
+    };
+    const auto put = [&](uintptr_t location, uint32_t value) { std::memcpy(at(location, 4), &value, 4); };
+    const auto pointer = [&](uintptr_t location) { uint32_t value; std::memcpy(&value, at(location, 4), 4); return static_cast<uintptr_t>(value); };
+    const auto byte = [&](uintptr_t location) { return *at(location, 1); };
+    const auto integer = [&](uintptr_t location) { int32_t value; std::memcpy(&value, at(location, 4), 4); return value; };
+    const uintptr_t header = base;
+    const auto node = [&](int key) { return static_cast<uintptr_t>(base + node_size * (key + 1)); };
+    const auto control = [&](int key) { return static_cast<uintptr_t>(base + 512 + 8 * key); };
+    // Keys 0..4: root 2, its left 1 with left 0, its right 3 with right 4.
+    const auto link = [&](int key, uintptr_t parent, uintptr_t left, uintptr_t right) {
+        put(node(key) + 4, static_cast<uint32_t>(parent)); put(node(key) + 8, static_cast<uint32_t>(left)); put(node(key) + 12, static_cast<uint32_t>(right));
+        put(node(key) + 16, static_cast<uint32_t>(key)); put(node(key) + 20, static_cast<uint32_t>(control(key)));
+        memory[control(key) + enabled - base] = 1;
+    };
+    link(2, header, node(1), node(3));
+    link(1, node(2), node(0), 0);
+    link(0, node(1), 0, 0);
+    link(3, node(2), 0, node(4));
+    link(4, node(3), 0, 0);
+    put(header + 4, static_cast<uint32_t>(node(2))); put(header + 8, static_cast<uint32_t>(node(0))); put(header + 12, static_cast<uint32_t>(node(4)));
+    const game_controls::InlineSelectionMembers layout{16, 20};
+    const auto chosen = [&](size_t limit = 64) { return game_controls::disabled_inline_member(header, layout, enabled, limit, pointer, byte, integer); };
+    const auto fails = [&](auto call) {
+        try { (void)call(); return false; }
+        catch (const std::exception&) { return true; }
+    };
+    CHECK(layout.valid());
+    CHECK(!chosen().has_value());
+    memory[control(4) + enabled - base] = 0;
+    CHECK(chosen() == 4);                                 // the largest key is reached through the right spine
+    memory[control(3) + enabled - base] = 0;
+    CHECK(chosen() == 3);
+    memory[control(0) + enabled - base] = 0;
+    CHECK(chosen() == 0);
+    memory[control(0) + enabled - base] = 1; memory[control(3) + enabled - base] = 1; memory[control(4) + enabled - base] = 1;
+    memory[control(2) + enabled - base] = 0;
+    CHECK(chosen() == 2);                                 // climbing from the left subtree reaches the root
+    memory[control(2) + enabled - base] = 1;
+    // The map walker for cn-406 cannot read this tree: it follows the header's +0 (the colour, zero) as its first link.
+    CHECK(fails([&] { return game_controls::disabled_member(header, game_controls::SelectionMembers{16, 20, 24}, enabled, 64, pointer, byte, integer); }));
+    CHECK(fails([&] { return chosen(3); }));              // longer than the tree limit
+    put(node(3) + 20, 0);
+    CHECK(fails([&] { return chosen(); }));               // a member without a control
+    put(node(3) + 20, static_cast<uint32_t>(control(3)));
+    put(node(4) + 4, 0);
+    CHECK(fails([&] { return chosen(); }));               // a null parent while climbing
+    put(node(4) + 4, static_cast<uint32_t>(node(3)));
+    put(header + 8, static_cast<uint32_t>(header));
+    CHECK(!chosen().has_value());                         // an empty tree points its left link at the header
+    put(header + 8, 0);
+    CHECK(fails([&] { return chosen(); }));               // a header without a smallest link
+    CHECK(fails([&] { return game_controls::disabled_inline_member(header, {16, 16}, enabled, 64, pointer, byte, integer); }));
+    CHECK(fails([&] { return game_controls::disabled_inline_member(header, {12, 20}, enabled, 64, pointer, byte, integer); }));
+    CHECK(!game_controls::InlineSelectionMembers{}.valid());
+}
+
+// cn-324 sub_401B10 keeps the length at data -20 and the characters at data.
+void legacy_string_tests() {
+    struct Header { int32_t length, capacity, references, unknown_12, unknown_16; wchar_t data[8]; } stored{3, 7, 1, 0, 0, {L'a', L'b', L'c', 0}};
+    const auto data = reinterpret_cast<uintptr_t>(stored.data);
+    const auto read = [](uintptr_t location, void* output, uint32_t size) { std::memcpy(output, reinterpret_cast<const void*>(location), size); return true; };
+    CHECK(native_calls::legacy_string(data, 16, read) == L"abc");
+    stored.length = 0;
+    CHECK(native_calls::legacy_string(data, 16, read).empty());
+    const auto fails = [&](auto call) {
+        try { (void)call(); return false; }
+        catch (const std::exception&) { return true; }
+    };
+    stored.length = 17;
+    CHECK(fails([&] { return native_calls::legacy_string(data, 16, read); }));   // longer than the text limit
+    stored.length = -1;
+    CHECK(fails([&] { return native_calls::legacy_string(data, 16, read); }));   // a corrupt header
+    CHECK(fails([&] { return native_calls::legacy_string(0, 16, read); }));      // no string at all
+    stored.length = 3;
+    CHECK(fails([&] { return native_calls::legacy_string(data, 16, [](uintptr_t, void*, uint32_t) { return false; }); }));
+}
+
+void signature_readiness_tests() {
+    uint64_t now = 100;
+    std::vector<uint32_t> sleeps;
+    const auto clock = [&] { return now; };
+    const auto pause = [&](uint32_t milliseconds) { sleeps.push_back(milliseconds); now += milliseconds; };
+    CHECK(await_signatures(25, 10, [] { return true; }, clock, pause));
+    CHECK(now == 100 && sleeps.empty());
+    CHECK(await_signatures(25, 10, [&] { return now >= 120; }, clock, pause));
+    CHECK(now == 120 && sleeps == std::vector<uint32_t>({10, 10}));
+    sleeps.clear();
+    CHECK(!await_signatures(25, 10, [] { return false; }, clock, pause));
+    CHECK(now == 145 && sleeps == std::vector<uint32_t>({10, 10, 5}));
+    sleeps.clear();
+    CHECK(await_signatures(5, 100, [&] { return now == 150; }, clock, pause));
+    CHECK(now == 150 && sleeps == std::vector<uint32_t>({5}));
+    sleeps.clear();
+    CHECK(!await_signatures(5, 100, [&] { now += 6; return false; }, clock, pause));
+    CHECK(sleeps.empty());
+    CHECK(!await_signatures(5, 100, [&] { now += 6; return true; }, clock, pause));
+    bool awakened = false;
+    unsigned attempts = 0;
+    CHECK(!await_signatures(5, 100, [&] { ++attempts; return awakened; }, clock,
+        [&](uint32_t milliseconds) { now += milliseconds + 1; awakened = true; }));
+    CHECK(attempts == 1);
+    for (const auto limits : {std::pair{0u, 10u}, std::pair{10u, 0u}}) {
+        bool rejected = false;
+        try { (void)await_signatures(limits.first, limits.second, [] { return true; }, clock, pause); }
+        catch (const std::invalid_argument&) { rejected = true; }
+        CHECK(rejected);
+    }
+}
 void legacy_readiness_tests() {
     std::array<uint8_t, 512> memory{};
     constexpr uintptr_t application = 0x1000, manager = 0x1100;
@@ -140,6 +348,14 @@ __declspec(naked) void esi_chat() {
         mov esi, 12345678h
         ret 8
     }
+}
+uint8_t __fastcall notifying_edit(uintptr_t edit, void*, const BorrowedString* text, uint8_t quiet) {
+    arguments.instance = edit; arguments.text = copied(text); arguments.buttons = quiet;
+    return 1;
+}
+uint8_t __fastcall plain_edit(uintptr_t edit, void*, const BorrowedString* text) {
+    arguments.instance = edit; arguments.text = copied(text); arguments.buttons = -1;
+    return 1;
 }
 void* __cdecl sized_allocate(uint32_t size) {
     arguments.color = size;
@@ -276,15 +492,32 @@ void native_call_tests() {
     try { (void)native_calls::construct(0, 0, &dialog, heading, text, 2, 0, 0); }
     catch (const std::invalid_argument&) { rejected = true; }
     CHECK(rejected);
+    // Each edit setter pops its own arguments; a mismatched count leaves the stack moved.
+    const uintptr_t edits[]{reinterpret_cast<uintptr_t>(&notifying_edit), reinterpret_cast<uintptr_t>(&plain_edit)};
+    for (uint32_t abi = 1; abi <= 2; ++abi) {
+        uintptr_t before = 0, after = 0;
+        __asm mov before, esp
+        native_calls::set_edit_text(abi, edits[abi - 1], 555, text);
+        __asm mov after, esp
+        CHECK(before == after);
+        CHECK(arguments.instance == 555 && arguments.text == body && arguments.buttons == (abi == 1 ? 0 : -1));
+    }
+    rejected = false;
+    try { native_calls::set_edit_text(3, edits[1], 555, text); }
+    catch (const std::invalid_argument&) { rejected = true; }
+    CHECK(rejected);
 }
 struct Fixture final : Adapter {
     std::vector<Completion> callbacks;
     std::vector<Request> requests;
+    std::vector<std::string> callers;
     bool supported = true, ready = true, throws = false;
     std::function<void()> synchronous;
-    std::vector<Capability> capabilities() override { return {{"messageBox", supported, ready, {}, {}}, {"chat", supported, ready, {}, {}}, {"notification", supported, ready, {}, {}}}; }
-    void submit(const std::string&, Request request, Completion complete) override {
+    std::vector<Capability> capabilities() override { return {{"messageBox", supported, ready, {}, {}}, {"chat", supported, ready, {}, {}}, {"notification", supported, ready, {}, {}},
+        {"control.inspect", supported, ready, {}, {}}, {"control.setText", supported, ready, {}, {}}, {"control.addButton", supported, ready, {}, {}}, {"control.remove", supported, ready, {}, {}}, {"control.activate", supported, ready, {}, {}}, {"control.setEnabled", supported, ready, {}, {}}, {"control.events", supported, ready, {}, {}}}; }
+    void submit(const std::string& caller, Request request, Completion complete) override {
         if (throws) throw std::runtime_error("fixture");
+        callers.push_back(caller);
         requests.push_back(std::move(request));
         callbacks.push_back(std::move(complete));
         const auto task = synchronous;
@@ -301,8 +534,194 @@ void rejects(Service& service, const std::string& payload) {
     try { (void)service.handle("test.a", payload); } catch (const std::invalid_argument&) { rejected = true; }
     CHECK(rejected);
 }
+void control_registry_tests() {
+    ControlRegistry registry(8);
+    std::vector<ControlSnapshot> tree{
+        {1, 1, {{}, "Ui/DlgCreateRoom.ui", "", "form", "Create room", true}},
+        {2, 1, {{}, "Ui/DlgCreateRoom.ui", "edtRoomTitle", "edit", "Existing title", true}},
+        {3, 1, {{}, "Ui/DlgCreateRoom.ui", "btnGameMode", "button", "Normal", true}},
+        {4, 1, {{}, "Ui/DlgCreateRoom.ui", "btnGameMode", "button", "Normal", true}},
+        {5, 5, {{}, "Ui/DlgOther.ui", "edtRoomTitle", "edit", "Other title", true}}};
+    Request set;
+    set.kind = "control.setText";
+    set.target.form = "ui\\dlgcreateroom.ui";
+    set.target.name = "edtRoomTitle";
+    // An exact form/name selector never needs the old text to be supplied.
+    auto selected = registry.select("panel.a", set, tree);
+    CHECK(selected.size() == 1 && selected[0].object == 2);
+    auto description = registry.describe("panel.a", selected);
+    CHECK(!description[0].id.empty());
+    const auto first_id = description[0].id;
+    set.target = {};
+    set.target.id = first_id;
+    CHECK(registry.select("panel.a", set, tree).size() == 1);
+    CHECK(registry.select("panel.b", set, tree).empty());
+    set.target = {};
+    set.target.name = "edtRoomTitle";
+    CHECK(registry.select("panel.a", set, tree).size() == 2);
+    set.target.text = "Other title";
+    CHECK(registry.select("panel.a", set, tree).front().object == 5);
+    set.target.text = "";
+    CHECK(registry.select("panel.a", set, tree).empty());
+    set.target = {};
+    set.target.form = "Ui/DlgCreateRoom.ui";
+    CHECK(registry.select("panel.a", set, tree).front().object == 1);
+    set.kind = "control.inspect";
+    CHECK(registry.select("panel.a", set, tree).size() == 4);
+    set.kind = "control.addButton";
+    CHECK(registry.select("panel.a", set, tree).size() == 1);
+    set.target = {};
+    set.target.name = "btnGameMode";
+    set.kind = "control.setText";
+    CHECK(registry.select("panel.a", set, tree).size() == 2);
+    tree[2].info.array_index = 0; tree[3].info.array_index = 1;
+    set.target.array_index = 0;
+    CHECK(registry.select("panel.a", set, tree).size() == 1 && registry.select("panel.a", set, tree).front().object == 3);
+    set.target.array_index = 1;
+    CHECK(registry.select("panel.a", set, tree).front().object == 4);
+    set.target.array_index = 2;
+    CHECK(registry.select("panel.a", set, tree).empty());
+    auto button = tree[2].info;
+    CHECK(button_activation(button) == ButtonActivation::disabled);
+    button.selected = true;
+    CHECK(button_activation(button) == ButtonActivation::already_selected);
+    button.selected = false;
+    CHECK(button_activation(button) == ButtonActivation::disabled);
+    button.enabled = true;
+    CHECK(button_activation(button) == ButtonActivation::ready);
+    button.kind = "label";
+    CHECK(button_activation(button) == ButtonActivation::unsupported);
+    registry.invalidate(2);
+    set.target = {};
+    set.target.id = first_id;
+    CHECK(registry.select("panel.a", set, tree).empty());
+    const auto replacement = registry.describe("panel.a", {tree[1]})[0].id;
+    CHECK(replacement != first_id);
+    registry.refresh({tree[0]});
+    set.target.id = replacement;
+    CHECK(registry.select("panel.a", set, tree).empty());
+    ControlRegistry bounded(1);
+    bool full = false;
+    try { (void)bounded.describe("a", {tree[0], tree[1]}); } catch (const std::length_error&) { full = true; }
+    CHECK(full);
+    CHECK(bounded.describe("a", {tree[0]}).size() == 1);
+    ControlEvents events(2, 2);
+    events.reserve("a"); events.reserve("b");
+    Request poll_request;
+    poll_request.operation_id = "poll";
+    events.click("a", "a-1");
+    events.click("b", "b-1");
+    const auto first = events.poll("a", poll_request);
+    CHECK(first.events.size() == 1 && first.events[0].control_id == "a-1" && first.cursor == 1);
+    CHECK(events.poll("a", poll_request).events.size() == 1);
+    events.click("a", "a-2");
+    CHECK(events.poll("a", poll_request).reason == "eventHistoryLost");
+    CHECK(events.poll("b", poll_request).status == "completed");
+    poll_request.after_sequence = 1;
+    const auto next = events.poll("a", poll_request);
+    CHECK(next.events.size() == 1 && next.events[0].sequence == 2 && next.cursor == 2);
+    CHECK(events.poll("b", poll_request).events.empty());
+    CHECK(events.poll("unknown", poll_request).reason == "invalidEventCursor");
+    bool owners_full = false;
+    try { events.reserve("c"); } catch (const std::length_error&) { owners_full = true; }
+    CHECK(owners_full);
+}
+void control_service_tests() {
+    Fixture adapter;
+    Service service("fixture", adapter, {16, 32});
+    const auto command = [](const char* id, const char* kind, const std::string& fields = "") {
+        return std::string("action='invoke'\noperation_id='") + id + "'\nkind='" + kind + "'\n" + fields;
+    };
+    const auto set = command("set", "control.setText", "text=''\nmaximum_length=128\n[target]\nform='Ui/DlgCreateRoom.ui'\nname='edtRoomTitle'\n");
+    CHECK(contains(service.handle("host", "owner_scope='package.a'\n" + set), "queued"));
+    CHECK(adapter.callers[0] == "host:package.a");
+    CHECK(adapter.requests[0].maximum_length == 128 && !adapter.requests[0].target.text);
+    CHECK(contains(service.handle("host", "owner_scope='package.b'\n" + poll("set")), "operationUnavailable"));
+    CHECK(contains(service.handle("another", "owner_scope='package.a'\n" + poll("set")), "operationUnavailable"));
+    Result result{"set", "completed", {}, {}};
+    result.controls.push_back({"control-1", "Ui/DlgCreateRoom.ui", "edtRoomTitle", "edit", "", true, 82, 6, 344, 23, 128});
+    adapter.callbacks[0](result);
+    const auto completed = service.handle("host", "owner_scope='package.a'\n" + poll("set"));
+    CHECK(contains(completed, "maximumLength") && contains(completed, "edtRoomTitle") && contains(completed, "completed"));
+    const auto auto_set = command("search", "control.setText", "text='Replacement'\n[target]\ntext='Current'\n");
+    CHECK(contains(service.handle("host", auto_set), "queued"));
+    CHECK(adapter.requests.back().target.text == "Current");
+    adapter.callbacks.back()({"search", "ambiguous", {}, "multipleControls"});
+    CHECK(contains(service.handle("host", poll("search")), "ambiguous"));
+    CHECK(contains(service.handle("host", command("events", "control.events", "after_sequence=12\n")), "queued"));
+    Result events{"events", "completed", {}, {}};
+    events.events.push_back({13, "control-1", "click"}); events.cursor = 13;
+    adapter.callbacks.back()(events);
+    const auto polled = service.handle("host", poll("events"));
+    CHECK(contains(polled, "controlId") && contains(polled, "cursor") && contains(polled, "click"));
+    CHECK(contains(service.handle("host", command("add", "control.addButton", "text='Modes'\n[target]\nform='Ui/DlgCreateRoom.ui'\n[definition]\nname='modeExtension'\nx=300\ny=623\nwidth=100\nheight=25\n")), "queued"));
+    CHECK(adapter.requests.back().definition->width == 100);
+    CHECK(contains(service.handle("host", command("add-by-id", "control.addButton", "text='Modes'\n[target]\nid='control-form'\n[definition]\nname='modeExtension'\nx=300\ny=621\nwidth=100\nheight=25\n")), "queued"));
+    CHECK(adapter.requests.back().target.form.empty() && adapter.requests.back().target.id == "control-form");
+    CHECK(contains(service.handle("host", command("activate", "control.activate", "[target]\nform='Ui/DlgCreateRoom.ui'\nname='btnGameMode'\narray_index=0\n")), "queued"));
+    CHECK(adapter.requests.back().target.array_index == 0);
+    // The service accepts the enabled flag it parses: Mode Extension's look of an unselected mode depends on it.
+    CHECK(contains(service.handle("host", command("enable", "control.setEnabled", "enabled=true\n[target]\nid='control-mode'\n")), "queued"));
+    CHECK(adapter.requests.back().kind == "control.setEnabled" && adapter.requests.back().enabled == true);
+    CHECK(contains(service.handle("host", command("disable", "control.setEnabled", "enabled=false\n[target]\nid='control-mode'\n")), "queued"));
+    CHECK(adapter.requests.back().enabled == false);
+    // A re-enabled mode button is still the selection: its value and selected state travel together, and a reply with the
+    // value alone is refused instead of reaching the launcher as a snapshot it rejects.
+    ControlInfo toggled{"control-mode", "Ui/DlgCreateRoom.ui", "btnGameMode", "button", "", true};
+    toggled.array_index = 0; toggled.selection_value = 1; toggled.selected = true;
+    Result disabled{"disable", "completed", {}, {}}; disabled.controls.push_back(toggled);
+    adapter.callbacks.back()(disabled); adapter.callbacks.pop_back();
+    toggled.enabled = true; toggled.selected.reset();
+    Result torn{"enable", "completed", {}, {}}; torn.controls.push_back(toggled);
+    adapter.callbacks.back()(torn); adapter.callbacks.pop_back();
+    const auto disabled_reply = service.handle("host", poll("disable"));
+    CHECK(contains(disabled_reply, "completed") && contains(disabled_reply, "\"selected\""));
+    CHECK(contains(service.handle("host", poll("enable")), "invalidAdapterResult"));
+    Result activation{"activate", "completed", {}, "alreadySelected"};
+    ControlInfo mode{"control-mode", "Ui/DlgCreateRoom.ui", "btnGameMode", "button", "", true};
+    mode.enabled = false; mode.array_index = 0; mode.selection_value = 1; mode.selected = true;
+    activation.controls.push_back(mode);
+    adapter.callbacks.back()(activation);
+    const auto activated = service.handle("host", poll("activate"));
+    CHECK(contains(activated, "arrayIndex") && contains(activated, "selectionValue") && contains(activated, "selected") && contains(activated, "enabled") && contains(activated, "alreadySelected"));
+    CHECK(contains(service.handle("host", command("inspect-mode", "control.inspect", "[target]\nname='btnGameMode'\narray_index=0\n")), "queued"));
+    mode.selected = false;
+    Result inspected_mode{"inspect-mode", "completed", {}, {}};
+    inspected_mode.controls.push_back(mode);
+    adapter.callbacks.back()(inspected_mode);
+    const auto unselected = service.handle("host", poll("inspect-mode"));
+    const auto selected_key = unselected.find("\"selected\"");
+    CHECK(selected_key != std::string::npos && unselected.compare(unselected.find_first_not_of(" :\t\r\n", selected_key + 10), 5, "false") == 0);
+    rejects(service, command("bad", "control.setText"));
+    rejects(service, command("bad", "control.setText", "text='unfiltered'"));
+    rejects(service, command("bad", "control.remove"));
+    rejects(service, command("bad", "control.activate"));
+    rejects(service, command("bad", "control.activate", "text='unexpected'\n[target]\nname='btnGameMode'\narray_index=0"));
+    rejects(service, command("bad", "control.activate", "[target]\narray_index=-1"));
+    rejects(service, command("bad", "control.activate", "[target]\narray_index=0"));
+    rejects(service, command("bad", "control.inspect", "text='unexpected'"));
+    rejects(service, command("bad", "control.inspect", "maximum_length=50"));
+    rejects(service, command("bad", "control.setEnabled", "[target]\nid='control-mode'"));
+    rejects(service, command("bad", "control.setEnabled", "enabled='yes'\n[target]\nid='control-mode'"));
+    rejects(service, command("bad", "control.setEnabled", "enabled=true\ntext='x'\n[target]\nid='control-mode'"));
+    rejects(service, command("bad", "control.inspect", "enabled=true"));
+    rejects(service, command("bad", "control.setText", "text='x'\nmaximum_length=0"));
+    rejects(service, command("bad", "control.inspect", "[target]\nform='../Dlg.ui'"));
+    rejects(service, command("bad", "control.events", "after_sequence=-1"));
+    rejects(service, command("bad", "control.events", "[target]\nid='control-1'"));
+    rejects(service, "owner_scope='bad:scope'\n" + command("bad", "control.inspect"));
+    rejects(service, command("bad", "control.addButton", "text='x'"));
+    rejects(service, command("bad", "notification", "[target]\nname='native'"));
+}
 }
 int main() {
+    selection_record_tests();
+    selection_member_tests();
+    inline_selection_member_tests();
+    legacy_string_tests();
+    signature_readiness_tests();
+    control_registry_tests();
+    control_service_tests();
     legacy_readiness_tests();
     native_calls::detach_legacy_message(reinterpret_cast<uintptr_t>(&detach_dialog), &arguments);
     CHECK(arguments.instance == 1);

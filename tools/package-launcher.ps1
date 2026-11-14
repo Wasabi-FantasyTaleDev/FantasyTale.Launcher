@@ -24,7 +24,7 @@ if ($Version -and $Version -cne $repositoryVersion) {
     throw 'Update Version in Directory.Build.props first. Package and local build versions must use the same value.'
 }
 $Version = $repositoryVersion
-$deprecatedMaxVersion = [string]$versionProperties.Project.PropertyGroup.LauncherDeprecatedMaxVersion
+$deprecatedBeforeVersion = [string]$versionProperties.Project.PropertyGroup.LauncherDeprecatedBeforeVersion
 if (!$GatewayArtifacts) { throw 'Supply the reviewed Gateway artifact directory before packaging this release.' }
 & python (Join-Path $repository 'tools/package-gateway.py') --artifacts $GatewayArtifacts
 if ($LASTEXITCODE -ne 0) { throw 'Gateway provenance verification failed before building the Launcher.' }
@@ -121,8 +121,8 @@ $policy = "schema = 2`n[[sources]]`nname = $(Quote-Toml $displaySourceName)`nkin
 Write-Utf8 (Join-Path $package 'launcher-update.toml') $policy
 $config = "input = $(Quote-Toml $package)`noutput = $(Quote-Toml $public)`nplatform = $(Quote-Toml $Platform)`nversion = $(Quote-Toml $Version)`nrevision = $Revision`nfeed_path = $(Quote-Toml $feed)`nsource_prefix = $(Quote-Toml $SourcePrefix)`n"
 $configuration = Join-Path $destination 'publish.toml'
-if ($deprecatedMaxVersion) {
-    $config += "deprecated_max_version = $(Quote-Toml $deprecatedMaxVersion)`n"
+if ($deprecatedBeforeVersion) {
+    $config += "deprecated_before_version = $(Quote-Toml $deprecatedBeforeVersion)`n"
 }
 Write-Utf8 $configuration $config
 & dotnet run --project (Join-Path $repository 'tools/publish-launcher') -c Release -- $configuration

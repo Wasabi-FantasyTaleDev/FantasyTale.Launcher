@@ -2,7 +2,7 @@
 import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { localized } from '../i18n'
 import { isRunning, refreshInstances, selectGame, state } from '../state'
 import type { StorePackage, StoreSource } from '../store/types'
@@ -48,7 +48,7 @@ async function browse() {
 }
 async function install(overwrite = false) {
   if (admissionDone.value) { close(); return }
-  if (busy.value || !inHost || !build.value) return
+  if (busy.value || !(inHost || !!demoMode?.enabled) || !build.value) return
   const current = revision, item = { ...props.item }, source = { ...props.source }, selectedBuild = build.value
   const selectedPath = path.value, selectedName = name.value, selectedPending = pending.value
   busy.value = true; error.value = ''
@@ -80,17 +80,16 @@ async function install(overwrite = false) {
 }
 </script>
 <template>
-  <WDialog :open="open" :title="t('install.title')" :primary-text="t(admissionDone ? 'updates.close' : busy ? 'install.starting' : 'install.install')" :close-text="t('dialog.cancel')" :primary-disabled="busy || !admissionDone && (components.loading.value || !!components.error.value || !inHost || !build || !!pending || !!target && isRunning(target))" :primary-busy="busy" @close="close" @primary="install()">
+  <WDialog :open="open" :title="t('install.title')" :primary-text="t(admissionDone ? 'updates.close' : busy ? 'install.starting' : 'install.install')" :close-text="t('dialog.cancel')" :primary-disabled="busy || !admissionDone && (components.loading.value || !!components.error.value || !(inHost || !!demoMode?.enabled) || !build || !!pending || !!target && isRunning(target))" :primary-busy="busy" @close="close" @primary="install()">
     <div class="form-stack">
-      <DownloadTaskProgress v-if="busy" pending />
       <InstallationTaskList v-if="tasks.length" :tasks="tasks" />
       <template v-else>
-      <StorePluginInstallList :items="[{ item, source }]" />
+      <StorePluginInstallList :items="[{ item, source }]"><DownloadTaskProgress v-if="busy" pending /></StorePluginInstallList>
       <label class="field"><span>{{ t('install.target') }}</span><WComboBox v-model="target" :options="options" :disabled="busy" /></label>
       <WContentTransition><div :key="target ? 'existing' : 'new'" class="form-stack">
         <template v-if="!target">
           <label class="field"><span>{{ t('live.name') }}</span><WTextBox v-model="name" :placeholder="localized(build?.name)" :maxlength="128" :disabled="busy" /></label>
-          <label class="field"><span>{{ t('live.source') }}</span><div class="input-action"><WTextBox v-model="path" :placeholder="t('live.installPathDefault')" :disabled="busy" /><WButton :disabled="busy || !inHost" @click="browse">{{ t('live.browse') }}</WButton></div></label>
+          <label class="field"><span>{{ t('live.source') }}</span><div class="input-action"><WTextBox v-model="path" :placeholder="t('live.installPathDefault')" :disabled="busy" /><WButton :disabled="busy || !(inHost || !!demoMode?.enabled)" @click="browse">{{ t('live.browse') }}</WButton></div></label>
         </template>
         <template v-else><p class="muted">{{ t('install.replace') }}</p><p class="install-path">{{ selected?.installationPath }}</p></template>
       </div></WContentTransition>

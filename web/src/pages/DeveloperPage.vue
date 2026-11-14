@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { prefs } from '../theme'
-import { call } from '../bridge'
+import { call, demoMode } from '../bridge'
 import { state } from '../state'
 import PageBody from '../components/PageBody.vue'
 import WSelectorBar from '../controls/WSelectorBar.vue'
@@ -12,6 +12,7 @@ import WToggleSwitch from '../controls/WToggleSwitch.vue'
 import WExpander from '../controls/WExpander.vue'
 import NativeGameUiTests from '../components/NativeGameUiTests.vue'
 import ResourceOverrideTests from '../components/ResourceOverrideTests.vue'
+import DemoModeTab from '../components/DemoModeTab.vue'
 
 const { t } = useI18n()
 const tab = ref('options')
@@ -42,11 +43,12 @@ const tabs = computed(() => [
   { key: 'sources', label: t('developerMode.tabs.sources') },
   { key: 'nativeUi', label: t('nativeUi.title') },
   { key: 'resources', label: t('resourceOverrides.title') },
+  { key: 'demo', label: t('developerMode.tabs.demo') },
 ])
 </script>
 
 <template>
-  <section v-if="prefs.developerMode" class="page developer-page">
+  <section v-if="prefs.developerMode || demoMode?.enabled" class="page developer-page">
     <header class="page-header"><h1 class="page-title">{{ t('developerMode.navigation') }}</h1></header>
     <WSelectorBar v-model="tab" :items="tabs" compact-indicator class="developer-tabs" :aria-label="t('developerMode.navigation')" />
     <WContentTransition>
@@ -66,6 +68,7 @@ const tabs = computed(() => [
         </div>
         <NativeGameUiTests v-else-if="tab === 'nativeUi'" />
         <ResourceOverrideTests v-else-if="tab === 'resources'" />
+        <DemoModeTab v-else-if="tab === 'demo'" />
         <!-- TODO: Implement store-source management without storing credentials in web-view preferences. -->
         <p v-else class="developer-placeholder">{{ t('developerMode.pending') }}</p>
       </PageBody>

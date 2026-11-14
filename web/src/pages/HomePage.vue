@@ -3,10 +3,10 @@ import PageBody from '../components/PageBody.vue'
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, on, type HostingProfile } from '../bridge'
+import { call, demoMode, inHost, on, type HostingProfile } from '../bridge'
 import { localized, clientRegion } from '../i18n'
 import { clientVersionCaption } from '../clientVersion'
-import { gameInstances, gamePreparing, gameReady, homeGames, isRunning, perform, selectGame, selectedBuild, selectedGame, gameServers, selectedServer, loginRequired, loginPolicy, navigationEntries, clientLanguages, isClientLanguageInstalled, languageNames, setClientLanguage, refreshServices, refreshServers, selectedInstance, state } from '../state'
+import { gameInstances, gamePreparing, gameReady, homeGames, isRunning, perform, selectGame, selectedBuild, selectedGame, gameServers, selectedServer, buildNotServed, loginRequired, loginPolicy, navigationEntries, clientLanguages, isClientLanguageInstalled, languageNames, setClientLanguage, refreshServices, refreshServers, selectedInstance, state } from '../state'
 import PluginSchemePicker from '../components/PluginSchemePicker.vue'
 import { ensurePluginScheme, pluginSchemesBusy } from '../state'
 import AccountPicker from '../components/AccountPicker.vue'
@@ -29,9 +29,17 @@ import FluentIcon from '../controls/FluentIcon.vue'
 import WProgressRing from '../controls/WProgressRing.vue'
 import { requestStop } from '../state'
 import { requestRecommendations, dismissRecommendations } from '../plugins/recommendations'
+import { requestPluginPolicy } from '../plugins/pluginPolicy'
 import { requestLaunchWarnings, finishLaunchWarnings } from '../plugins/launchWarnings'
 import { launchWithResourceChoices, finishResourceConflicts } from '../plugins/resourceConflicts'
 import { requestRequiredUpdates, finishRequiredUpdates } from '../plugins/launchUpdates'
+import ServerMaintenanceDialog from '../components/ServerMaintenanceDialog.vue'
+import ServerNoticeDialog from '../components/ServerNoticeDialog.vue'
+import ServerNoticeListDialog from '../components/ServerNoticeListDialog.vue'
+import MarkdownText from '../components/MarkdownText.vue'
+import { accountSection, accountSectionsShown, defaultSection, loadServerStatus, pendingAuthSection, serverStatus } from '../servers/sections'
+import { selectAccount } from '../state'
+import type { ServerNotice, ServerStatus } from '../bridge'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -110,6 +118,77 @@ let localAttempt = 0
 const launchStarting = computed(() => localStarting.value || launchPreparing.value || state.running.find(r => r.instanceId === selectedInstance.value?.id)?.hook?.state === 'starting')
 const pendingLaunch = ref<{ instanceId: string; serverId: string; username: string | undefined; tasks: string[] }>()
 const pluginTransfers = ref<DownloadTask[]>([])
+// Start first checks the servers: while any is under maintenance the player sees every server as a card and continues
+// only when one of their section can be entered. A status that cannot be read never blocks the launch; the game server
+// itself refuses entry during maintenance.
+const maintenanceStatus = ref<ServerStatus | null>(null)
+// Servers that cannot be entered when the launch continues; the gateway leaves them out of the server list.
+let unavailableServers: number[] = []
+let finishMaintenance: ((proceed: boolean) => void) | undefined
+function answerMaintenance(proceed: boolean) { const resolve = finishMaintenance; finishMaintenance = undefined; maintenanceStatus.value = null; resolve?.(proceed) }
+// The section the player starts in. It follows the signed-in account, except that sections sharing the default
+// section's sign-in can all be played with the same account.
+const playSection = ref<string | null>(null)
+const currentAccountSection = () => accountSectionsShown() ? state.account?.section ?? null : defaultSection(serverStatus.value)
+// Play here only selects another, still open section and the dialog stays open, so the launch goes on only when the
+// player presses Continue. A section with the same sign-in keeps the account; a separate one switches to the saved
+// account there (the same username first), or closes the dialog and opens the sign-in when none is saved.
+const switchingSection = ref(false)
+async function playInSection(section: string) {
+  if (switchingSection.value) return
+  const target = accountSection(section)
+  if (target === currentAccountSection()) { playSection.value = section; return }
+  const saved = state.accounts.find(entry => entry.account.section === target && entry.account.username === state.account?.username)
+    ?? state.accounts.find(entry => entry.account.section === target)
+  if (!saved) { answerMaintenance(false); pendingAuthSection.value = section; state.authOpen = true; return }
+  switchingSection.value = true
+  try { await selectAccount(saved.account.username, target); playSection.value = section }
+  catch (error) { state.requestFailure = error as Error; state.error = (error as Error).message }
+  finally { switchingSection.value = false }
+}
+async function checkServers(current: () => boolean): Promise<boolean> {
+  if (!(inHost || !!demoMode?.enabled)) return true
+  let status: ServerStatus
+  unavailableServers = []
+  try { status = await loadServerStatus() } catch { return current() }
+  if (!current()) return false
+  unavailableServers = status.servers.filter(server => server.state !== 'online').map(server => server.id)
+  if (!status.sections.some(section => section.id === playSection.value) || accountSection(playSection.value, status) !== currentAccountSection())
+    playSection.value = currentAccountSection()
+  if (!status.servers.some(server => server.state === 'maintenance')) return true
+  maintenanceStatus.value = status
+  return await new Promise<boolean>(resolve => { finishMaintenance = resolve }) && current()
+}
+// Then the server's notices the player has not seen yet; each is marked seen once shown, so it appears only once.
+const startNotices = ref<ServerNotice[]>([])
+let finishNotices: (() => void) | undefined
+function noticesDone() { const resolve = finishNotices; finishNotices = undefined; startNotices.value = []; resolve?.() }
+async function showNotices(serverId: string, current: () => boolean): Promise<boolean> {
+  if (!(inHost || !!demoMode?.enabled)) return true
+  const section = playSection.value ?? state.account?.section ?? undefined
+  let notices: ServerNotice[]
+  try { notices = await call('servers.notices', { serverId, section }) } catch { return current() }
+  if (!current() || !notices.length) return current()
+  startNotices.value = notices
+  await new Promise<void>(resolve => { finishNotices = resolve })
+  try { await call('servers.markNoticesSeen', { serverId, section, ids: notices.map(notice => notice.id) }) } catch { /* shown again next time */ }
+  return current()
+}
+// Show All lists every published notice as cards, from the notice popup or the button beside the server picker.
+const allNotices = ref<{ open: boolean; loading: boolean; error: string; notices: ServerNotice[] }>({ open: false, loading: false, error: '', notices: [] })
+let allNoticesRequest = 0
+async function openAllNotices() {
+  const serverId = state.selectedServerId, request = ++allNoticesRequest
+  const section = playSection.value ?? state.account?.section ?? undefined
+  allNotices.value = { open: true, loading: true, error: '', notices: [] }
+  try {
+    const notices = await call('servers.notices', { serverId, section, all: true })
+    if (request !== allNoticesRequest) return
+    allNotices.value = { ...allNotices.value, loading: false, notices }
+    if (notices.length) void call('servers.markNoticesSeen', { serverId, section, ids: notices.map(notice => notice.id) }).catch(() => {})
+  } catch (error) { if (request === allNoticesRequest) allNotices.value = { ...allNotices.value, loading: false, error: (error as Error).message } }
+}
+function closeAllNotices() { ++allNoticesRequest; allNotices.value = { ...allNotices.value, open: false } }
 let finishTransfers: ((answer: 'wait' | 'now' | 'cancel') => void) | undefined, alive = true
 function finishPluginTransfers(answer: 'wait' | 'now' | 'cancel') {
   const resolve = finishTransfers; finishTransfers = undefined; pluginTransfers.value = []; resolve?.(answer)
@@ -138,12 +217,12 @@ const versionChoice = computed({ get: () => selectedInstance.value ? `instance:$
   set: (value: string) => { if (value.startsWith('instance:')) { state.selectedInstanceId = value.slice(9); state.selectedBuildId = selectedInstance.value?.build ?? '' } else { state.selectedInstanceId = ''; state.selectedBuildId = value.slice(6) } } })
 const languageChoices = computed(() => clientLanguages.value.length ? clientLanguages.value.map(value => ({ value, label: isClientLanguageInstalled(value) ? languageNames[value] ?? value : t('clientLanguage.notInstalled', { language: languageNames[value] ?? value }) })) : [{ value: '', label: t('service.defaultLanguage') }])
 const servers = computed(() => [...gameServers.value.filter(s => !s.localOnly).map(s => ({ value: s.id, label: s.name })),
-  { value: 'action:local-play', label: t('localPlay.title'), disabled: selectedGame.value?.localHostingEnabled !== true || !inHost },
+  { value: 'action:local-play', label: t('localPlay.title'), disabled: selectedGame.value?.localHostingEnabled !== true || !(inHost || !!demoMode?.enabled) },
   { value: 'action:add-server', label: t('service.addServer') },
 ])
 async function chooseServer(value: string) {
   if (value === 'action:local-play') {
-    if (selectedGame.value?.localHostingEnabled !== true || !inHost || choosingLocal.value) return
+    if (selectedGame.value?.localHostingEnabled !== true || !(inHost || !!demoMode?.enabled) || choosingLocal.value) return
     const game = state.selectedGameId, build = selectedBuild.value?.id
     choosingLocal.value = true
     try {
@@ -164,7 +243,7 @@ async function chooseServer(value: string) {
   }
   else if (value === 'action:add-server') void router.push({ name: 'multiplayer', query: { tab: 'server' } })
   else {
-    if (inHost) await call('hosting.releasePrivate', { keepServerId: value })
+    if (inHost || !!demoMode?.enabled) await call('hosting.releasePrivate', { keepServerId: value })
     state.selectedServerId = value
   }
 }
@@ -228,11 +307,25 @@ async function launch() {
   cancelledResourceInstance = ''
   launchPreparing.value = true
   const attempt = ++launchAttempt
-  const deadline = Date.now() + 60000
+  // The start clock runs only while the client is really starting. Maintenance, notices, plugin recommendations,
+  // warnings and conflict choices wait for the player, so they never count towards the start timeout.
+  let deadline: number | undefined
   let stopped = false
-  const valid = () => !stopped && alive && launchAttempt === attempt && launchPreparing.value && Date.now() < deadline
+  const valid = () => !stopped && alive && launchAttempt === attempt && launchPreparing.value && (deadline === undefined || Date.now() < deadline)
   const instanceId = selectedInstance.value.id, serverId = state.selectedServerId
-  if (launchTimeout) clearTimeout(launchTimeout)
+  if (launchTimeout) { clearTimeout(launchTimeout); launchTimeout = undefined }
+  const clock: LaunchClock = {
+    start() {
+      if (launchTimeout) clearTimeout(launchTimeout)
+      deadline = Date.now() + 60000
+      launchTimeout = setTimeout(() => stopLaunchAttempt?.(true), 60000)
+      return deadline
+    },
+    pause() {
+      if (launchTimeout) { clearTimeout(launchTimeout); launchTimeout = undefined }
+      deadline = undefined
+    },
+  }
   const timeout = new Promise<void>(resolve => {
     stopLaunchAttempt = timedOut => {
       if (launchAttempt !== attempt || stopped) return
@@ -244,7 +337,8 @@ async function launch() {
       finishResourceConflicts(false)
       dismissRecommendations()
       if (timedOut) state.error = t('launch.timeout')
-      if (inHost) {
+      // Before the clock starts nothing is running in the host yet; stopping here only closes the open prompt.
+      if ((inHost || !!demoMode?.enabled) && deadline !== undefined) {
         launchCancelling.value = true
         launchCancellation = call('instances.cancelLaunch', { id: instanceId, deadlineUnixMilliseconds: deadline }).then(() => {}).catch(error => {
           if (launchAttempt === attempt && !timedOut) { state.requestFailure = error as Error; state.error = (error as Error).message }
@@ -252,12 +346,11 @@ async function launch() {
       }
       resolve()
     }
-    launchTimeout = setTimeout(() => stopLaunchAttempt?.(true), 60000)
   })
   try {
     const prepare = async () => {
       await ensurePluginScheme()
-      if (valid() && instanceId === selectedInstance.value?.id && serverId === state.selectedServerId) await prepareLaunch(valid, deadline, timeout)
+      if (valid() && instanceId === selectedInstance.value?.id && serverId === state.selectedServerId) await prepareLaunch(valid, clock, timeout)
     }
     await Promise.race([prepare(), timeout])
   } catch (error) { if (launchAttempt === attempt) { state.requestFailure = error as Error; state.error = (error as Error).message } } finally {
@@ -268,16 +361,24 @@ async function launch() {
     }
   }
 }
-async function prepareLaunch(valid: () => boolean, deadline: number, timeout: Promise<void>) {
+interface LaunchClock { start(): number; pause(): void }
+async function prepareLaunch(valid: () => boolean, clock: LaunchClock, timeout: Promise<void>) {
   if (!selectedInstance.value || !valid()) return
-  const instance = selectedInstance.value, serverId = state.selectedServerId, launchAccount = playerNameForLaunch()
-  const username = state.account?.username
-  const current = () => valid() && selectedInstance.value?.id === instance.id && state.selectedServerId === serverId && state.account?.username === username && playerNameForLaunch() === launchAccount
+  const instance = selectedInstance.value, serverId = state.selectedServerId
+  // Play here in the maintenance dialog may switch the account to another section, so the account this launch uses
+  // is fixed only once that dialog is answered.
+  if (!await checkServers(() => valid() && selectedInstance.value?.id === instance.id && state.selectedServerId === serverId)) return
+  const launchAccount = playerNameForLaunch(), username = state.account?.username, section = state.account?.section
+  const current = () => valid() && selectedInstance.value?.id === instance.id && state.selectedServerId === serverId && state.account?.username === username && state.account?.section === section && playerNameForLaunch() === launchAccount
+  if (!await showNotices(serverId, current)) return
   try {
     if (!await requestRecommendations(instance.id, instance.name, serverId, true, current)) {
       if (current()) waitForPlugins(downloadTasks.value.filter(task => task.target.kind === 'plugin' && task.target.instanceId === instance.id && !isTerminal(task) && task.stage !== 'failed'), instance.id, serverId)
       return
     }
+    if (!current()) return
+    // An unmet plugin requirement or an enabled conflict blocks the launch until the user resolves it in the prompt.
+    if (!await requestPluginPolicy(instance.id, { launching: true }, current)) return
     if (!current()) return
   } catch (error) { if (current()) { state.requestFailure = error as Error; state.error = (error as Error).message }; return }
   let confirmedWarnings: string[] | null
@@ -293,7 +394,7 @@ async function prepareLaunch(valid: () => boolean, deadline: number, timeout: Pr
   } catch (error) { if (current()) { state.requestFailure = error as Error; state.error = (error as Error).message }; return }
   let confirmedPendingPlugins: string[] = []
   try {
-    if (inHost) {
+    if (inHost || !!demoMode?.enabled) {
       const tasks = await call('plugins.launchTransfers', { instanceId: instance.id })
       if (!current()) return
       confirmedPendingPlugins = tasks.filter(task => requiredTaskIds.includes(task.id)).map(task => task.id)
@@ -312,9 +413,15 @@ async function prepareLaunch(valid: () => boolean, deadline: number, timeout: Pr
   if (!current()) return
   const success = await perform(() => Promise.race([(async () => {
     if (!current()) return
+    clock.start()
     if (state.instancesLoaded && language && language !== instance.language) await call('instances.update', { id: instance.id, name: instance.name, endpoint: instance.endpoint, language, serverId: serverId || undefined })
     if (!current()) return
-    const result = await launchWithResourceChoices(resourceConflictChoices => call('instances.launch', { id: instance.id, serverId, account: launchAccount || undefined, confirmedWarnings, confirmedPendingPlugins, confirmedRequiredPluginUpdates, resourceConflictChoices, launcherLanguage: locale.value, deadlineUnixMilliseconds: deadline }), current)
+    // Each attempt gets a fresh minute; the clock stops while the player answers a resource conflict prompt.
+    const result = await launchWithResourceChoices(resourceConflictChoices => {
+      const deadline = clock.start()
+      return call('instances.launch', { id: instance.id, serverId, section: state.account?.section ?? undefined, unavailableServers, account: launchAccount || undefined, confirmedWarnings, confirmedPendingPlugins, confirmedRequiredPluginUpdates, resourceConflictChoices, launcherLanguage: locale.value, deadlineUnixMilliseconds: deadline })
+        .catch(error => { clock.pause(); throw error })
+    }, current)
     if (!current()) return
     cancelled = 'cancelled' in result || 'timeout' in result
     if ('timeout' in result) state.error = t('launch.timeout')
@@ -377,7 +484,7 @@ async function requestLaunch() {
         </div>
         <div class="launch-action">
           <WButton class="launch-button" :class="{ 'is-starting': launchStarting, 'is-connecting': loginConnecting }" variant="accent" :aria-busy="launchStarting || loginConnecting"
-            :disabled="launchCancelling || (!launchStarting && (clientPending || loginConnecting || state.busy || pluginSchemesBusy.value || !!pendingLaunch || (!running && !!clientUpdate)))"
+            :disabled="launchCancelling || (!launchStarting && (clientPending || loginConnecting || state.busy || pluginSchemesBusy.value || !!pendingLaunch || (!running && !!clientUpdate) || (!running && buildNotServed)))"
             @click="running ? requestLaunch() : !hasClient ? (addOpen = true) : requestLaunch()">
             <WProgressRing v-if="launchStarting || loginConnecting || (clientPending && state.instancesLoading)" class="launch-spinner" :size="16" />
             <FluentIcon v-else :glyph="running ? 'completed' : clientUpdate ? 'download' : !hasClient ? 'add' : needLogin ? 'contact' : 'play'" :size="16" />
@@ -385,13 +492,14 @@ async function requestLaunch() {
           </WButton>
         </div>
       </div>
+      <p v-if="buildNotServed && !running" class="build-not-served" role="status">{{ t('live.buildNotServed') }}</p>
       <ClientUpdateStatus v-if="selectedInstance && !clientUpdate" :instance-id="selectedInstance.id" compact />
       <Transition name="resource-progress"><div v-if="resourceVisible && resourceProgress" class="resource-progress-slot"><div><HomeResourceProgress :progress="resourceProgress" @cancel="cancelResources" /></div></div></Transition>
       <HomeUpdate />
       <div v-if="hookFailed" class="server-error" role="alert"><span>{{ failedPluginNames ? t('launch.pluginsFailed', { plugins: failedPluginNames }) : t(selectedInstance?.diagnosticsEnabled ? 'launch.hookFailed' : 'launch.failed') }}</span><WButton v-if="selectedInstance?.diagnosticsEnabled" variant="subtle" @click="call('instances.openDiagnostics', { id: selectedInstance!.id })">{{ t('launch.diagnostics') }}</WButton></div>
       <div v-if="!gamePreparing" class="home-service-strips">
         <div class="service-strip server-account-strip">
-          <div class="server-group"><FluentIcon glyph="globe" :size="18" /><span class="strip-label">{{ t('home.server') }}</span><WComboBox fit-content class="strip-picker" :model-value="selectedServer?.localOnly ? 'action:local-play' : state.selectedServerId" :options="servers" @update:model-value="chooseServer" :disabled="state.busy" :placeholder="t('service.selectServer')" :aria-label="t('service.selectServer')" /><WButton v-if="selectedServer?.localOnly" variant="subtle" :disabled="state.busy || localStarting" :aria-label="t('hosting.edit')" @click="openLocalSettings"><FluentIcon glyph="settings" /></WButton></div>
+          <div class="server-group"><FluentIcon glyph="globe" :size="18" /><span class="strip-label">{{ t('home.server') }}</span><WComboBox fit-content class="strip-picker" :model-value="selectedServer?.localOnly ? 'action:local-play' : state.selectedServerId" :options="servers" @update:model-value="chooseServer" :disabled="state.busy" :placeholder="t('service.selectServer')" :aria-label="t('service.selectServer')" /><WButton v-if="selectedServer?.localOnly" variant="subtle" :disabled="state.busy || localStarting" :aria-label="t('hosting.edit')" @click="openLocalSettings"><FluentIcon glyph="settings" /></WButton><WButton v-else-if="selectedServer?.apiUrl" variant="subtle" :title="t('notices.allTitle')" :aria-label="t('notices.allTitle')" @click="openAllNotices"><FluentIcon glyph="info" /></WButton></div>
 
           <div class="language-group"><FluentIcon glyph="font" :size="18" /><span class="strip-label">{{ t('service.clientLanguage') }}</span><WComboBox fit-content class="strip-picker" :model-value="state.clientLanguage" :options="languageChoices" :disabled="!state.instancesLoaded || state.busy || running || !clientLanguages.length" :aria-label="t('service.clientLanguage')" @update:model-value="chooseClientLanguage" /></div>
           <div v-if="nameOnly" class="account-group local-name"><span class="strip-label">{{ t('localPlay.playerName') }}</span><WTextBox v-model="localPlayerName" :maxlength="32" :aria-label="t('localPlay.playerName')" :disabled="state.busy || running" /></div>
@@ -402,7 +510,7 @@ async function requestLaunch() {
       </div></div>
     </div>
     <div class="home-secondary">
-    <div v-if="selectedGame?.serviceNotice" class="service-notice" role="note"><FluentIcon glyph="info" :size="16" /><p>{{ localized(selectedGame.serviceNotice) }}</p></div>
+    <div v-if="selectedGame?.serviceNotice" class="service-notice" role="note"><FluentIcon glyph="info" :size="16" /><MarkdownText :source="localized(selectedGame.serviceNotice)" /></div>
 
 
     <div v-if="!gamePreparing && (navigationEntries.includes('instances') || navigationEntries.includes('plugins'))" class="section-heading"><h2>{{ t('live.library') }}</h2><WButton v-if="navigationEntries.includes('instances')" variant="subtle" @click="router.push('/instances')">{{ t('live.manage') }}<FluentIcon glyph="chevronRight" :size="10" /></WButton></div>
@@ -423,8 +531,11 @@ async function requestLaunch() {
     </WDialog>
     <LocalServerSetupDialog :open="localPlayOpen" :initial-build="selectedBuild?.id" :profile="localProfile" default-scope="private" select-after-save @saved="localSaved" @close="localPlayOpen = false" />
     <InstanceDialog :open="addOpen" :initial-build="selectedBuild?.id" @close="addOpen = false" />
+    <ServerMaintenanceDialog :status="maintenanceStatus" :section="playSection" :switching="switchingSection" @continue="answerMaintenance(true)" @close="answerMaintenance(false)" @switch="playInSection" />
+    <ServerNoticeDialog :notices="startNotices" @done="noticesDone" @show-all="openAllNotices" />
+    <ServerNoticeListDialog :open="allNotices.open" :notices="allNotices.notices" :loading="allNotices.loading" :error="allNotices.error" @close="closeAllNotices" />
     <WDialog :open="pluginTransfers.length > 0" :title="t('pluginUpdates.launchPendingTitle')"
-      :primary-text="t('pluginUpdates.waitAndLaunch')" :secondary-text="t('pluginUpdates.launchNow')" :close-text="t('dialog.cancel')"
+      :primary-text="t('pluginUpdates.waitAndLaunch')" :secondary-text="t('pluginUpdates.launchNow')" :close-text="t('dialog.cancel')" primary-first
       @primary="finishPluginTransfers('wait')" @secondary="finishPluginTransfers('now')" @close="finishPluginTransfers('cancel')">
       <p>{{ t('pluginUpdates.launchPendingBody') }}</p>
       <InstallationTaskList :tasks="pluginTransfers" />
@@ -576,6 +687,7 @@ async function requestLaunch() {
 }
 .server-error { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-top: 1px solid var(--card-stroke-default); font-size: 12px; color: var(--text-secondary); }
 .server-error > span { flex: 1; overflow-wrap: anywhere; }
+.build-not-served { margin: 0; padding: 8px 24px 0; font-size: 12px; color: var(--text-secondary); text-align: right; }
 @media (max-width: 700px) {
   .home-connection { gap: 16px; padding: 18px 20px; }
   .home-connection .connection-row { gap: 10px; }

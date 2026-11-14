@@ -59,15 +59,7 @@ public sealed class StoreSourceStore
         try
         {
             File.WriteAllText(temporary, text.ToString(), new UTF8Encoding(false));
-            var elapsed = System.Diagnostics.Stopwatch.StartNew();
-            while (true)
-            {
-                try { File.Move(temporary, file, true); break; }
-                // A source reader or Windows scanner may retain the replaced snapshot briefly.
-                catch (Exception error) when (OperatingSystem.IsWindows() && error is IOException or UnauthorizedAccessException
-                    && (error.HResult & 0xffff) is 5 or 32 or 33 && elapsed.Elapsed < TimeSpan.FromSeconds(1))
-                { Thread.Sleep(10); }
-            }
+            AtomicFile.Replace(temporary, file);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }

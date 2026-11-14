@@ -139,7 +139,7 @@ plugin definitions; use it when composing the unified catalog.
 | `update_mode` | Client `files` for a current file snapshot, or `release` for versioned releases |
 | `revision` | Release ordering value; use unique increasing positive values for ordered releases |
 | `authors`, `uploader` | Optional author list and uploader display name; omit uploader when empty |
-| `plugin_definition` | Schema-two inline `plugin.toml` text for plugin metadata |
+| `plugin_definition` | Schema-two inline `plugin.toml` text for plugin metadata; required for a package that declares `requires`, so its requirements are installed from the same catalog before the download |
 | `minimum_launcher_version` | Optional schema-two SemVer requirement; must agree with inline plugin metadata |
 
 Package identity is scoped to its configured source. A different source cannot

@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ban-pick": "vite --config ../tools/game-ui/ban-pick-demo/vite.config.mjs",
+    "build:ban-pick": "vue-tsc --noEmit -p ../tools/game-ui/ban-pick-demo/tsconfig.json && vite build --config ../tools/game-ui/ban-pick-demo/vite.config.mjs",
     "build": "vite build",
     "build:game-ui": "vue-tsc --noEmit -p ../tools/game-ui/tsconfig.json && node build-game-ui.mjs",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json",
     "test": "node --test tests/*.test.mjs tests/*.test.ts ../tools/game-ui/*.test.mjs",
     "test:store": "node --test tests/store-background.test.mjs tests/store-session.test.mjs tests/store-groups.test.mjs tests/store-plugin-sources.test.mjs tests/store-versions.test.mjs tests/store-updates.test.mjs",
-    "test:plugins": "node --test tests/plugin-schemes.test.mjs tests/home-plugin-downloads.test.mjs tests/plugin-library.test.mjs tests/plugin-ui-races.test.mjs tests/plugin-configuration-page.test.mjs tests/plugin-configuration-layout.test.mjs tests/store-versions.test.mjs tests/plugin-recommendations.test.mjs tests/plugin-launch-warnings.test.mjs tests/plugin-launch-updates.test.mjs",
+    "test:plugins": "node --test tests/plugin-schemes.test.mjs tests/home-plugin-downloads.test.mjs tests/plugin-library.test.mjs tests/plugin-ui-races.test.mjs tests/plugin-policy.test.mjs tests/plugin-configuration-page.test.mjs tests/plugin-configuration-layout.test.mjs tests/store-versions.test.mjs tests/plugin-recommendations.test.mjs tests/plugin-launch-warnings.test.mjs tests/plugin-launch-updates.test.mjs tests/plugin-policy-errors.test.mjs",
     "test:accounts": "node --test tests/account-load.test.mjs tests/account-expiry.test.mjs tests/account-ui-races.test.mjs tests/account-page-races.test.mjs tests/login-policy.test.mjs",
     "test:startup": "node --test tests/startup-background.test.mjs",
     "test:navigation": "node --test tests/navigation.test.mjs",
@@ -20,6 +22,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@zkl2333/freetype-wasm": "2.14.3",
+    "markdown-it": "15.0.3",
     "vue": "3.5.43",
     "vue-i18n": "11.4.18",
     "vue-router": "4.6.4"

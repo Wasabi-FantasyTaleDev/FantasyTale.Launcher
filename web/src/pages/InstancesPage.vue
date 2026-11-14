@@ -2,7 +2,7 @@
 import PageBody from '../components/PageBody.vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Instance } from '../bridge'
+import { call, demoMode, inHost, type Instance } from '../bridge'
 import { localized } from '../i18n'
 import { gameInstances, gamePreparing, isRunning, perform, selectedGame, state } from '../state'
 import ClientUpdateStatus from '../components/ClientUpdateStatus.vue'
@@ -41,7 +41,7 @@ const buildName = (id: string) => localized(selectedGame.value?.builds.find(b =>
 
 <template>
   <section class="page">
-    <header class="page-header"><div><h1 class="page-title">{{ t('instances.title') }}</h1><p class="page-desc">{{ t('instances.desc') }}</p></div><div class="header-actions"><WButton v-if="!gamePreparing && gameInstances.length" :disabled="!inHost || clientUpdates.requesting || clientUpdates.overview.checking" @click="checkClientUpdates"><FluentIcon glyph="refresh" />{{ t(clientUpdates.requesting || clientUpdates.overview.checking ? 'clientUpdates.checking' : 'clientUpdates.check') }}</WButton><WButton v-if="!gamePreparing" variant="accent" :disabled="state.busy" @click="edit('create')"><FluentIcon glyph="add" />{{ t('live.add') }}</WButton></div></header>
+    <header class="page-header"><div><h1 class="page-title">{{ t('instances.title') }}</h1><p class="page-desc">{{ t('instances.desc') }}</p></div><div class="header-actions"><WButton v-if="!gamePreparing && gameInstances.length" :disabled="!(inHost || !!demoMode?.enabled) || clientUpdates.requesting || clientUpdates.overview.checking" @click="checkClientUpdates"><FluentIcon glyph="refresh" />{{ t(clientUpdates.requesting || clientUpdates.overview.checking ? 'clientUpdates.checking' : 'clientUpdates.check') }}</WButton><WButton v-if="!gamePreparing" variant="accent" :disabled="state.busy" @click="edit('create')"><FluentIcon glyph="add" />{{ t('live.add') }}</WButton></div></header>
     <PageBody>
     <p v-if="removalNotice" class="removal-notice" role="status">{{ removalNotice }}</p>
     <div v-if="gamePreparing" class="empty-state"><FluentIcon glyph="clock" :size="40" /><h2>{{ t('live.gameComingSoon') }}</h2><p>{{ localized(selectedGame?.serviceNotice ?? undefined) || t('live.gamePending') }}</p></div>
@@ -54,9 +54,9 @@ const buildName = (id: string) => localized(selectedGame.value?.builds.find(b =>
         <!-- <span v-else class="instance-status">{{ instance.id === state.selectedInstanceId ? t('live.selected') : '' }}</span> -->
         <ClientUpdateStatus :instance-id="instance.id" hide-unmanaged />
         <div class="row-actions">
-          <WButton v-if="instance.recoveryRequired" :disabled="!inHost || isRunning(instance.id) || state.busy" @click="recovering = instance">{{ t('recovery.action') }}</WButton>
-          <WButton v-if="instance.diagnosticsEnabled" variant="subtle" :title="t('launch.diagnostics')" :aria-label="t('launch.diagnostics')" :disabled="!inHost || state.busy" @click="perform(() => call('instances.openDiagnostics', { id: instance.id }))"><FluentIcon glyph="info" /></WButton>
-          <WButton variant="subtle" :title="t('instances.menu.openFolder')" :aria-label="t('instances.menu.openFolder')" :disabled="!inHost || state.busy" @click="perform(() => call('instances.openFolder', { id: instance.id }))"><FluentIcon glyph="folderOpen" /></WButton>
+          <WButton v-if="instance.recoveryRequired" :disabled="!(inHost || !!demoMode?.enabled) || isRunning(instance.id) || state.busy" @click="recovering = instance">{{ t('recovery.action') }}</WButton>
+          <WButton v-if="instance.diagnosticsEnabled" variant="subtle" :title="t('launch.diagnostics')" :aria-label="t('launch.diagnostics')" :disabled="!(inHost || !!demoMode?.enabled) || state.busy" @click="perform(() => call('instances.openDiagnostics', { id: instance.id }))"><FluentIcon glyph="info" /></WButton>
+          <WButton variant="subtle" :title="t('instances.menu.openFolder')" :aria-label="t('instances.menu.openFolder')" :disabled="!(inHost || !!demoMode?.enabled) || state.busy" @click="perform(() => call('instances.openFolder', { id: instance.id }))"><FluentIcon glyph="folderOpen" /></WButton>
           <WButton variant="subtle" :title="t('live.editTitle')" :aria-label="t('live.editTitle')" :disabled="!state.instancesLoaded || isRunning(instance.id) || state.busy" @click="edit('edit', instance)"><FluentIcon glyph="edit" /></WButton>
           <WButton variant="subtle" :title="t('live.cloneTitle')" :aria-label="t('live.cloneTitle')" :disabled="!state.instancesLoaded || isRunning(instance.id) || state.busy" @click="edit('clone', instance)"><FluentIcon glyph="copy" /></WButton>
           <WButton variant="subtle" :title="t('instances.menu.remove')" :aria-label="t('instances.menu.remove')" :disabled="isRunning(instance.id) || state.busy" @click="confirmRemoval(instance)"><FluentIcon glyph="delete" /></WButton>

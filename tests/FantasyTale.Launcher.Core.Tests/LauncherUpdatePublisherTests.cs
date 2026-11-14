@@ -89,7 +89,7 @@ public sealed class LauncherUpdatePublisherTests : IDisposable
         var configuration = Path.Combine(_root, "publish.toml");
         var platform = "win-" + RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
         await File.WriteAllTextAsync(configuration,
-            $"input = 'input'\noutput = 'public'\nplatform = '{platform}'\nrevision = 2\nversion = '0.1.45'\ndeprecated_max_version = '0.1.38'\n");
+            $"input = 'input'\noutput = 'public'\nplatform = '{platform}'\nrevision = 2\nversion = '0.1.45'\ndeprecated_before_version = '0.1.39'\n");
         if (retiredInput)
         {
             await Assert.ThrowsAsync<InvalidDataException>(() => LauncherReleasePublisher.PublishAsync(configuration));
@@ -100,9 +100,12 @@ public sealed class LauncherUpdatePublisherTests : IDisposable
         await File.WriteAllTextAsync(Path.Combine(input, LauncherUpdatePolicy.FileName),
             "kind = 'http'\nbase_url = 'https://updates.example/'\n");
         var release = LauncherRelease.Parse(LauncherUpdatePolicy.Load(input)!, await File.ReadAllBytesAsync(index));
-        Assert.Equal("0.1.38", release.DeprecatedMaxVersion);
+        Assert.Equal("0.1.39", release.DeprecatedBeforeVersion);
         Assert.True(release.RequiresUpdate("0.1.38"));
+        Assert.True(release.RequiresUpdate("0.1.39-rc.1"));
         Assert.False(release.RequiresUpdate("0.1.39"));
+        // Launchers before 0.2.0 read the inclusive key, set to the lowest pre-release of the boundary.
+        Assert.Contains("deprecated_max_version = \"0.1.39-0\"", await File.ReadAllTextAsync(index), StringComparison.Ordinal);
         Assert.Equal(3, release.Files.Count);
         Assert.DoesNotContain(release.Files, file => file.Path == "launcher-release-policy.toml");
     }
@@ -112,7 +115,7 @@ public sealed class LauncherUpdatePublisherTests : IDisposable
     {
         var configuration = Path.Combine(_root, "publish.toml");
         await File.WriteAllTextAsync(configuration,
-            "input = 'input'\noutput = 'public'\nversion = '0.1.45'\ndeprecated_max_version = '0.1.38'\ndeprecation_transport = 'compatibility-file'\n");
+            "input = 'input'\noutput = 'public'\nversion = '0.1.45'\ndeprecated_before_version = '0.1.38'\ndeprecation_transport = 'compatibility-file'\n");
         await Assert.ThrowsAsync<DefinitionException>(() => LauncherReleasePublisher.PublishAsync(configuration));
         Assert.False(Directory.Exists(Path.Combine(_root, "public")));
     }

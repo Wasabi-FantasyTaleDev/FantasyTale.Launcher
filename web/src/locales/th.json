@@ -26,7 +26,8 @@
     "installed": "ติดตั้งแล้ว"
   },
   "dialog": {
-    "cancel": "ยกเลิก"
+    "cancel": "ยกเลิก",
+    "close": "ปิด"
   },
   "home": {
     "launch": "เริ่มเกม",
@@ -178,6 +179,7 @@
     "clientUnavailable": "No client build is available to add yet.",
     "previousGame": "Previous game: {name}",
     "nextGame": "Next game: {name}",
+    "buildNotServed": "No server node serves this client version yet.",
     "gameComingSoon": "Preparing",
     "gamePending": "This game is being prepared. Switch to another game to start playing.",
     "subtitle": "Your games, ready when you are.",
@@ -283,7 +285,8 @@
     "loginNeeded": "Sign in to this server to continue.",
     "unknown": "Not available",
     "removeServerTitle": "Remove this server?",
-    "removeServerBody": "Remove “{name}” from this device? Installed clients are kept."
+    "removeServerBody": "Remove “{name}” from this device? Installed clients are kept.",
+    "serverSection": "เซิร์ฟเวอร์"
   },
   "updates": {
     "totalSpeed": "Total download speed",
@@ -491,7 +494,8 @@
     "description": "Enable experimental features or configure and maintain store sources.",
     "tabs": {
       "options": "Developer options",
-      "sources": "Store source management"
+      "sources": "Store source management",
+      "demo": "โหมดสาธิต"
     },
     "pending": "Coming soon",
     "nsfw": {
@@ -505,7 +509,70 @@
       "passThroughDescription": "อนุญาตให้คลิกเกมนอกกล่องข้อความ มีผลในการเริ่มเกมครั้งถัดไป"
     },
     "desc": "เปิดใช้งานฟีเจอร์และเครื่องมือขั้นสูงสำหรับการพัฒนาและการดีบัก",
-    "enable": "เปิดใช้งานโหมดนักพัฒนา"
+    "enable": "เปิดใช้งานโหมดนักพัฒนา",
+    "demo": {
+      "title": "โหมดสาธิต UI",
+      "description": "เปิดใช้งานอัตโนมัติระหว่างการพัฒนาในเบราว์เซอร์ (npm run dev) ใช้ข้อมูลจำลองและแอนิเมชันแบบโต้ตอบได้โดยไม่แสดงป้ายบอกสถานะใด ๆ นอกแท็บนี้",
+      "disabledNotice": "โหมดสาธิต UI ปิดอยู่ในขณะนี้ กรุณาเปิดใช้งานด้านบนอีกครั้งเพื่อทดสอบหน้าต่างโต้ตอบและแอนิเมชันจำลอง",
+      "reset": "รีเซ็ตข้อมูลจำลอง",
+      "resetDone": "คืนค่าข้อมูลพื้นที่ทำงานจำลองเรียบร้อยแล้ว",
+      "activeTransfers": "การถ่ายโอนสาธิตที่กำลังทำงาน",
+      "groups": {
+        "store": "ร้านค้าและแอนิเมชันการดาวน์โหลด",
+        "storeDesc": "เปิดหน้าต่างติดตั้งจากร้านค้าและเริ่มแอนิเมชันความคืบหน้าการดาวน์โหลดแบบเรียลไทม์",
+        "instances": "ไคลเอนต์ ผู้เล่นหลายคน และการโฮสต์",
+        "instancesDesc": "เปิดหน้าต่างแก้ไขไคลเอนต์ เข้าสู่ระบบ รายละเอียดเซิร์ฟเวอร์ รายชื่อผู้เล่นออนไลน์ และการตั้งค่าโฮสต์ในเครื่อง",
+        "plugins": "ปลั๊กอิน นโยบาย และข้อขัดแย้ง",
+        "pluginsDesc": "ทดสอบการจัดการส่วนพึ่งพา คำแนะนำ การแจ้งเตือนก่อนเริ่ม ข้อขัดแย้งของทรัพยากร และการแจ้งเตือนกู้คืน",
+        "updates": "การอัปเดตตัวเปิดเกมและมิเรอร์",
+        "updatesDesc": "ทดสอบหน้าต่างมีอัปเดตใหม่ แอนิเมชันดาวน์โหลด การยืนยันรีสตาร์ต อัปเดตบังคับ และคำแนะนำเมื่อเกิดข้อผิดพลาด",
+        "notices": "การแจ้งเตือนและแบนเนอร์ข้อผิดพลาด",
+        "noticesDesc": "เรียกใช้การแจ้งเตือนและแบนเนอร์ข้อผิดพลาดพร้อมรายละเอียดการวินิจฉัย"
+      },
+      "actions": {
+        "storeClient": "หน้าต่างติดตั้งไคลเอนต์",
+        "storePlugin": "หน้าต่างติดตั้งปลั๊กอิน",
+        "storeServer": "หน้าต่างแพ็กเกจเซิร์ฟเวอร์",
+        "storePluginUpdates": "อัปเดตปลั๊กอินแบบกลุ่ม",
+        "storeSources": "หน้าต่างแหล่งร้านค้า",
+        "animateClient": "เริ่มแอนิเมชันติดตั้งไคลเอนต์",
+        "animatePlugin": "เริ่มแอนิเมชันดาวน์โหลดปลั๊กอิน",
+        "animateServer": "เริ่มแอนิเมชันดาวน์โหลดเซิร์ฟเวอร์",
+        "instanceAdd": "หน้าต่างเพิ่มไคลเอนต์",
+        "instanceEdit": "หน้าต่างแก้ไขไคลเอนต์",
+        "stopGame": "หน้าต่างหยุดเกม",
+        "auth": "หน้าต่างเข้าสู่ระบบ",
+        "serverDetails": "รายละเอียดเซิร์ฟเวอร์และพรีเซ็ต",
+        "serverEdit": "หน้าต่างเพิ่ม/แก้ไขเซิร์ฟเวอร์",
+        "onlinePlayers": "รายชื่อผู้เล่นออนไลน์",
+        "serverPlugins": "ปลั๊กอินแนะนำของเซิร์ฟเวอร์",
+        "directorySources": "หน้าต่างแหล่งไดเรกทอรี",
+        "hostingSetup": "หน้าต่างตั้งค่าเซิร์ฟเวอร์ในเครื่อง",
+        "hostingLog": "บันทึกการทำงานโฮสติ้ง",
+        "pluginPolicy": "หน้าต่างนโยบายปลั๊กอิน",
+        "pluginRecommend": "หน้าต่างปลั๊กอินที่แนะนำ",
+        "pluginLaunchWarning": "คำเตือนปลั๊กอินก่อนเริ่มเกม",
+        "pluginConflict": "หน้าต่างทรัพยากรขัดแย้ง",
+        "pluginRequiredUpdate": "อัปเดตปลั๊กอินที่จำเป็น",
+        "pluginSupport": "ข้อเสนอรองรับไคลเอนต์ใหม่",
+        "pluginImport": "หน้าต่างนำเข้าปลั๊กอิน",
+        "pluginSchemeShare": "หน้าต่างแชร์ชุดปลั๊กอิน",
+        "pluginRecovery": "แจ้งเตือนการกู้คืนปลั๊กอิน",
+        "pluginDeprecation": "ประกาศปลั๊กอินที่เลิกใช้",
+        "updateAvailable": "หน้าต่างมีอัปเดตพร้อมใช้งาน",
+        "updateProgress": "แอนิเมชันดาวน์โหลดอัปเดต",
+        "updateReady": "หน้าต่างพร้อมรีสตาร์ต",
+        "updateMandatory": "หน้าต่างอัปเดตบังคับ",
+        "updateFailure": "คำแนะนำเมื่ออัปเดตล้มเหลว",
+        "githubMirror": "คำแนะนำมิเรอร์ GitHub",
+        "noticeSuccess": "แจ้งเตือนปลั๊กอินสำเร็จ",
+        "noticeWarning": "แจ้งเตือนคำเตือนปลั๊กอิน",
+        "serverError": "แบนเนอร์ข้อผิดพลาดเซิร์ฟเวอร์",
+        "launchFailure": "แบนเนอร์การล้างข้อมูลหลังเริ่มเกม",
+        "instanceBusy": "แบนเนอร์ไคลเอนต์ถูกใช้งานอยู่",
+        "clearNotices": "ล้างการแจ้งเตือนและข้อผิดพลาด"
+      }
+    }
   },
   "nativeUi": {
     "ok": "OK",
@@ -957,6 +1024,18 @@
   "featureAvailability": {
     "development": "อยู่ระหว่างการพัฒนา จะพร้อมใช้งานในเวอร์ชันถัดไป"
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "เซิร์ฟเวอร์นี้ต้องใช้ปลั๊กอิน \"{plugin}\" โปรดเปิดใช้สำหรับไคลเอนต์นี้ แล้วเริ่มเกมอีกครั้ง",
+    "server_plugin_version_low": "เวอร์ชันของ \"{plugin}\" ที่ติดตั้งไว้เก่ากว่าที่เซิร์ฟเวอร์นี้อนุญาต โปรดอัปเดต แล้วเริ่มเกมอีกครั้ง",
+    "server_plugin_version_high": "เวอร์ชันของ \"{plugin}\" ที่ติดตั้งไว้ใหม่กว่าที่เซิร์ฟเวอร์นี้อนุญาต โปรดเลือกเวอร์ชันที่อนุญาต แล้วเริ่มเกมอีกครั้ง",
+    "server_plugin_policy_conflict": "เซิร์ฟเวอร์นี้ปิดใช้ \"{plugin}\" แต่ไคลเอนต์นี้จำเป็นต้องใช้ โปรดสอบถามผู้ดูแลเซิร์ฟเวอร์เกี่ยวกับกฎนี้",
+    "client_policy_conflict": "กฎสำหรับ \"{plugin}\" ขัดแย้งกันเอง โปรดสอบถามผู้ดูแลเซิร์ฟเวอร์เกี่ยวกับกฎนี้",
+    "client_policy_source_conflict": "กฎสำหรับ \"{plugin}\" ระบุแหล่งดาวน์โหลดที่ไม่มีแหล่งใดตรงกัน โปรดสอบถามผู้ดูแลเซิร์ฟเวอร์เกี่ยวกับกฎนี้",
+    "client_policy_disabled": "เซิร์ฟเวอร์นี้ปิดใช้ \"{plugin}\" แล้ว โปรดปิดสำหรับไคลเอนต์นี้ แล้วลองอีกครั้ง",
+    "plugin_policy_require_unmet": "โปรดติดตั้งหรือเปิดใช้ \"{plugin}\" ก่อน",
+    "plugin_policy_required_by": "\"{plugin}\" จำเป็นต้องใช้ปลั๊กอินนี้ โปรดปิด \"{plugin}\" ก่อน",
+    "plugin_policy_conflict_active": "ขัดแย้งกับ \"{plugin}\" โปรดปิด \"{plugin}\" ก่อน"
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "Last installation attempt",
     "phase": "Installation stage",
@@ -1302,5 +1381,86 @@
     "message": "มีการดำเนินการอื่นใช้การตั้งค่าไคลเอนต์นี้อยู่ โปรดลองอีกครั้งในอีกสักครู่",
     "title": "รายละเอียดการใช้งานไคลเอนต์",
     "explanation": "ล็อกป้องกันการเริ่มเกม ดาวน์โหลด และบันทึกการตั้งค่าแก้ไขไคลเอนต์เดียวกันพร้อมกัน งานเบื้องหลังอาจถือล็อกแม้ไม่มีหน้าต่างเกม รายละเอียดแสดงงานที่ถูกบล็อกและพาธล็อก แต่ยังไม่ระบุกระบวนการที่ถือล็อก"
+  },
+  "pluginPolicy": {
+    "title": "ขาดปลั๊กอินที่จำเป็น",
+    "launchTitle": "ขาดปลั๊กอินที่จำเป็น",
+    "disableTitle": "ปลั๊กอินอื่นต้องใช้ปลั๊กอินนี้",
+    "body": "ปลั๊กอินนี้ต้องใช้ปลั๊กอินที่จำเป็น โปรดติดตั้งหรือเปิดใช้งานก่อนดำเนินการต่อ",
+    "launchBody": "ปลั๊กอินนี้ต้องใช้ปลั๊กอินที่จำเป็น โปรดติดตั้งหรือเปิดใช้งานก่อนดำเนินการต่อ",
+    "disableBody": "ปลั๊กอินที่เปิดอยู่ด้านล่างต้องใช้ปลั๊กอินที่คุณกำลังจะปิด โปรดปิดปลั๊กอินเหล่านั้นก่อนหรือยกเลิก",
+    "group": {
+      "require": "ปลั๊กอินที่ {name} ต้องใช้",
+      "conflict": "ขัดแย้งกับ {name}"
+    },
+    "rule": {
+      "require": "{plugin} ต้องใช้ {other}",
+      "recommend": "{plugin} แนะนำ {other}",
+      "conflict": "{plugin} ทำงานร่วมกับ {other} ไม่ได้"
+    },
+    "status": {
+      "missing": "ยังไม่ได้ติดตั้ง {name}",
+      "disabled": "ติดตั้ง {name} {version} แล้วแต่ปิดอยู่",
+      "version": "ติดตั้งเพียง {name} {version} ต้องการ {range}",
+      "unavailable": "{name} ไม่รองรับไคลเอนต์นี้",
+      "conflict": "{name} เปิดอยู่"
+    },
+    "install": "ติดตั้ง",
+    "update": "อัปเดต",
+    "installing": "กำลังติดตั้ง",
+    "updating": "กำลังอัปเดต",
+    "enable": "เปิด",
+    "enabledDone": "เปิดใช้งานแล้ว",
+    "disableAction": "ปิดใช้งาน",
+    "disabledDone": "ปิดใช้งานแล้ว",
+    "notInstalled": "ยังไม่ได้ติดตั้ง",
+    "notEnabled": "ยังไม่เปิดใช้งาน",
+    "disableOther": "ปิด {name}",
+    "dependentSwitch": "ใช้ {name}",
+    "confirm": "ยืนยัน",
+    "continue": "ยืนยัน",
+    "resolveFirst": "ยืนยัน",
+    "recommendedLabel": "แนะนำ",
+    "blockedHint": "โปรดติดตั้งหรือเปิดสิ่งที่จำเป็น หรือปิดปลั๊กอินนี้ ก่อนดำเนินการต่อ",
+    "notInStore": "ร้านค้าที่เปิดใช้งานไม่มี {name} สำหรับไคลเอนต์นี้",
+    "importEnable": "เปิดใช้งานในทุกไคลเอนต์ที่รองรับหลังติดตั้ง",
+    "supportTitle": "{name} รองรับไคลเอนต์เพิ่มขึ้น",
+    "supportBody": "{name} เวอร์ชัน {version} รองรับไคลเอนต์ต่อไปนี้แล้ว เลือกไคลเอนต์ที่จะเปิดใช้งาน",
+    "supportEnable": "เปิด",
+    "supportLater": "ไว้ทีหลัง",
+    "chip": {
+      "require": "ต้องใช้ {name}",
+      "recommend": "แนะนำ {name}",
+      "conflict": "ขัดแย้งกับ {name}"
+    }
+  },
+  "maintenance": {
+    "title": "เซิร์ฟเวอร์บางส่วนกำลังปิดปรับปรุง",
+    "titleAll": "เซิร์ฟเวอร์กำลังปิดปรับปรุง",
+    "intro": "เซิร์ฟเวอร์ที่ปิดปรับปรุงยังเข้าไม่ได้ในตอนนี้ คุณยังเล่นเซิร์ฟเวอร์ที่ระบุว่าเข้าได้ได้ตามปกติ",
+    "introAll": "เซิร์ฟเวอร์ทั้งหมดกำลังปิดปรับปรุง โปรดลองใหม่ภายหลัง",
+    "introSection": "เซิร์ฟเวอร์ทั้งหมดของ {section} กำลังปิดปรับปรุง ลงชื่อเข้าใช้ส่วนเซิร์ฟเวอร์อื่นเพื่อเล่นตอนนี้ หรือลองใหม่ภายหลัง",
+    "continue": "ดำเนินการต่อ",
+    "window": "{start} – {end}",
+    "until": "ถึง {end}",
+    "from": "ตั้งแต่ {start}",
+    "players": "{players} / {capacity} คน",
+    "canEnter": "เข้าได้",
+    "offlineHint": "ไม่สามารถเชื่อมต่อได้ในขณะนี้",
+    "state": {
+      "maintenance": "ปิดปรับปรุง",
+      "online": "เข้าได้",
+      "offline": "ออฟไลน์"
+    },
+    "playHere": "เล่นที่นี่",
+    "selected": "เลือกอยู่"
+  },
+  "notices": {
+    "title": "ประกาศ",
+    "next": "ถัดไป",
+    "start": "รับทราบ",
+    "showAll": "ดูทั้งหมด",
+    "allTitle": "ประกาศ",
+    "none": "ยังไม่มีประกาศ"
   }
 }

@@ -239,7 +239,9 @@ public sealed class PluginUpgradeActivationService
             catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or DefinitionException or InvalidOperationException or ArgumentException or JsonException or FormatException)
             { Failed(intent, error is IOException or UnauthorizedAccessException ? "disk" : "integrity"); }
         }
-        if (instanceId is not null || PendingCount != 0 || !_removeOldVersions()) return;
+        if (instanceId is not null || !_removeOldVersions()) return;
+        RetireSupersededImports();
+        if (PendingCount != 0) return;
         // Verify replacements once before taking download and client leases for retirement.
         var replacements = _library.SupersedingStorePackages();
         var folders = replacements.Where(Verify).Select(plugin => plugin.Folder).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -248,6 +250,26 @@ public sealed class PluginUpgradeActivationService
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (_pending.Count == 0) _downloads.TryRunWhileIdle(() => RetireSupersededIdle(folders, cancellationToken));
+        }
+    }
+
+    /// <summary>
+    /// When the remove-old-versions setting is on, deletes superseded local imports that no client selects and no pending
+    /// activation targets; other pending work (a failed store download, say) does not hold the cleanup back. Store
+    /// releases are retired by <see cref="ApplyReady"/> after their replacements are verified.
+    /// </summary>
+    public void RetireSupersededImports()
+    {
+        if (_restoreFailure is not null || !_removeOldVersions()) return;
+        lock (_gate)
+        {
+            _downloads.TryRunWhileIdle(() =>
+            {
+                var references = _instances.List().SelectMany(instance => instance.Plugins.Select(plugin => (instance.Game, plugin.Id, plugin.Version)))
+                    .Concat(_pending.Select(intent => (intent.Game, intent.Plugin, intent.Version))).ToHashSet();
+                if (_library.RetireSupersededImports(references)) Interlocked.Increment(ref _revision);
+                return true;
+            });
         }
     }
 

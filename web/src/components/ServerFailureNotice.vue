@@ -18,9 +18,9 @@ watch(() => props.error, () => { open.value = false; copyError.value = '' })
 async function copy() { try { await navigator.clipboard.writeText(text.value); copyError.value = '' } catch { copyError.value = t('serverFailure.copyFailed') } }
 </script>
 <template>
-  <WInfoBar severity="error" :closable="dismissible" @close="emit('close')"><span class="failure-message">{{ error.message }}</span><template #action><div v-if="showDetails || details?.code === 'launcher_update_required'" class="failure-actions"><WButton v-if="showDetails" variant="subtle" @click="open = true">{{ t('serverFailure.details') }}</WButton><WButton v-if="details?.code === 'launcher_update_required'" @click="router.push({ name: 'settings', query: { tab: 'updates' } })">{{ t('serverFailure.openUpdates') }}</WButton></div></template></WInfoBar>
+  <WInfoBar severity="error" :closable="dismissible" :markdown="details ? error.message : undefined" @close="emit('close')"><span class="failure-message">{{ error.message }}</span><template #action><div v-if="showDetails || details?.code === 'launcher_update_required'" class="failure-actions"><WButton v-if="showDetails" variant="subtle" @click="open = true">{{ t('serverFailure.details') }}</WButton><WButton v-if="details?.code === 'launcher_update_required'" @click="router.push({ name: 'settings', query: { tab: 'updates' } })">{{ t('serverFailure.openUpdates') }}</WButton></div></template></WInfoBar>
   <WDialog :open="open && showDetails" :title="t('serverFailure.details')" :close-text="t('titlebar.close')" @close="open = false"><pre class="failure-details">{{ text }}</pre><WButton @click="copy">{{ t('launcherUpdates.copyDetails') }}</WButton><p v-if="copyError">{{ copyError }}</p></WDialog>
 </template>
 <style scoped>
-.failure-message { white-space: pre-wrap; }.failure-actions { display: flex; gap: 8px; margin-top: 8px; }.failure-details { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; user-select: text; font-size: 12px; }
+span.failure-message { white-space: pre-wrap; }.failure-actions { display: flex; gap: 8px; margin-top: 8px; }.failure-details { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; user-select: text; font-size: 12px; }
 </style>

@@ -166,8 +166,9 @@ public sealed class LauncherServicePluginTests
         {
             Assert.Equal(build.Id, selected.Id);
             Assert.Equal(TimeSpan.FromSeconds(30), limits.HeartbeatInterval);
-            Assert.Collection(messages.Keys.Order(StringComparer.Ordinal),
-                type => Assert.Equal("ui.notification.result", type), type => Assert.Equal("ui.notification.show", type));
+            // Nirinsou Link itself consumes the server's popups and native UI requests.
+            Assert.Equal(["ui.native.invoke", "ui.native.result", "ui.notification.result", "ui.notification.show"],
+                messages.Keys.Order(StringComparer.Ordinal));
             observed.SetResult();
             return Task.FromResult<Communication.CompanionSession?>(null);
         });

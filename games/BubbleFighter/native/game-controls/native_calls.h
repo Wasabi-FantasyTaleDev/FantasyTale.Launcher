@@ -59,6 +59,20 @@ public:
     const wchar_t* const* address() const { return &value_; }
 };
 
+// Copies the text of the game string whose characters start at `data`: cn-324 sub_401B10 and cn-324 sub_880310 keep
+// the length at data -20. `read` copies native memory and reports false when it is unavailable. A missing string, a
+// negative length or one above `limit` is corrupt memory, not empty text.
+template<class Reader>
+std::wstring legacy_string(uintptr_t data, uint32_t limit, Reader read) {
+    int32_t length = 0;
+    if (data < 20 || !read(data - 20, &length, static_cast<uint32_t>(sizeof(length)))) throw std::runtime_error("Native control text is unavailable");
+    if (length < 0 || static_cast<uint32_t>(length) > limit) throw std::length_error("controlTextLimit");
+    std::wstring result(static_cast<size_t>(length), L'\0');
+    if (length && !read(data, result.data(), static_cast<uint32_t>(length) * static_cast<uint32_t>(sizeof(wchar_t))))
+        throw std::runtime_error("Native control text is unavailable");
+    return result;
+}
+
 inline void* construct_legacy_message(uint32_t abi, uintptr_t function, void* storage, const LegacyString& title,
     const LegacyString& body, int icon, int center) {
     using String = const wchar_t* const*;
@@ -230,6 +244,17 @@ inline void chat(uint32_t abi, uintptr_t function, uintptr_t module, const std::
             reinterpret_cast<void*>(module), &heading, color, &text, 0);
         return;
     default: throw std::invalid_argument("Unknown native chat ABI");
+    }
+}
+
+// Both setters copy the text, truncate it to the edit limit and clamp the caret.
+inline void set_edit_text(uint32_t abi, uintptr_t function, uintptr_t edit, const BorrowedString& text) {
+    switch (abi) {
+    // kr-1256 sub_FC91C0 takes a byte after the text and notifies the owner only when it is clear; it returns with RET 8.
+    case 1: reinterpret_cast<uint8_t(__thiscall*)(void*, const BorrowedString*, uint8_t)>(function)(reinterpret_cast<void*>(edit), &text, 0); return;
+    // cn-774 sub_F68290 takes only the text, always notifies, and returns with RET 4.
+    case 2: reinterpret_cast<uint8_t(__thiscall*)(void*, const BorrowedString*)>(function)(reinterpret_cast<void*>(edit), &text); return;
+    default: throw std::invalid_argument("Unknown native edit text ABI");
     }
 }
 }

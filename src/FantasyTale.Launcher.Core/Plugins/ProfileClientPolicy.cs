@@ -6,13 +6,20 @@ namespace FantasyTale.Launcher.Core.Plugins;
 /// <summary>Evaluates the same typed policy for local game/build profiles and server destinations.</summary>
 public static class ProfileClientPolicy
 {
-    /// <summary>Returns the local rules applicable to the selected build.</summary>
-    public static IReadOnlyList<ServerPluginRule> Rules(BuildDefinition build) => ServerPluginPolicy.ForBuild(build.ClientPolicy, build.Id);
+    /// <summary>Returns the local rules applicable to the selected build and the current launcher language.</summary>
+    public static IReadOnlyList<ServerPluginRule> Rules(BuildDefinition build) => Rules(build, LauncherLanguage.Current);
 
-    /// <summary>Whether a local rule of this type applies to the plugin on this build.</summary>
-    public static bool Has(BuildDefinition build, string plugin, string type) => build.ClientPolicy.Plugins
-        .Where(item => item.Id == plugin).SelectMany(item => item.Rules)
-        .Any(rule => rule.Type == type && (rule.Builds.Count == 0 || rule.Builds.Contains(build.Id, StringComparer.Ordinal)));
+    /// <summary>Returns the local rules applicable to the selected build and launcher language.</summary>
+    public static IReadOnlyList<ServerPluginRule> Rules(BuildDefinition build, string? language) => ServerPluginPolicy.ForBuild(build.ClientPolicy, build.Id, language);
+
+    /// <summary>Whether a local rule of this type applies to the plugin on this build and the current launcher language.</summary>
+    public static bool Has(BuildDefinition build, string plugin, string type)
+    {
+        var language = LauncherLanguage.Current;
+        return build.ClientPolicy.Plugins.Where(item => item.Id == plugin).SelectMany(item => item.Rules)
+            .Any(rule => rule.Type == type && (rule.Builds.Count == 0 || rule.Builds.Contains(build.Id, StringComparer.Ordinal))
+                && (rule.Languages is not { Count: > 0 } || language is { Length: > 0 } && rule.Languages.Any(tag => PluginPolicy.LanguageMatches(tag, language))));
+    }
 
     /// <summary>Retains a local constraint when its component has an explicitly declared former identifier.</summary>
     public static bool Has(BuildDefinition build, PluginDefinition plugin, string type) =>
@@ -23,7 +30,11 @@ public static class ProfileClientPolicy
         Merge(rules.Select(rule => rule with { Id = Definitions.PluginCatalog.CanonicalId(packages, rule.Id) }).ToArray(), []);
 
     /// <summary>Plugin identities offered by local require or recommend rules, in definition order.</summary>
-    public static IReadOnlyList<string> Offered(BuildDefinition build) => Rules(build).Where(rule => rule.Offered && !rule.Disabled).Select(rule => rule.Id).ToArray();
+    public static IReadOnlyList<string> Offered(BuildDefinition build) => Offered(build, LauncherLanguage.Current);
+
+    /// <summary>Plugin identities offered by local require or recommend rules for one launcher language, in definition order.</summary>
+    public static IReadOnlyList<string> Offered(BuildDefinition build, string? language) =>
+        Rules(build, language).Where(rule => rule.Offered && !rule.Disabled).Select(rule => rule.Id).ToArray();
 
     /// <summary>Combines game and build declarations without overrides or silently discarded constraints.</summary>
     public static ClientPolicy Combine(ClientPolicy game, ClientPolicy build)

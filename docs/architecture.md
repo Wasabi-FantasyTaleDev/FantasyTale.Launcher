@@ -1,5 +1,28 @@
 # Architecture
 
+Overlay packages may declare a game-module controller. The host starts that
+controller and subscribes its panel proxy before dispatching the entry HTML,
+then awaits its cleanup before closing the session transport. Native observation,
+mode policy and confirmed room mutations run in the managed controller, even
+while WebView is suspended. The page receives versioned display snapshots and
+submits session-bound user actions; controlled panels have no raw native bridge.
+
+Controlled packages receive a stable, owner-scoped Companion channel before
+their controller starts. Connection snapshots revoke authorization locally on
+disconnect. Mode Extension subscribes before obtaining its initial context and
+scene snapshots, and observes native controls only while the active room-create
+context is in `plaza`. Main-menu and in-room states remain dormant. Reconnects
+resynchronize; there is no periodic server query or time limit in the plaza.
+Native reads keep their operation identity while queued, without a controller
+deadline canceling the shared Hook channel. Accepted mutations retain bounded
+outcome checks and are never replayed after uncertainty.
+
+Hook admission contention is distinct from an uncertain submitted operation.
+An unsent request can be retried within a deadline; a queued operation permits
+only result queries. Mode observation also waits through transient native UI
+readiness changes. Controller stage/status/reason records have a separate bounded
+log so routine frontend polling cannot evict startup failure evidence.
+
 The Bubble Fighter Gateway can check native auxiliary readiness before freezing its directory.
 The shared resolver retains catalog capacities separately from confirmed unavailability; the game
 module supplies a bounded native probe configuration. A TCP connection alone does not establish that
@@ -43,6 +66,20 @@ including the selected theme/resource query. Hash routes and local subresources 
 available; other top-level documents and popup windows are blocked before navigation.
 Event metadata is checked before readiness or input state changes. This gate does not
 authenticate the main Photino window, whose native source/navigation API remains under review.
+
+The overlay clears the inherited WebView2 user-data-folder override before creating
+its browser. The launcher's Photino profile can have incompatible browser options;
+the overlay uses its own folder and shares that environment within its process.
+Initialization failures record the stage and numeric HRESULT without exception text.
+
+Packages may share data. A `kind = "assets"` package is data only and never reaches the native session, and any
+package may declare `requires`. `PluginRequirements` (Core) resolves them for one client: launch checks every
+requirement of every enabled package before touching client files, and the store install path queues missing
+requirements from the same catalog. For overlay launches the Host sends the id-to-folder map of the enabled overlay
+packages and the assets packages they require to the overlay process (`package-roots`), which answers
+`https://packages.fantasytale.local/<id>/<path>` itself from `OverlayPackageFiles` (Sdk): read-only, links and
+traversal refused, files streamed. See [shared data packages](plugin-management.md#shared-data-packages-and-requirements)
+and [package files](hook/overlay.md#package-files).
 
 Launch preparation owns a deadline, including the remaining automatic admission lifetime.
 Windows shell confirmation itself cannot be canceled by that token. If cancellation or

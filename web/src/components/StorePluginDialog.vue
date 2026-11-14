@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { pluginSourceChoices, pluginUpdateFrom, pluginInstallationTargets, type LocalPlugin } from '../store/updates'
 import { state, prepareStorePluginInstallation } from '../state'
 import type { StorePackage, StoreSource } from '../store/types'
@@ -80,7 +80,7 @@ async function install() {
     }
     return
   }
-  if (busy.value || !inHost || !item.value || !source.value || item.value.launcherCompatible === false) return
+  if (busy.value || !(inHost || !!demoMode?.enabled) || !item.value || !source.value || item.value.launcherCompatible === false) return
   const selectedItem = item.value, selectedSource = source.value, instanceIds = activateAfterInstall.value ? [...targets.value] : []
   const expectedSource = { kind: selectedSource.kind, baseUrl: selectedSource.baseUrl, catalogPath: selectedSource.catalogPath }
   const serverId = props.serverId ?? (state.selectedGameId === selectedItem.game ? state.selectedServerId || undefined : undefined)
@@ -99,7 +99,7 @@ async function install() {
 </script>
 <template>
     <WDialog :open="open" :title="t(updateFrom ? 'store.updateTitle' : 'install.pluginTitle')" :primary-text="primaryText" :close-text="finished ? undefined : t('updates.close')"
-    :primary-disabled="busy || !!taskId && !finished && !retryable || !inHost || !item || item.launcherCompatible === false" :primary-busy="busy" @close="close" @primary="install">
+    :primary-disabled="busy || !!taskId && !finished && !retryable || !(inHost || !!demoMode?.enabled) || !item || item.launcherCompatible === false" :primary-busy="busy" @close="close" @primary="install">
     <div v-if="item && source" class="form-stack">
       <StorePluginInstallList :items="installationItems"><DownloadTaskProgress :task-id="taskId" :pending="busy" /></StorePluginInstallList>
       <label v-if="choices.length > 1" class="field"><span>{{ t('store.downloadSource') }}</span><WComboBox :model-value="sourceId" :options="sourceOptions" :disabled="locked" @update:model-value="chooseSource" /></label>

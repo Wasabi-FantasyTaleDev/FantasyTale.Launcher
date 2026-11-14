@@ -113,7 +113,7 @@ public sealed class ServerStore
         InstanceStore.RejectLinks(file);
         var text = ServerProfileFile.Format(server);
         var temporary = Path.Combine(_root, ".saving-" + Guid.NewGuid().ToString("N"));
-        try { File.WriteAllText(temporary, text, new UTF8Encoding(false)); File.Move(temporary, file, true); }
+        try { File.WriteAllText(temporary, text, new UTF8Encoding(false)); AtomicFile.Replace(temporary, file); }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 

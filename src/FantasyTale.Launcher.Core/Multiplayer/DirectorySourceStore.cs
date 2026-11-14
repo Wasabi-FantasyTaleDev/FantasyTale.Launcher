@@ -50,7 +50,7 @@ public sealed class DirectorySourceStore
         using var lease = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         var text = $"schema = 1\n[source]\nid = {SessionWriter.Quote(source.Id)}\nname = {SessionWriter.Quote(source.Name)}\nbase_url = {SessionWriter.Quote(source.BaseUrl ?? "")}\nenabled = {(source.Enabled ? "true" : "false")}\n";
         var temporary = file + ".saving"; InstanceStore.RejectLinks(temporary);
-        try { File.WriteAllText(temporary, text, new UTF8Encoding(false)); File.Move(temporary, file, true); }
+        try { File.WriteAllText(temporary, text, new UTF8Encoding(false)); AtomicFile.Replace(temporary, file); }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 

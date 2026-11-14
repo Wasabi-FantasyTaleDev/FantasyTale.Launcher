@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type DirectorySource } from '../bridge'
+import { call, demoMode, inHost, type DirectorySource } from '../bridge'
 import WDialog from '../controls/WDialog.vue'
 import WComboBox from '../controls/WComboBox.vue'
 import WTextBox from '../controls/WTextBox.vue'
@@ -25,7 +25,7 @@ async function execute(remove = false) {
 }
 </script>
 <template>
-  <WDialog :open="open" :title="t('multiplayer.sources')" :primary-text="t('hosting.save')" :close-text="t('dialog.cancel')" :primary-disabled="!valid || busy || !inHost" :close-disabled="busy" @primary="execute()" @close="emit('close')">
+  <WDialog :open="open" :title="t('multiplayer.sources')" :primary-text="t('hosting.save')" :close-text="t('dialog.cancel')" :primary-disabled="!valid || busy || !(inHost || !!demoMode?.enabled)" :close-disabled="busy" @primary="execute()" @close="emit('close')">
     <div v-if="draft" class="source-form">
       <div class="source-chooser"><WComboBox :model-value="draft.id" :options="sources.map(s => ({ value: s.id, label: s.name }))" :disabled="busy" :aria-label="t('multiplayer.source')" @update:model-value="select" /><WButton :disabled="busy" @click="add">{{ t('multiplayer.addSource') }}</WButton></div>
       <label><span>{{ t('hosting.name') }}</span><WTextBox v-model="draft.name" :disabled="busy" :maxlength="128" /></label>

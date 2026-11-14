@@ -48,6 +48,15 @@ Launcher 自带更高版本时也会升级旧选择，保留启用状态与仍�
 `client_policy_rules` 声明。这些配置不含可执行文件，也不安装组件；用户通过正常的客户端安装／推荐流程明确下载。
 KR1256 必选韩服认证与商店开放组件；国服版本必选国服认证组件。同一客户端范围内的必选与推荐规则不能重叠。
 
+数据包（`kind = "assets"`，参见
+[共享数据包](plugin-management.zh.md#共享数据包与依赖)）在仓库中只保存清单；生成的游戏图片绝不提交
+（`store-plugins/**/data/` 已被忽略）。打包时运行
+`tools/publish-store/stage_assets_package.py --package <包文件夹> --pack <生成的数据目录> --output <暂存文件夹>`，
+它会把清单和数据复制到新的暂存文件夹，并检查数据目录结构（`pack.json`、`atlas/<hash>.webp`、
+`builds/<build id>.json`，不含链接）以及 JSON 中提到的每个文件都存在。再用 `publish_plugins.py --package`
+发布该暂存文件夹。发布工具会拒绝数据文件夹为空或缺失的数据包，并为每个声明 `requires` 的包内嵌
+`plugin_definition`，使启动器能在下载前安装依赖。没有数据的仓库检出仍可正常加载和测试。
+
 未完成的前进起跳插件保存在 `experimental-plugins/BubbleFighter`，不随包携带、不上架，
 商店发布工具也拒绝发布这些标识。移动编写目录不会删除用户插件库、客户端文件、账号或设置。
 修改本地插件资料及预览与发布到公开商店是两个独立步骤。

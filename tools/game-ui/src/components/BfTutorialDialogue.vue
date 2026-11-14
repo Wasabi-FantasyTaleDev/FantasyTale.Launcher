@@ -25,7 +25,7 @@ async function load(){
   try{
     const [data,font]=await Promise.all([responseJson('manifest.json'),responseJson('glyphs.json')]);
     if(disposed||current!==loadRevision)return;
-    const bitmap=new Image();bitmap.src=root.value+'glyphs.png';await bitmap.decode();
+    const bitmap=Object.assign(new Image(), { crossOrigin: 'anonymous' });bitmap.src=root.value+'glyphs.png';await bitmap.decode();
     if(disposed||current!==loadRevision)return;
     manifest=data;glyphs=font.glyphs;atlas=bitmap;
     if(props.sound){audio??=new AudioContext();if(audio.state==='running')await unlockSound();}

@@ -15,7 +15,12 @@ function pending() {
   return { promise, resolve, reject }
 }
 
-function setup(call, refreshPlugins = async () => {}) {
+const updatesSource = readFileSync(new URL('../src/store/updates.ts', import.meta.url), 'utf8')
+const updatesJs = ts.transpileModule(updatesSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+const updatesModule = { exports: {} }
+runInNewContext(updatesJs, { module: updatesModule, exports: updatesModule.exports, require: id => id === './versions' ? versions : undefined })
+
+function setup(call, refreshPlugins = async () => {}, onPolicy = async () => true) {
   const state = vue.reactive({ selectedInstanceId: 'one', selectedServerId: 'server', error: '', busy: false, plugins: [] })
   const instances = [{ id: 'one', game: 'fixture', plugins: [] }, { id: 'two', game: 'fixture', plugins: [] }]
   state.instances = instances
@@ -37,11 +42,13 @@ function setup(call, refreshPlugins = async () => {}) {
     if (id === '../state') return dependencies
     if (id === '../bridge') return { inHost: true, call }
     if (id === '../i18n') return { localized: value => value }
+    if (id === '../plugins/pluginPolicy') return { requestPluginPolicy: onPolicy }
     if (id === '../plugins/notices') return { showPluginNotice() {} }
     if (id === '../plugins/library') return library
     if (id === '../plugins/configuration') return configuration
     if (id === '../plugins/updatePreview') return { pluginUpdatePreviewAvailable: false, createPluginUpdatePreview: () => ({ stop() {} }) }
     if (id === '../store/versions') return versions
+    if (id === '../store/updates') return updatesModule.exports
     if (id === '../downloads/live') return { downloads, trackDownload: task => downloads.tasks.push(task) }
     if (id === '../downloads/model') return { isTerminal: task => task.stage === 'completed' }
     if (id.endsWith('.vue')) return { default: {} }
@@ -458,5 +465,51 @@ test('an activated update replaces a previously browsed release instead of displ
     assert.equal(fixture.bindings.libraryVersions['fixture:fixture.plugin'], undefined)
     assert.equal(fixture.bindings.plugins.value[0].version, '2.0.0')
     assert.equal(fixture.bindings.plugins.value[0].selection.enabled, true)
+  } finally { fixture.dispose() }
+})
+
+test('asset dependencies report satisfied without appearing in instance plugins while disabled service rules stay unmet', () => {
+  const fixture = setup(async () => undefined)
+  try {
+    const previews = { id: 'bubblefighter.fantasy.item-previews', version: '0.1.0', game: 'fixture', kind: 'assets', available: true, selection: null }
+    const nirinsou = { id: 'bubble.fighter.fantasy.nirinsoulink', aliases: ['bubblefighter.fantasy.communication'], version: '0.2.2', game: 'fixture', kind: 'service', available: true, selection: null }
+    fixture.state.plugins = [previews, nirinsou]
+    fixture.instances[0].plugins = [{ id: nirinsou.id, version: nirinsou.version, enabled: false, options: {} }]
+    assert.equal(fixture.bindings.ruleMet({ plugin: 'bubblefighter.fantasy.item-previews', type: 'require', range: '>=0.1.0', builds: [], languages: [], defaultSelected: false }), true)
+    assert.equal(fixture.bindings.ruleMet({ plugin: 'bubblefighter.fantasy.communication', type: 'require', range: '', builds: [], languages: [], defaultSelected: false }), false)
+    fixture.instances[0].plugins = [{ id: nirinsou.id, version: nirinsou.version, enabled: true, options: {} }]
+    assert.equal(fixture.bindings.ruleMet({ plugin: 'bubblefighter.fantasy.communication', type: 'require', range: '>=0.2.0', builds: [], languages: [], defaultSelected: false }), true)
+    assert.equal(fixture.bindings.ruleMet({ plugin: 'bubble.fighter.fantasy.nirinsoulink', type: 'require', range: '', builds: [], languages: [], defaultSelected: false, satisfied: true }), true)
+  } finally { fixture.dispose() }
+})
+
+test('version switches, updates, and disabling toggles check pluginPolicy before configuring', async () => {
+  const policyCalls = [], configureCalls = []
+  const fixture = setup(
+    async (method, params) => { if (method === 'plugins.configure') configureCalls.push(params) },
+    async () => {},
+    async (instanceId, options) => { policyCalls.push({ instanceId, options }); return false },
+  )
+  try {
+    const older = { ...plugin(), version: '1.0.0', available: true }
+    const newer = { ...plugin(), version: '2.0.0', available: true }
+    fixture.state.plugins = [older, newer]
+    fixture.instances[0].plugins = [{ id: older.id, version: '1.0.0', enabled: true, options: {} }]
+
+    await fixture.bindings.toggle(older, false)
+    assert.equal(JSON.stringify(policyCalls.at(-1)), JSON.stringify({ instanceId: 'one', options: { disabling: { id: older.id, version: '1.0.0' } } }))
+
+    await fixture.bindings.selectVersion(older, '2.0.0')
+    assert.equal(JSON.stringify(policyCalls.at(-1)), JSON.stringify({ instanceId: 'one', options: { enabling: { id: newer.id, version: '2.0.0' } } }))
+
+    fixture.bindings.switching.value = { plugin: newer, from: '1.0.0', instanceId: 'one' }
+    await fixture.bindings.switchVersion()
+    assert.equal(JSON.stringify(policyCalls.at(-1)), JSON.stringify({ instanceId: 'one', options: { enabling: { id: newer.id, version: '2.0.0' } } }))
+    assert.equal(fixture.bindings.switching.value, undefined)
+
+    fixture.bindings.updates.value = [{ id: older.id, installedVersion: '1.0.0', status: 'installed', version: '2.0.0' }]
+    await fixture.bindings.activateUpdate(older)
+    assert.equal(JSON.stringify(policyCalls.at(-1)), JSON.stringify({ instanceId: 'one', options: { enabling: { id: newer.id, version: '2.0.0' } } }))
+    assert.equal(configureCalls.length, 0)
   } finally { fixture.dispose() }
 })

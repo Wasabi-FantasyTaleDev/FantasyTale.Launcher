@@ -105,11 +105,24 @@ public sealed class PluginLibrary : IDisposable
             return Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(Snapshot(plugin.Folder, cancellationToken))));
     }
 
+    /// <summary>
+    /// Raised after a new package version is committed, outside the library lock, with the other installed versions of
+    /// the same package as they were before it. Plugin policy uses it to offer clients a build the upgrade newly supports.
+    /// </summary>
+    public event Action<PluginDefinition, IReadOnlyList<PluginDefinition>>? PackageInstalled;
+
+    private void Announce(PluginDefinition installed, IReadOnlyList<PluginDefinition>? previous)
+    {
+        if (previous is not null) PackageInstalled?.Invoke(installed, previous);
+    }
+
     /// <summary>Installs catalog-pinned plugin bytes without enabling them; an exact completed installation is safe to retry after process loss.</summary>
     public PluginDefinition InstallFromStore(string source, GameDefinition game, BuildDefinition build, StorePackage package,
         byte[] manifest, string sourceId, string sourceIdentity, CancellationToken cancellationToken = default)
     {
         LauncherCompatibility.Require(package.MinimumLauncherVersion, package.Id);
+        IReadOnlyList<PluginDefinition>? previousVersions = null;
+        PluginDefinition result;
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -157,10 +170,12 @@ public sealed class PluginLibrary : IDisposable
                     return existing;
                 }
                 _pending = new(new(token, plugin, copied.Length, copied.Sum(f => f.Size)), folder, copied);
-                return Install(token, game, build, receipt, null, cancellationToken);
+                result = InstallCore(token, game, build, receipt, null, cancellationToken, out previousVersions);
             }
             finally { _pending = previous; DeleteStaging(folder); DeleteStaging(transport); }
         }
+        Announce(result, previousVersions);
+        return result;
     }
 
     /// <summary>Opens the library and removes abandoned import staging after acquiring its exclusive lease.</summary>
@@ -238,7 +253,14 @@ public sealed class PluginLibrary : IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             using var libraryLease = Acquire();
-            _ = Packages(game);
+            var inventory = Packages(game);
+            // Shared data stays while any installed package still declares a requirement on it.
+            var others = inventory.Where(package => package.Id != id).ToArray();
+            var dependents = inventory.Where(package => package.Id == id)
+                .SelectMany(package => PluginRequirements.Dependents(package, others))
+                .Select(dependent => dependent.Id).Distinct(StringComparer.Ordinal).ToArray();
+            if (dependents.Length > 0)
+                throw new InvalidOperationException($"'{id}' is required by {string.Join(", ", dependents.Select(dependent => $"'{dependent}'"))}. Uninstall those first.");
             var folders = Installed().Where(package => package.Game == game.Id && package.Id == id).Select(package => package.Folder)
                 .Concat(_loadIssues.Where(issue => issue.Game == game.Id && issue.Id == id).Select(issue => issue.Folder)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             if (folders.Length == 0) throw new InvalidOperationException("This plugin is bundled with the Launcher or is no longer installed.");
@@ -401,6 +423,15 @@ public sealed class PluginLibrary : IDisposable
 
     private PluginDefinition Install(string token, GameDefinition game, BuildDefinition? build, SourceReceipt? receipt, Action<PluginImportProgress>? progress, CancellationToken cancellationToken)
     {
+        var installed = InstallCore(token, game, build, receipt, progress, cancellationToken, out var previous);
+        Announce(installed, previous);
+        return installed;
+    }
+
+    private PluginDefinition InstallCore(string token, GameDefinition game, BuildDefinition? build, SourceReceipt? receipt, Action<PluginImportProgress>? progress,
+        CancellationToken cancellationToken, out IReadOnlyList<PluginDefinition>? previousVersions)
+    {
+        previousVersions = null;
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -411,6 +442,7 @@ public sealed class PluginLibrary : IDisposable
             var plugin = ValidatePackage(pending.Folder, game, build, receipt is not null, receipt?.SourceId);
             var installed = Installed();
             if (installed.Any(p => p.Game == plugin.Game && p.Id == plugin.Id && p.Version == plugin.Version)) throw new IOException("This plugin version is already installed.");
+            previousVersions = installed.Where(p => p.Game == plugin.Game && p.Id == plugin.Id).ToArray();
             var key = PackageKey(plugin.Game, plugin.Id, plugin.Version);
             var destination = Safe(_packages, key);
             cancellationToken.ThrowIfCancellationRequested();
@@ -556,6 +588,31 @@ public sealed class PluginLibrary : IDisposable
     internal bool RetireSuperseded(IReadOnlySet<(string Game, string Plugin, string Version)> references)
         => RetireSuperseded(references, SupersedingStorePackages().Where(plugin => MatchesInstalledSnapshot(plugin)).Select(plugin => plugin.Folder).ToHashSet(StringComparer.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// Removes local imports that a newer installed version of the same package supersedes and no client selects; store
+    /// releases are retired separately after their replacement is verified. Returns whether a package was removed.
+    /// </summary>
+    internal bool RetireSupersededImports(IReadOnlySet<(string Game, string Plugin, string Version)> references)
+    {
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            using var lease = Acquire();
+            var installed = Installed(); var changed = false;
+            foreach (var plugin in installed)
+            {
+                if (Origin(plugin) is not null || references.Contains((plugin.Game, plugin.Id, plugin.Version))) continue;
+                if (!installed.Any(other => other.Game == plugin.Game && other.Id == plugin.Id
+                    && PluginCatalog.CompareVersions(other.Version, plugin.Version) > 0)) continue;
+                _ = FileTree(plugin.Folder, trusted: true);
+                var quarantine = Safe(_staging, Guid.NewGuid().ToString("N"));
+                Directory.Move(plugin.Folder, quarantine);
+                DeleteStaging(quarantine); changed = true;
+            }
+            return changed;
+        }
+    }
+
     internal bool RetireSuperseded(IReadOnlySet<(string Game, string Plugin, string Version)> references, IReadOnlySet<string> verifiedFolders)
     {
         lock (_gate)
@@ -595,6 +652,12 @@ public sealed class PluginLibrary : IDisposable
             if (plugin.Kind == "files")
                 _ = Hooks.FilePluginResolver.Resolve(new InstanceDefinition("validation", "Validation", game.Id, target.Id, null,
                     [new(plugin.Id, plugin.Version, true, false, new Dictionary<string, object>())]), target, [plugin]);
+        }
+        if (plugin.Assets is { } assets)
+        {
+            // An assets package without its data folder or without any file in it is a packaging error, not an empty pack.
+            var data = Safe(folder, ClientRelease.ValidatePath(assets.Root));
+            if (!Directory.Exists(data) || FileTree(data).Count == 0) throw new InvalidDataException("The assets package does not contain files under its data folder.");
         }
         if (plugin.Library is { } library)
         {

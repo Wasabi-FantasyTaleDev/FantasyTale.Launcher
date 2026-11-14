@@ -1,6 +1,9 @@
 #include "ui_service.h"
 #include "presentation.h"
 #include "native_calls.h"
+#include "control_registry.h"
+#include "signature_readiness.h"
+#include "selection_records.h"
 #include <fthook/plugin_abi.h>
 #include <windows.h>
 #include <toml.hpp>
@@ -36,10 +39,27 @@ uintptr_t pointer(uintptr_t address) { uintptr_t result = 0; return read(address
 using native_calls::BorrowedString;
 
 struct Descriptor {
+    struct SelectionGroup {
+        std::string form, name;
+        uintptr_t form_vtable = 0;
+        uint32_t value_offset = 0;
+        std::vector<int32_t> values;
+        // Set when the form maps ArrayIndex to value through its own record vector instead of `values`.
+        uint32_t records_offset = 0;
+        SelectionRecords records;
+        // Set when the form stores no chosen value and marks the choice as the first disabled member of its own map;
+        // `value_offset` is then unused.
+        uint32_t members_offset = 0;
+        SelectionMembers members;
+        // Set when the member tree's header node lies inside the form at `members_offset` (member_layout 2).
+        bool inline_members = false;
+        InlineSelectionMembers inline_layout;
+    };
     uintptr_t base = 0;
     std::map<std::string, uintptr_t> addresses;
     std::map<std::string, uint32_t> values;
     std::vector<std::pair<uintptr_t, std::vector<uint8_t>>> signatures;
+    std::vector<SelectionGroup> selection_groups;
     uintptr_t address(const char* name) const { return addresses.at(name); }
     uint32_t value(const char* name) const { return values.at(name); }
     uint32_t convention(const char* name) const { const auto it = values.find(name); return it == values.end() ? 1 : it->second; }
@@ -69,7 +89,7 @@ std::optional<Descriptor> load_descriptor() {
     const auto& table = parsed.table();
     for (const auto& [key, node] : table) {
         (void)node;
-        if (key != "schema" && key != "build" && key != "timestamp" && key != "addresses" && key != "values" && key != "signatures") throw std::invalid_argument("Unknown native UI descriptor field");
+        if (key != "schema" && key != "build" && key != "timestamp" && key != "addresses" && key != "values" && key != "signatures" && key != "selection_groups") throw std::invalid_argument("Unknown native UI descriptor field");
     }
     if (table["schema"].value<int64_t>() != 1 || table["build"].value<std::string>() != runtime->build) throw std::invalid_argument("Native UI descriptor identity mismatch");
     Descriptor result;
@@ -111,6 +131,78 @@ std::optional<Descriptor> load_descriptor() {
         if (result.addresses.at(*name) - result.base + expected.size() > pe.OptionalHeader.SizeOfImage)
             throw std::invalid_argument("Native UI signature extends beyond the main image");
         result.signatures.emplace_back(result.addresses.at(*name), std::move(expected));
+    }
+    if (const auto* node = table.get("selection_groups")) {
+        const auto* groups = node->as_array();
+        if (!groups) throw std::invalid_argument("Native selection groups must be an array");
+        for (const auto& item : *groups) {
+            const auto* group = item.as_table();
+            if (!group) throw std::invalid_argument("A native selection group must be a table");
+            for (const auto& [key, value] : *group) {
+                (void)value;
+                if (key != "form" && key != "name" && key != "form_vtable" && key != "form_size" && key != "value_offset" && key != "values"
+                    && key != "records_offset" && key != "record_size" && key != "record_key_offset" && key != "record_value_offset"
+                    && key != "members_offset" && key != "member_key_offset" && key != "member_control_offset" && key != "member_nil_offset"
+                    && key != "member_layout")
+                    throw std::invalid_argument("Unknown native selection group field");
+            }
+            const auto form = (*group)["form"].value<std::string>(), name = (*group)["name"].value<std::string>(), vtable = (*group)["form_vtable"].value<std::string>();
+            const auto size = (*group)["form_size"].value<int64_t>(), offset = (*group)["value_offset"].value<int64_t>();
+            const auto* choices = (*group)["values"].as_array();
+            const auto records = (*group)["records_offset"].value<int64_t>(), record_size = (*group)["record_size"].value<int64_t>();
+            const auto record_key = (*group)["record_key_offset"].value<int64_t>(), record_value = (*group)["record_value_offset"].value<int64_t>();
+            const bool keyed = records || record_size || record_key || record_value;
+            const auto members = (*group)["members_offset"].value<int64_t>(), member_key = (*group)["member_key_offset"].value<int64_t>();
+            const auto member_control = (*group)["member_control_offset"].value<int64_t>(), member_nil = (*group)["member_nil_offset"].value<int64_t>();
+            const auto member_layout = (*group)["member_layout"].value<int64_t>();
+            const bool marked = members || member_key || member_control || member_nil || member_layout;
+            if (!form || form->empty() || !form->ends_with(".ui") || form->find('\0') != std::string::npos
+                || !name || name->empty() || name->find('\0') != std::string::npos || !vtable || !result.addresses.contains(*vtable)
+                || !size || *size < 4 || *size > UINT32_MAX || (marked && (offset || keyed))
+                || (!marked && (!offset || *offset < 0 || *offset > *size - 4 || *offset % 4))
+                || (keyed ? choices != nullptr : !choices || choices->empty()))
+                throw std::invalid_argument("Invalid native selection group layout");
+            Descriptor::SelectionGroup selected{*form, *name, result.addresses.at(*vtable), marked ? 0 : static_cast<uint32_t>(*offset), {}};
+            // 1 (default): the form holds a pointer to the map's header and every link carries a nil byte (cn-406 +712).
+            // 2: the form holds the header node itself and missing children are null links (cn-324 DlgCreateRoom +352).
+            if ((*group)["member_layout"] && (!member_layout || (*member_layout != 1 && *member_layout != 2)))
+                throw std::invalid_argument("Unknown native selection member layout");
+            if (marked && member_layout == 2) {
+                // The header node (colour, parent, left, right) lies inside the form; node fields are read only at the stated offsets.
+                if (!members || !member_key || !member_control || member_nil || *members < 4 || *members % 4 || *members > *size - 16
+                    || *member_key < 0 || *member_control < 0 || *member_key > 4096 || *member_control > 4096)
+                    throw std::invalid_argument("Invalid native selection member layout");
+                selected.members_offset = static_cast<uint32_t>(*members);
+                selected.inline_members = true;
+                selected.inline_layout = {static_cast<uint32_t>(*member_key), static_cast<uint32_t>(*member_control)};
+                if (!selected.inline_layout.valid()) throw std::invalid_argument("Invalid native selection member layout");
+            } else if (marked) {
+                // The member map's header pointer lies inside the form; node fields are read only at the stated offsets.
+                if (!members || !member_key || !member_control || !member_nil || *members < 4 || *members % 4 || *members > *size - 4
+                    || *member_key < 0 || *member_control < 0 || *member_nil < 0 || *member_key > 4096 || *member_control > 4096 || *member_nil > 4096)
+                    throw std::invalid_argument("Invalid native selection member layout");
+                selected.members_offset = static_cast<uint32_t>(*members);
+                selected.members = {static_cast<uint32_t>(*member_key), static_cast<uint32_t>(*member_control), static_cast<uint32_t>(*member_nil)};
+                if (!selected.members.valid()) throw std::invalid_argument("Invalid native selection member layout");
+            }
+            if (keyed) {
+                // The record vector is a begin/end pointer pair inside the form; each record is read only within its size.
+                if (!records || !record_size || !record_key || !record_value || *records < 0 || *records % 4 || *records > *size - 8
+                    || *record_size < 0 || *record_size > 4096 || *record_key < 0 || *record_value < 0 || *record_key > UINT32_MAX || *record_value > UINT32_MAX)
+                    throw std::invalid_argument("Invalid native selection record layout");
+                selected.records_offset = static_cast<uint32_t>(*records);
+                selected.records = {static_cast<uint32_t>(*record_size), static_cast<uint32_t>(*record_key), static_cast<uint32_t>(*record_value)};
+                if (!selected.records.valid()) throw std::invalid_argument("Invalid native selection record layout");
+            }
+            if (choices) for (const auto& choice : *choices) {
+                const auto value = choice.value<int64_t>();
+                if (!value || *value < INT32_MIN || *value > INT32_MAX) throw std::invalid_argument("Native selection values must be signed 32-bit integers");
+                selected.values.push_back(static_cast<int32_t>(*value));
+            }
+            if (std::any_of(result.selection_groups.begin(), result.selection_groups.end(), [&](const auto& prior) { return prior.form == selected.form && prior.name == selected.name && prior.form_vtable == selected.form_vtable; }))
+                throw std::invalid_argument("Duplicate native selection group");
+            result.selection_groups.push_back(std::move(selected));
+        }
     }
     // Required keys fail during activation rather than after a control is allocated.
     for (const auto* name : {"construct_message", "modal_message", "message_vtable", "application", "ui_context", "ui_manager"}) (void)result.address(name);
@@ -160,8 +252,61 @@ std::optional<Descriptor> load_descriptor() {
     for (const auto* name : {"allocate", "construct_message", "layout_message", "modal_message", "position_message", "detach_message", "string_create", "string_release", "notify", "chat", "append_announcement", "clock_now", "set_text"})
         if (result.addresses.contains(name) && std::none_of(result.signatures.begin(), result.signatures.end(), [&](const auto& signature) { return signature.first == result.address(name); }))
             throw std::invalid_argument("Missing native UI function signature");
+    if (result.values.contains("control_abi")) {
+        const auto abi = result.value("control_abi");
+        if (abi != 1 && abi != 2) throw std::invalid_argument("Unknown native control ABI");
+        const auto signed_functions = [&](std::initializer_list<const char*> names) {
+            for (const auto* name : names) {
+                const auto address = result.address(name);
+                if (std::none_of(result.signatures.begin(), result.signatures.end(), [&](const auto& signature) { return signature.first == address; }))
+                    throw std::invalid_argument("Missing native control function signature");
+            }
+        };
+        signed_functions({"control_load_form", "control_initialize", "control_destroy", "control_click", "control_set_text", "edit_set_text"});
+        if (abi == 1) {
+            // kr-812: text goes through vtable getters and game-allocated strings; buttons can be created.
+            signed_functions({"control_get_text", "edit_get_text", "edit_set_maximum", "control_string_assign", "control_button_create", "control_parent", "control_geometry"});
+            if (result.convention("control_text_abi") == 1) signed_functions({"control_string_release"});
+            (void)result.address("ime_manager");
+            for (const auto* name : {"get_text_slot", "ime_composition_offset"}) (void)result.value(name);
+        } else {
+            // kr-1256: text is read in place, the edit limit is a field, and focus is cleared before a control is disabled.
+            signed_functions({"control_focus"});
+            for (const auto* name : {"text_offset", "focus_offset"}) (void)result.value(name);
+        }
+        for (const auto* name : {"button_vtable", "edit_vtable", "label_vtable"}) (void)result.address(name);
+        for (const auto* name : {"name_offset", "visible_offset", "enabled_offset", "array_index_offset", "children_offset", "x_offset", "y_offset", "width_offset", "height_offset",
+            "edit_maximum_offset", "control_root_offset", "control_layer_offset", "control_modal_offset", "owner_form_offset"}) (void)result.value(name);
+        // Observer prologues are copied whole into trampolines: each length must end on an instruction boundary of
+        // position-independent code in that build; kr-812's defaults are 7, 7, 7 and 5 bytes.
+        for (const auto* name : {"load_hook_bytes", "initialize_hook_bytes", "destroy_hook_bytes", "click_hook_bytes"})
+            if (result.values.contains(name) && (result.value(name) < 5 || result.value(name) > 16)) throw std::invalid_argument("Invalid native control hook length");
+        // 1 (default): the button handler takes a "clicked" byte and fires only when it is set (kr-812 sub_A91840).
+        // 2: the handler takes no argument and is the activation itself (cn-406 sub_9812D0, UiButton vtable +0xB4).
+        if (result.values.contains("click_abi") && result.value("click_abi") != 1 && result.value("click_abi") != 2)
+            throw std::invalid_argument("Unknown native control click ABI");
+        // 1 (default): the edit setter takes the text and a notification byte (kr-1256 sub_FC91C0).
+        // 2: it takes the text alone (cn-774 sub_F68290, UiEdit vtable +244).
+        if (result.values.contains("edit_text_abi") && (abi != 2 || (result.value("edit_text_abi") != 1 && result.value("edit_text_abi") != 2)))
+            throw std::invalid_argument("Unknown native edit text ABI");
+        // 1 (default): control strings are 24-byte wide strings with length/capacity at +16/+20 (kr-812 sub_401300).
+        // 2: they are one pointer to UTF-16 data behind a 20-byte header with the length at -20 (cn-324 sub_401B10),
+        // built and released by string_create/string_release.
+        if (result.values.contains("control_text_abi")) {
+            const auto text = result.value("control_text_abi");
+            if (abi != 1 || (text != 1 && text != 2)) throw std::invalid_argument("Unknown native control text ABI");
+            if (text == 2) signed_functions({"string_create", "string_release"});
+        }
+        // Optional: builds without a verified enable setter report control.setEnabled as unsupported.
+        if (result.addresses.contains("control_set_enabled") && std::none_of(result.signatures.begin(), result.signatures.end(),
+                [&](const auto& signature) { return signature.first == result.address("control_set_enabled"); }))
+            throw std::invalid_argument("Missing native control function signature");
+    }
+    if (!result.selection_groups.empty() && !result.values.contains("control_abi")) throw std::invalid_argument("Native selections require a control adapter");
     return result;
 }
+
+#include "native_controls.h"
 
 class NativeAdapter;
 std::atomic<NativeAdapter*> active_adapter = nullptr;
@@ -169,6 +314,7 @@ std::atomic<NativeAdapter*> active_adapter = nullptr;
 class NativeAdapter final : public Adapter {
     struct Work { std::string caller; Request request; Completion complete; };
     std::optional<Descriptor> descriptor_;
+    std::unique_ptr<NativeControls> controls_;
     std::mutex queue_mutex_, setup_mutex_;
     std::deque<Work> work_;
     HANDLE stop_ = nullptr, wake_ = nullptr, dispatcher_ = nullptr;
@@ -324,6 +470,11 @@ class NativeAdapter final : public Adapter {
         if (failed_.load() || !descriptor.matches() || !descriptor.ui_ready()) {
             work.complete({value.operation_id, "notReady", {}, "gameUiNotReady"}); return;
         }
+        if (value.kind.starts_with("control.")) {
+            phase_ = "controls";
+            work.complete(controls_ ? controls_->execute(work.caller, value) : Result{value.operation_id, "unsupported", {}, "adapterUnavailable"});
+            return;
+        }
         const auto legacy = descriptor.legacy_message_box();
         if (legacy && value.kind != "messageBox") {
             work.complete({value.operation_id, "unsupported", {}, "adapterUnavailable"}); return;
@@ -461,7 +612,15 @@ class NativeAdapter final : public Adapter {
         work.complete({value.operation_id, selected_index >= 0 ? "selected" : "dismissed", selected_index >= 0 ? value.buttons[static_cast<size_t>(selected_index)].id : "", {}});
     }
 public:
-    explicit NativeAdapter(size_t queue_limit) : descriptor_(load_descriptor()), queue_limit_(queue_limit) {
+    explicit NativeAdapter(size_t queue_limit, ControlLimits limits, uint32_t signature_timeout_ms, uint32_t signature_poll_ms)
+        : descriptor_(load_descriptor()), queue_limit_(queue_limit) {
+        if (descriptor_ && descriptor_->values.contains("control_abi")) {
+            // The host worker can run before the client has unpacked its code.
+            // Stage observers only after every descriptor signature is readable and matches.
+            if (!await_signatures(signature_timeout_ms, signature_poll_ms, [&] { return descriptor_->matches(); }, GetTickCount64, Sleep))
+                throw std::runtime_error("Native control signatures did not become ready before the activation deadline");
+            controls_ = std::make_unique<NativeControls>(*descriptor_, limits);
+        }
         stop_ = CreateEventW(nullptr, TRUE, FALSE, nullptr);
         wake_ = CreateEventW(nullptr, FALSE, FALSE, nullptr);
         if (stop_ && wake_) dispatcher_ = CreateThread(nullptr, 0, dispatch, this, 0, nullptr);
@@ -471,6 +630,7 @@ public:
             throw std::runtime_error("Cannot start native UI dispatcher");
         }
     }
+    bool cleanup_available() const { return !controls_ || !controls_->hooks_installed(); }
     ~NativeAdapter() override {
         SetEvent(stop_);
         WaitForSingleObject(dispatcher_, INFINITE);
@@ -489,11 +649,35 @@ public:
         std::vector<std::string> message_features{"title", "text", "buttons:1..2", "buttonLabels", "buttonResult", "icon:notice", "icon:warning", "icon:question", "icon:error"};
         if (legacy) message_features = {"title", "text", "buttons:2", "buttonLabels", "buttonResult", "icon:question"};
         if (supported && descriptor_->values.contains("without_icon_offset")) message_features.push_back("icon:none");
-        return {{"messageBox", supported, ready, message_features, supported ? "" : "adapterUnavailable"},
+        std::vector<Capability> result{{"messageBox", supported, ready, message_features, supported ? "" : "adapterUnavailable"},
             {"notification", supported && !legacy, ready && !legacy, {"text"}, supported && !legacy ? "" : "adapterUnavailable"},
             {"announcement.show", banner_supported, banner_supported && ready, {"text", "autoExpire"}, banner_supported ? "" : "adapterUnavailable"},
             {"announcement.close", false, false, {}, "automaticExpiryOnly"},
             {"chat", supported && !legacy, chat_ready, {"text", "caption", "color:uniform", "style:normal", "style:system", "localOnly"}, supported && !legacy ? "" : "adapterUnavailable"}};
+        const auto control_supported = supported && controls_ && controls_->available();
+        // Control ABI 2 (kr-1256) has no verified button factory, so owned buttons are not offered there.
+        const auto in_place = supported && descriptor_->values.contains("control_abi") && descriptor_->value("control_abi") == 2;
+        for (const auto* kind : {"control.inspect", "control.setText", "control.addButton", "control.remove", "control.activate"}) {
+            std::vector<std::string> features{"form", "name", "id", "currentText", "visibleOnly", "callerScoped"};
+            if (std::string_view(kind) == "control.setText") { features.push_back("maximumLength"); features.push_back("readback"); }
+            if (std::string_view(kind) == "control.addButton") { features.push_back("nativeDefaultSkin"); features.push_back("clickEvents"); }
+            if (std::string_view(kind) == "control.remove") features.push_back("ownedOnly");
+            if (std::string_view(kind) == "control.activate") { features.push_back("enabled"); features.push_back("selected"); }
+            const auto creation = std::string_view(kind) == "control.addButton" || std::string_view(kind) == "control.remove";
+            const auto offered = control_supported && !(creation && in_place);
+            result.push_back({kind, offered, offered && ready, std::move(features),
+                offered ? "" : control_supported ? "controlCreationUnsupported" : "adapterUnavailable"});
+        }
+        const auto enable_supported = control_supported && (in_place || descriptor_->addresses.contains("control_set_enabled"));
+        result.push_back({"control.setEnabled", enable_supported, enable_supported && ready, {"form", "name", "id", "visibleOnly", "callerScoped", "cosmetic"},
+            enable_supported ? "" : "adapterUnavailable"});
+        result.push_back({"control.events", control_supported, control_supported && ready, {"callerScoped", "cursor", "retained", "lossBoundary"}, control_supported ? "" : "adapterUnavailable"});
+        return result;
+    }
+    std::optional<std::vector<FormState>> forms(const std::string& resource) override {
+        if (failed_.load() || !controls_ || !controls_->available() || !descriptor_->matches()) return std::nullopt;
+        try { return controls_->forms(resource); }
+        catch (const std::exception&) { return std::vector<FormState>{}; }
     }
     void submit(const std::string& caller, Request request, Completion complete) override {
         if (!connect()) { complete({request.operation_id, "notReady", {}, "gameUiNotReady"}); return; }
@@ -519,6 +703,7 @@ int32_t FTHOOK_CALL handle(void*, const char* caller, const char* request, char*
     catch (...) { return FTHOOK_FAILED; }
 }
 int32_t FTHOOK_CALL cleanup(void*) {
+    if (adapter && !adapter->cleanup_available()) return FTHOOK_FAILED;
     service.reset(); adapter.reset(); runtime = nullptr;
     return FTHOOK_OK;
 }
@@ -536,8 +721,21 @@ extern "C" int32_t FTHOOK_CALL fthook_plugin_main(const fthook_host* host, fthoo
         || host->option(host->context, "retained_results", &results) != FTHOOK_OK || results.kind != FTHOOK_OPTION_INT
         || pending.integer <= 0 || results.integer < pending.integer) return FTHOOK_INVALID;
     try {
-        adapter = std::make_unique<NativeAdapter>(static_cast<size_t>(pending.integer));
+        const auto option = [&](const char* key) {
+            fthook_option value{};
+            if (host->option(host->context, key, &value) != FTHOOK_OK || value.kind != FTHOOK_OPTION_INT || value.integer <= 0 || value.integer > INT32_MAX)
+                throw std::invalid_argument("Invalid native control resource limit");
+            return static_cast<uint32_t>(value.integer);
+        };
+        const ControlLimits control_limits{option("max_controls"), option("max_tracked_forms"), option("max_tree_nodes"), option("retained_control_events"), option("max_control_text")};
+        adapter = std::make_unique<NativeAdapter>(static_cast<size_t>(pending.integer), control_limits,
+            option("signature_timeout_ms"), option("signature_poll_ms"));
         service = std::make_unique<Service>(host->build, *adapter, Limits{static_cast<size_t>(pending.integer), static_cast<size_t>(results.integer)});
         return services->register_service(services->context, "game.native-ui", handle, nullptr);
+    } catch (const std::exception& error) {
+        char message[256]{};
+        sprintf_s(message, "native UI: plugin activation failed: %.192s", error.what());
+        host->log(host->context, message);
+        return FTHOOK_FAILED;
     } catch (...) { host->log(host->context, "native UI: plugin activation failed"); return FTHOOK_FAILED; }
 }

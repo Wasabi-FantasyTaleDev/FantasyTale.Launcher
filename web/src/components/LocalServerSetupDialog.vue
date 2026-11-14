@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, hostingPreview, type HostingProfile, type HostingSession, type InstalledServerPackage } from '../bridge'
+import { call, demoMode, inHost, hostingPreview, type HostingProfile, type HostingSession, type InstalledServerPackage } from '../bridge'
 import { selectedGame, state, refreshServers, selectedInstance } from '../state'
 import { localized, clientRegion } from '../i18n'
 import { clientVersionCaption } from '../clientVersion'
@@ -159,7 +159,7 @@ async function stop() {
   finally { if (current(expected)) busy.value = false }
 }
 async function save() {
-  if (!draft.value || !valid.value || busy.value || loading.value || !(inHost || hostingPreview)) return
+  if (!draft.value || !valid.value || busy.value || loading.value || !(inHost || !!demoMode?.enabled || hostingPreview)) return
   const expected = revision, request = { ...draft.value, name: draft.value.name.trim(), packagePath: draft.value.packagePath.trim(), advertisedHost: draft.value.mode === 'private' ? '127.0.0.1' : draft.value.advertisedHost.trim(), temporaryData: storageChoice.value === 'temporary' }
   busy.value = true; error.value = ''
   try {
@@ -215,7 +215,7 @@ onBeforeUnmount(() => { disposed = true; ++revision; clearTimeout(timer) })
 </script>
 
 <template>
-  <WDialog dismiss-on-backdrop :open="open" :title="title" wide :primary-text="primaryText" :close-text="t('dialog.cancel')" :primary-disabled="busy || loading || !valid || !(inHost || hostingPreview) || !!activeTask || (draft?.requireAuthentication === false && !nicknameValid)" @primary="save" @close="close">
+  <WDialog dismiss-on-backdrop :open="open" :title="title" wide :primary-text="primaryText" :close-text="t('dialog.cancel')" :primary-disabled="busy || loading || !valid || !(inHost || !!demoMode?.enabled || hostingPreview) || !!activeTask || (draft?.requireAuthentication === false && !nicknameValid)" @primary="save" @close="close">
     <WAnimatedSize class="setup-size"><div class="setup-form">
       <p v-if="loading" role="status">{{ t('hosting.starting') }}</p>
       <template v-if="draft">
@@ -246,9 +246,9 @@ onBeforeUnmount(() => { disposed = true; ++revision; clearTimeout(timer) })
           <div class="setup-section advanced-settings">
             <div class="package-section">
               <label><span>{{ t('serverPackages.installed') }}</span><WComboBox v-model="managedPackage" :options="packageOptions" :disabled="locked" /></label>
-              <label><span>{{ t('hosting.package') }}</span><span class="folder-field"><WTextBox v-model="draft.packagePath" :disabled="locked || !!managedPackage" /><WButton :disabled="locked || !(inHost || hostingPreview)" @click="browse">{{ t('hosting.browse') }}</WButton></span></label>
+              <label><span>{{ t('hosting.package') }}</span><span class="folder-field"><WTextBox v-model="draft.packagePath" :disabled="locked || !!managedPackage" /><WButton :disabled="locked || !(inHost || !!demoMode?.enabled || hostingPreview)" @click="browse">{{ t('hosting.browse') }}</WButton></span></label>
               <div v-if="!compatible.length && !draft.packagePath" class="package-download">
-                <p class="hint">{{ t('localPlay.missingPackage') }}</p><WButton v-if="!catalogLoaded" :disabled="busy || !(inHost || hostingPreview)" @click="findPackages">{{ t('localPlay.findPackage') }}</WButton>
+                <p class="hint">{{ t('localPlay.missingPackage') }}</p><WButton v-if="!catalogLoaded" :disabled="busy || !(inHost || !!demoMode?.enabled || hostingPreview)" @click="findPackages">{{ t('localPlay.findPackage') }}</WButton>
                 <template v-else-if="releaseOptions.length"><WComboBox v-model="releaseKey" :options="releaseOptions" :disabled="busy || !!activeTask" /><WButton :disabled="busy || !!activeTask || !releaseKey" @click="install">{{ t('install.install') }}</WButton></template>
                 <p v-else class="hint">{{ t('localPlay.noPackage') }}</p>
               </div>

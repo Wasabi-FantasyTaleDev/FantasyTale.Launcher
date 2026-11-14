@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { call, inHost, type LocalizedText } from '../bridge'
+import { call, demoMode, inHost, type LocalizedText } from '../bridge'
 import type { DownloadTask } from '../downloads/model'
 
 export interface RequiredPluginUpdate { key: string; id: string; name: LocalizedText; installedVersion: string; version: string; task: DownloadTask | null }
@@ -11,7 +11,7 @@ let generation = 0
 
 /** Reads background discovery only; launching never requests a source refresh. */
 export async function requestRequiredUpdates(instanceId: string, serverId: string) {
-  if (!inHost) return { keys: [], tasks: [] }
+  if (!(inHost || !!demoMode?.enabled)) return { keys: [], tasks: [] }
   if (finish) return null
   const expected = ++generation
   const read = (ensure = false) => call('plugins.launchUpdates', { instanceId, serverId, ensure })

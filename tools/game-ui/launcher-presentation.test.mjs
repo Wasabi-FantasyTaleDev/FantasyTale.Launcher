@@ -11,11 +11,12 @@ class Element {
   classList = {add() {}, remove() {}};
   children = [];
   listeners = {};
-  append(...children) { this.children.push(...children); }
-  prepend(...children) { this.children.unshift(...children); }
+  append(...children) { this.children.push(...children); for (const child of children) child.parentNode = this; }
+  prepend(...children) { this.children.unshift(...children); for (const child of children) child.parentNode = this; }
   replaceChildren(...children) { this.children = children; }
   addEventListener(name, listener) { this.listeners[name] = listener; }
-  dispatchEvent(event) { this.lastEvent = event; }
+  dispatchEvent(event) { this.lastEvent = event; if (event.bubbles) this.parentNode?.dispatchEvent(event); }
+  toDataURL() { return 'data:image/png;base64,c2tpbg=='; }
   getContext() {
     const context = {scale: (...value) => { context.samples = value; }, measureText: text => ({width: text.length * 13, actualBoundingBoxDescent: 3}), fillText() {}, strokeText() {}, drawImage() {}};
     painted.push({canvas: this, context});

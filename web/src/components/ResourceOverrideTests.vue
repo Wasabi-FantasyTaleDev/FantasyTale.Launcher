@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type ResourceOverrideSnapshot, type ResourceOverrideFile } from '../bridge'
+import { call, demoMode, inHost, type ResourceOverrideSnapshot, type ResourceOverrideFile } from '../bridge'
 import { selectedInstance, gameInstances } from '../state'
 import { localized } from '../i18n'
 import { formatBytes } from '../downloads/model'
@@ -30,7 +30,7 @@ async function refresh() {
   const revision = ++request
   error.value = ''; loading.value = true
   try {
-    const value = selected.value && inHost ? await call('instances.resourceOverrides', { id: selected.value }) : null
+    const value = selected.value && (inHost || !!demoMode?.enabled) ? await call('instances.resourceOverrides', { id: selected.value }) : null
     if (!stopped && revision === request) snapshot.value = value
   } catch (reason) { if (!stopped && revision === request) error.value = (reason as Error).message }
   finally { if (!stopped && revision === request) loading.value = false }
@@ -45,7 +45,7 @@ function expand(target: string) { expanded.value = expanded.value === target ? '
     <p class="description">{{ t('resourceOverrides.description') }}</p>
     <div class="toolbar">
       <WComboBox v-model="selected" :options="clients" :aria-label="t('resourceOverrides.client')" />
-      <WButton :disabled="!selected || loading || !inHost" @click="refresh"><WProgressRing v-if="loading" :size="14" />{{ t('resourceOverrides.refresh') }}</WButton>
+      <WButton :disabled="!selected || loading || !(inHost || !!demoMode?.enabled)" @click="refresh"><WProgressRing v-if="loading" :size="14" />{{ t('resourceOverrides.refresh') }}</WButton>
     </div>
     <WInfoBar v-if="error" severity="error" :title="error" :closable="false" />
     <p v-if="snapshot" class="description">{{ t('resourceOverrides.summary', { count: files.length, time: new Date(snapshot.preparedAt).toLocaleString(locale) }) }}</p>

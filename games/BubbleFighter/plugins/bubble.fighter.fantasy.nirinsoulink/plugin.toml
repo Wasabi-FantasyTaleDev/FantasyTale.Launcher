@@ -11,7 +11,7 @@ minimum_launcher_version = "0.1.57"
 authors = ["Fantasy Tale Studio"]
 license = "MIT"
 name = { "zh-CN" = "Fantasy Tale Nirinsou Link", "zh-TW" = "Fantasy Tale Nirinsou Link", en = "Fantasy Tale Nirinsou Link", ko = "Fantasy Tale Nirinsou Link", id = "Fantasy Tale Nirinsou Link", vi = "Fantasy Tale Nirinsou Link" }
-description = { "zh-CN" = "实现与 Fantasy Tale Launcher 以及相关插件与服务器间的通信，不建议关闭", "zh-TW" = "實現與 Fantasy Tale Launcher 及相關外掛與伺服器間的通訊，不建議關閉", "en" = "Enables communication between Fantasy Tale Launcher, related plugins and servers. Disabling it is not recommended.", "ko" = "Fantasy Tale Launcher, 관련 플러그인 및 서버 간 통신을 지원합니다. 비활성화하지 않는 것을 권장합니다.", "id" = "Menghubungkan Fantasy Tale Launcher, plugin terkait, dan server. Sebaiknya tetap diaktifkan.", "vi" = "Cho phép Fantasy Tale Launcher, các plugin liên quan và máy chủ giao tiếp với nhau. Không nên tắt.", "th" = "รองรับการสื่อสารระหว่าง Fantasy Tale Launcher ปลั๊กอินที่เกี่ยวข้อง และเซิร์ฟเวอร์ ไม่แนะนำให้ปิด" }
+description = { "zh-CN" = "实现与 Fantasy Tale Launcher 以及相关插件与服务器间的通信，不建议关闭", "zh-TW" = "實現與 Fantasy Tale Launcher 及相關模組與伺服器間的通訊，不建議關閉", "en" = "Enables communication between Fantasy Tale Launcher, related plugins and servers. Disabling it is not recommended.", "ko" = "Fantasy Tale Launcher, 관련 플러그인 및 서버 간 통신을 지원합니다. 비활성화하지 않는 것을 권장합니다.", "id" = "Menghubungkan Fantasy Tale Launcher, plugin terkait, dan server. Sebaiknya tetap diaktifkan.", "vi" = "Cho phép Fantasy Tale Launcher, các plugin liên quan và máy chủ giao tiếp với nhau. Không nên tắt.", "th" = "รองรับการสื่อสารระหว่าง Fantasy Tale Launcher ปลั๊กอินที่เกี่ยวข้อง และเซิร์ฟเวอร์ ไม่แนะนำให้ปิด" }
 
 [compatibility]
 builds = ["*"]
@@ -22,6 +22,8 @@ provider = "companion"
 [service.messages]
 "ui.notification.show" = 1
 "ui.notification.result" = 1
+"ui.native.invoke" = 1
+"ui.native.result" = 1
 
 [[options]]
 key = "heartbeat_interval_ms"

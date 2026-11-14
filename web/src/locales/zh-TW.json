@@ -26,7 +26,8 @@
     "installed": "已安裝"
   },
   "dialog": {
-    "cancel": "取消"
+    "cancel": "取消",
+    "close": "關閉"
   },
   "home": {
     "launch": "啟動遊戲",
@@ -178,6 +179,7 @@
     "clientUnavailable": "目前還沒有可加入的用戶端版本。",
     "previousGame": "上一個遊戲：{name}",
     "nextGame": "下一個遊戲：{name}",
+    "buildNotServed": "此伺服器暫無節點支援該用戶端版本。",
     "gameComingSoon": "準備中",
     "gamePending": "遊戲正在準備中，你可以切換至其他遊戲繼續遊玩。",
     "subtitle": "熟悉的遊戲，從這裡開始。",
@@ -283,7 +285,8 @@
     "loginNeeded": "請先登入目前的伺服器。",
     "unknown": "暫無資料",
     "removeServerTitle": "移除此伺服器？",
-    "removeServerBody": "從本機移除「{name}」？已安裝的用戶端將保留。"
+    "removeServerBody": "從本機移除「{name}」？已安裝的用戶端將保留。",
+    "serverSection": "伺服器"
   },
   "updates": {
     "totalSpeed": "總下載速度",
@@ -439,7 +442,7 @@
     "installed": "已安裝",
     "goToUpdates": "前往更新",
     "upToDate": "已是最新",
-    "updateCount": "{count} 個外掛有更新",
+    "updateCount": "{count} 個模組有更新",
     "updateAvailable": "有更新",
     "updateAll": "全部更新",
     "updateTitle": "更新模組",
@@ -478,7 +481,8 @@
     "description": "可開啟一些實驗性功能或對商店來源進行設定與維護",
     "tabs": {
       "options": "開發者選項",
-      "sources": "商店來源管理"
+      "sources": "商店來源管理",
+      "demo": "演示模式"
     },
     "pending": "待開發",
     "nsfw": {
@@ -490,6 +494,69 @@
       "description": "啟動遊戲後顯示 Overlay Test 視窗。下次啟動遊戲生效。",
       "passThrough": "框外點擊穿透",
       "passThroughDescription": "允許點擊訊息框外的遊戲介面。下次啟動遊戲生效。"
+    },
+    "demo": {
+      "title": "UI 演示模式",
+      "description": "於 npm run dev 瀏覽器開發環境自動開啟。使用可互動的模擬資料與即時動畫進行介面測試，且除本分頁外不在任何位置顯示演示標記。",
+      "disabledNotice": "UI 演示模式目前已關閉。請於上方重新開啟後再觸發互動視窗與模擬動畫。",
+      "reset": "重設模擬資料",
+      "resetDone": "已還原初始模擬資料。",
+      "activeTransfers": "進行中的演示傳輸",
+      "groups": {
+        "store": "商店與下載動畫",
+        "storeDesc": "開啟商店安裝視窗，或直接啟動會在各頁面同步顯示進度的即時安裝動畫。",
+        "instances": "用戶端、多人連線與本機開服",
+        "instancesDesc": "測試用戶端設定、登入驗證、伺服器詳情、線上玩家名單與本機開服視窗。",
+        "plugins": "外掛、原則與衝突處理",
+        "pluginsDesc": "測試外掛相依與衝突原則、推薦安裝、啟動警告、資源覆蓋衝突與復原通知。",
+        "updates": "啟動器更新與鏡像提示",
+        "updatesDesc": "測試可用更新提示、即時下載進度動畫、重啟安裝確認、強制升級需求與更新失敗指引視窗。",
+        "notices": "訊息通知與錯誤橫幅",
+        "noticesDesc": "觸發全域外掛訊息通知與可檢視診斷詳情的錯誤橫幅。"
+      },
+      "actions": {
+        "storeClient": "安裝用戶端視窗",
+        "storePlugin": "安裝外掛視窗",
+        "storeServer": "伺服器套件視窗",
+        "storePluginUpdates": "外掛批次更新視窗",
+        "storeSources": "商店來源管理視窗",
+        "animateClient": "觸發用戶端安裝動畫",
+        "animatePlugin": "觸發外掛下載動畫",
+        "animateServer": "觸發伺服器下載動畫",
+        "instanceAdd": "新增用戶端視窗",
+        "instanceEdit": "編輯用戶端視窗",
+        "stopGame": "停止遊戲確認視窗",
+        "auth": "登入與註冊視窗",
+        "serverDetails": "伺服器詳情與預設",
+        "serverEdit": "新增／編輯伺服器視窗",
+        "onlinePlayers": "線上玩家名單視窗",
+        "serverPlugins": "伺服器推薦外掛視窗",
+        "directorySources": "伺服器目錄來源視窗",
+        "hostingSetup": "本機伺服器設定視窗",
+        "hostingLog": "本機開服執行紀錄",
+        "pluginPolicy": "外掛相依與衝突原則",
+        "pluginRecommend": "推薦外掛確認視窗",
+        "pluginLaunchWarning": "已停用相依啟動警告",
+        "pluginConflict": "資源覆蓋衝突選擇",
+        "pluginRequiredUpdate": "啟動前必更外掛視窗",
+        "pluginSupport": "新支援用戶端啟用提示",
+        "pluginImport": "匯入本機外掛視窗",
+        "pluginSchemeShare": "分享外掛方案視窗",
+        "pluginRecovery": "外掛異常復原通知",
+        "pluginDeprecation": "外掛停用與下線公告",
+        "updateAvailable": "發現可用更新視窗",
+        "updateProgress": "啟動器下載進度動畫",
+        "updateReady": "準備重啟更新確認",
+        "updateMandatory": "強制升級需求視窗",
+        "updateFailure": "更新失敗手動指引",
+        "githubMirror": "GitHub 鏡像加速提示",
+        "noticeSuccess": "外掛成功通知條",
+        "noticeWarning": "外掛警告通知條",
+        "serverError": "伺服器連線失敗詳情",
+        "launchFailure": "遊戲清理異常詳情",
+        "instanceBusy": "用戶端使用中衝突詳情",
+        "clearNotices": "清除通知與錯誤橫幅"
+      }
     }
   },
   "nativeUi": {
@@ -564,7 +631,7 @@
   },
   "recommendations": {
     "selectedCount": "已選 {selected}/{total} 項",
-    "loading": "正在讀取外掛清單…",
+    "loading": "正在讀取模組清單…",
     "displayLanguages": "顯示語言",
     "title": "推薦模組",
     "body": "建議您安裝以下模組，以獲得更好的遊戲體驗：",
@@ -603,7 +670,7 @@
     "launchPendingNote": "立即啟動將使用目前已安裝的完整版本。仍須符合必裝模組要求，新版本會在遊戲結束後套用。",
     "waitAndLaunch": "完成後啟動",
     "launchNow": "立即啟動",
-    "pendingActivation": "有 {count} 項外掛程式設定等待套用。",
+    "pendingActivation": "有 {count} 項模組設定等待套用。",
     "unpublished": "所需模組尚未在商店發佈此用戶端的相容版本，請等待發佈或聯絡維護者。",
     "check": "檢查更新",
     "checking": "正在檢查…",
@@ -626,8 +693,8 @@
     "network": "暫時無法連線至原下載來源",
     "disk": "無法讀取本機模組資訊",
     "installing": "安裝中",
-    "waitingForExit": "有 {count} 項外掛程式設定將在遊戲結束後生效。",
-    "activationFailed": "外掛程式已安裝，但無法套用至目前用戶端。請檢查設定，啟動器會自動重試。"
+    "waitingForExit": "有 {count} 項模組設定將在遊戲結束後生效。",
+    "activationFailed": "模組已安裝，但無法套用至目前用戶端。請檢查設定，啟動器會自動重試。"
   },
   "multiplayer": {
     "timeout": "目錄回應逾時，請稍後重新整理再試。",
@@ -913,6 +980,18 @@
   "featureAvailability": {
     "development": "正在開發中，將在未來版本開放。"
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "此伺服器要求啟用模組「{plugin}」。請為此用戶端啟用後重新啟動。",
+    "server_plugin_version_low": "已安裝的「{plugin}」版本低於此伺服器允許的版本。請更新後重新啟動。",
+    "server_plugin_version_high": "已安裝的「{plugin}」版本高於此伺服器允許的版本。請選擇允許的版本後重新啟動。",
+    "server_plugin_policy_conflict": "此伺服器停用了「{plugin}」，但此用戶端需要它。請聯絡伺服器管理員確認此規則。",
+    "client_policy_conflict": "「{plugin}」的規則互相矛盾。請聯絡伺服器管理員確認此規則。",
+    "client_policy_source_conflict": "「{plugin}」的規則指定的下載來源沒有交集。請聯絡伺服器管理員確認此規則。",
+    "client_policy_disabled": "此伺服器已停用「{plugin}」。請為此用戶端關閉後重試。",
+    "plugin_policy_require_unmet": "請先安裝或啟用「{plugin}」。",
+    "plugin_policy_required_by": "「{plugin}」需要此模組。請先關閉「{plugin}」。",
+    "plugin_policy_conflict_active": "與「{plugin}」衝突。請先關閉「{plugin}」。"
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "上次安裝結果",
     "phase": "安裝階段",
@@ -934,12 +1013,12 @@
   },
   "clientLibrary": {
     "useExisting": "偵測到目前目錄下已存在遊戲檔案，是否直接使用目前的用戶端？",
-    "preload": "僅下載到外掛程式庫",
+    "preload": "僅下載到模組庫",
     "downloadOrInstall": "安裝",
-    "preloadNote": "先儲存到外掛程式庫，不會自動啟用。新增對應用戶端後，可在外掛設定中選用。",
-    "noClient": "尚未新增相容的用戶端。仍可提前下載外掛，新增用戶端後再使用。",
+    "preloadNote": "先儲存到模組庫，不會自動啟用。新增對應用戶端後，可在模組設定中選用。",
+    "noClient": "尚未新增相容的用戶端。仍可提前下載模組，新增用戶端後再使用。",
     "gameUnavailable": "目前啟動器尚未開放此遊戲。",
-    "pluginsUnsupported": "此遊戲不支援外掛。",
+    "pluginsUnsupported": "此遊戲不支援模組。",
     "buildUnsupported": "目前啟動器不支援此版本所需的用戶端，請更新啟動器或選擇其他版本。",
     "searchLimit": "所選資料夾過大或層級過深，請選擇更靠近遊戲主程式的資料夾。",
     "multipleClients": "找到多個用戶端，請選擇要新增的用戶端資料夾。",
@@ -1052,15 +1131,15 @@
     "unlimited": "不限制",
     "builds": "支援版本",
     "unknownBuilds": "伺服器尚未提供支援版本。",
-    "plugins": "外掛清單",
+    "plugins": "模組清單",
     "required": "必裝",
     "recommended": "推薦",
     "installed": "已安裝並啟用",
-    "noPlugins": "伺服器尚未宣告推薦或必裝外掛。",
-    "sources": "推薦外掛來源",
+    "noPlugins": "伺服器尚未宣告推薦或必裝模組。",
+    "sources": "推薦模組來源",
     "addSource": "新增來源",
     "sourceAdded": "已新增",
-    "pluginUnavailable": "已啟用的商店來源中找不到支援版本，可先新增伺服器推薦的外掛來源。"
+    "pluginUnavailable": "已啟用的商店來源中找不到支援版本，可先新增伺服器推薦的模組來源。"
   },
   "serverFailure": {
     "wrong_password": "密碼錯誤。",
@@ -1107,22 +1186,22 @@
     "skipped": "此套件無法載入，可透過原商店已驗證的新版本替換。"
   },
   "resourcePreparation": {
-    "title": "正在套用外掛修補",
+    "title": "正在套用模組修補",
     "progress": "{done} / {total} 個檔案 · 已用時 {seconds} 秒"
   },
   "resourceConflicts": {
-    "title": "外掛衝突",
-    "body": "以下外掛修改了同一處內容。請為每項衝突選擇要保留的外掛，或取消啟動後自行調整。",
-    "choose": "選擇要保留的外掛",
+    "title": "模組衝突",
+    "body": "以下模組修改了同一處內容。請為每項衝突選擇要保留的模組，或取消啟動後自行調整。",
+    "choose": "選擇要保留的模組",
     "keep": "保留 {name}",
     "retry": "繼續啟動",
     "value": "修改內容：{value}",
     "original": "原始內容：{value}",
-    "scope": "選擇僅對本次啟動生效，不會解除安裝或關閉外掛。"
+    "scope": "選擇僅對本次啟動生效，不會解除安裝或關閉模組。"
   },
   "launchCleanup": {
     "bootstrap": "本機連線元件發生異常，請查看診斷記錄。",
-    "restore": "遊戲已結束，部分外掛檔案尚未還原。下次啟動時會自動嘗試復原。",
+    "restore": "遊戲已結束，部分模組檔案尚未還原。下次啟動時會自動嘗試復原。",
     "observe": "暫時無法確認遊戲程序狀態，請稍後重試或查看診斷記錄。",
     "other": "遊戲清理尚未完成，請查看診斷記錄。",
     "clientExited": "遊戲異常結束（{code}），請查看詳細資料了解結束記錄及清理狀態。",
@@ -1132,14 +1211,14 @@
     "readFailed": "無法開啟診斷記錄，仍可複製現有的錯誤詳細資料。",
     "stages": {
       "bootstrap": "本機連線元件在結束執行時發生異常。此提示本身無法確定遊戲結束的原因。",
-      "restore": "遊戲已結束，但外掛資源還原尚未完成。",
+      "restore": "遊戲已結束，但模組資源還原尚未完成。",
       "observe": "啟動器未能確認遊戲程序是否已經結束。",
       "other": "遊戲結束或清理過程中的某個步驟未能完成。"
     }
   },
   "resourceOverrides": {
     "title": "資源 override 測試",
-    "description": "按完整 BFZ／PKN 封存檔查看資源外掛的修改。展開封存檔可查看參與修改的每個外掛和成員檔案。",
+    "description": "按完整 BFZ／PKN 封存檔查看資源模組的修改。展開封存檔可查看參與修改的每個模組和成員檔案。",
     "client": "用戶端",
     "refresh": "重新整理",
     "summary": "{count} 個封存檔 · 準備於 {time}",
@@ -1219,5 +1298,86 @@
     "message": "用戶端設定正由另一項操作使用，請稍後重試。",
     "title": "用戶端占用詳情",
     "explanation": "此鎖避免啟動、下載及儲存設定同時修改同一用戶端。即使沒有遊戲視窗，背景操作也可能持有它。下方顯示被阻止的操作及鎖檔路徑，尚不能據此確定持有程序。"
+  },
+  "pluginPolicy": {
+    "title": "前置模組缺失",
+    "launchTitle": "前置模組缺失",
+    "disableTitle": "其他模組相依於此模組",
+    "body": "該模組需要前置模組，請先安裝或啟用前置模組後再繼續。",
+    "launchBody": "該模組需要前置模組，請先安裝或啟用前置模組後再繼續。",
+    "disableBody": "以下已啟用的模組需要你正在關閉的模組。請先停用它們，或取消操作。",
+    "group": {
+      "require": "{name} 需要以下模組",
+      "conflict": "與 {name} 存在衝突"
+    },
+    "rule": {
+      "require": "{plugin} 需要 {other}",
+      "recommend": "{plugin} 推薦 {other}",
+      "conflict": "{plugin} 無法與 {other} 同時使用"
+    },
+    "status": {
+      "missing": "尚未安裝 {name}。",
+      "disabled": "已安裝 {name} {version}，但未啟用。",
+      "version": "只安裝了 {name} {version}，需要 {range}。",
+      "unavailable": "{name} 不支援此用戶端。",
+      "conflict": "{name} 已啟用。"
+    },
+    "install": "安裝",
+    "update": "更新",
+    "installing": "正在安裝",
+    "updating": "正在更新",
+    "enable": "啟用",
+    "enabledDone": "已啟用",
+    "disableAction": "停用",
+    "disabledDone": "已停用",
+    "notInstalled": "未安裝",
+    "notEnabled": "未啟用",
+    "disableOther": "關閉 {name}",
+    "dependentSwitch": "使用 {name}",
+    "confirm": "確認",
+    "continue": "確認",
+    "resolveFirst": "確認",
+    "recommendedLabel": "推薦",
+    "blockedHint": "繼續前請安裝或啟用所需模組，或關閉該模組。",
+    "notInStore": "已啟用的商店沒有為此用戶端提供 {name}。",
+    "importEnable": "安裝後在所有支援的用戶端上啟用",
+    "supportTitle": "{name} 支援更多用戶端",
+    "supportBody": "{name} {version} 現已支援以下用戶端，請選擇要啟用的用戶端。",
+    "supportEnable": "啟用",
+    "supportLater": "暫不",
+    "chip": {
+      "require": "需要 {name}",
+      "recommend": "推薦 {name}",
+      "conflict": "與 {name} 衝突"
+    }
+  },
+  "maintenance": {
+    "title": "部分伺服器正在維護",
+    "titleAll": "伺服器正在維護",
+    "intro": "維護中的伺服器暫時無法進入，標記為「可進入」的伺服器仍可正常遊戲。",
+    "introAll": "所有伺服器都在維護中，請稍後再試。",
+    "introSection": "{section} 的所有伺服器都在維護中。可以登入其他伺服器分區遊戲，或稍後再試。",
+    "continue": "繼續",
+    "window": "{start} – {end}",
+    "until": "預計 {end} 結束",
+    "from": "{start} 開始",
+    "players": "{players} / {capacity} 人",
+    "canEnter": "可以進入",
+    "offlineHint": "暫時無法連線。",
+    "state": {
+      "maintenance": "維護中",
+      "online": "可進入",
+      "offline": "離線"
+    },
+    "playHere": "在此遊戲",
+    "selected": "目前選擇"
+  },
+  "notices": {
+    "title": "公告",
+    "next": "下一則",
+    "start": "知道了",
+    "showAll": "查看全部",
+    "allTitle": "公告",
+    "none": "目前沒有公告。"
   }
 }

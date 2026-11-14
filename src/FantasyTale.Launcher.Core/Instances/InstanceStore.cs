@@ -154,7 +154,7 @@ public sealed partial class InstanceStore
             try
             {
                 await File.WriteAllTextAsync(temporary, InstanceFile.Render(repaired), new UTF8Encoding(false), cancellationToken).ConfigureAwait(false);
-                File.Move(temporary, file, true);
+                AtomicFile.Replace(temporary, file);
             }
             finally { File.Delete(temporary); }
             return repaired;
@@ -274,7 +274,7 @@ public sealed partial class InstanceStore
         if (original.InstallationPath != definition.InstallationPath) throw new InvalidOperationException("Moving an installation requires a separate file operation.");
         var file = Path.Combine(Folder(definition.Id), "instance.toml");
         var temporary = Path.Combine(Folder(definition.Id), ".instance-" + Guid.NewGuid().ToString("N") + ".tmp");
-        try { File.WriteAllText(temporary, content, new UTF8Encoding(false)); File.Move(temporary, file, true); }
+        try { File.WriteAllText(temporary, content, new UTF8Encoding(false)); AtomicFile.Replace(temporary, file); }
         finally { File.Delete(temporary); }
     }
 

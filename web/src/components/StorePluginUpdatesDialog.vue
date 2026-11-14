@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { state } from '../state'
 import { downloadTasks, trackDownload, downloadAction } from '../downloads/live'
 import { pluginSourceChoices, pluginInstallationTargets, pluginSelectionStamp, type StorePluginUpdate } from '../store/updates'
@@ -52,7 +52,7 @@ function chooseSource(index: number, sourceId: string) {
 }
 async function install() {
   if (completed.value) { close(); return }
-  if (busy.value || !inHost || !plans.value.length) return
+  if (busy.value || !(inHost || !!demoMode?.enabled) || !plans.value.length) return
   const current = revision, capturedPlans = [...plans.value], capturedItems = [...installationItems.value], activate = activateAfterInstall.value
   busy.value = true
   try {
@@ -89,7 +89,7 @@ async function install() {
 
 <template>
   <WDialog :open="open" :title="t('store.updateAll')" :primary-text="t(completed ? 'updates.close' : busy ? 'install.starting' : queued ? 'updates.retry' : 'store.updateAll')" :close-text="completed ? undefined : t('updates.close')"
-    :primary-disabled="busy || !inHost || !plans.length || !completed && !actionable" :primary-busy="busy" @close="close" @primary="install">
+    :primary-disabled="busy || !(inHost || !!demoMode?.enabled) || !plans.length || !completed && !actionable" :primary-busy="busy" @close="close" @primary="install">
     <div class="form-stack">
       <StorePluginInstallList class="update-install-list" :items="installationItems">
         <template #default="{ index }">

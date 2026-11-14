@@ -164,49 +164,59 @@ void __cdecl draw_health(const DrawArguments* arguments, uintptr_t hud, uintptr_
     }
     const bool native_digits = yellow_font && native_style::draw(position.data(), text);
     if (!native_digits)
-        original_draw(arguments->numbers, position[0], position[1], 5, arguments->depth, arguments->scale, text);
+        original_draw(arguments->numbers, position[0], position[1], static_cast<int>(client_descriptor.white_style_slot),
+            arguments->depth, arguments->scale, text);
     if (show_percent && !raw_health)
         native_style::draw_percent(native_digits ? native_style::digits.data() : arguments->numbers,
-            native_digits ? static_cast<int>(client_descriptor.native_style_slot) : 5,
+            static_cast<int>(native_digits ? client_descriptor.native_style_slot : client_descriptor.white_style_slot),
             text, position.data(), formatted, native_digits ? 0.9f : arguments->depth, native_digits ? 0.9f : arguments->scale);
 }
 
-// kr-812 7DFADF restores the selected player into EDI before 7DFB55; EBP is HUD.
-// Forward the untouched seven original argument slots; caller cleanup and callee-saved registers remain.
-__declspec(naked) void draw_intercept() {
-    __asm {
-        push ebp
-        mov ebp, esp
-        push edi
-        push dword ptr [ebp]
-        lea eax, [ebp + 8]
-        push eax
-        call draw_health
-        add esp, 12
-        pop ebp
-        ret
+struct CapturedRegisters {
+    uintptr_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+};
+static_assert(sizeof(CapturedRegisters) == 32);
+
+void __cdecl draw_captured(const DrawArguments* arguments, const CapturedRegisters* registers) {
+    const auto hud = client_descriptor.hud_register == "ebx" ? registers->ebx
+        : client_descriptor.hud_register == "edi" ? registers->edi : registers->ebp;
+    uintptr_t player = 0;
+    switch (client_descriptor.player_capture) {
+    case numeric_health::PlayerCapture::CallerEdi: player = registers->edi; break;
+    case numeric_health::PlayerCapture::CallerEbx: player = registers->ebx; break;
+    case numeric_health::PlayerCapture::CallerEsi: player = registers->esi; break;
+    case numeric_health::PlayerCapture::CallerStack: {
+        const auto arguments_address = reinterpret_cast<uintptr_t>(arguments);
+        const auto offset = client_descriptor.player_stack_offset;
+        if (offset >= sizeof(DrawArguments) && arguments_address + offset >= arguments_address &&
+            !read(arguments_address + offset, &player, sizeof(player))) player = 0;
+        break;
     }
+    case numeric_health::PlayerCapture::HudOwner: break;
+    }
+    draw_health(arguments, hud, player);
 }
 
-// cn-279 7175D0 retains its HUD in EBX; the seven stack slots are unchanged.
-__declspec(naked) void draw_intercept_ebx() {
+// cn-279 7175D0 uses EBX for HUD; kr-1256 68EAAD uses EDI and selected-player ESI.
+// Snapshot before calling C++ so descriptor selection cannot overwrite the caller's registers.
+__declspec(naked) void draw_intercept() {
     __asm {
-        push ebp
-        mov ebp, esp
-        push edi
-        push ebx
-        lea eax, [ebp + 8]
+        pushfd
+        pushad
+        mov eax, esp
         push eax
-        call draw_health
-        add esp, 12
-        pop ebp
+        lea eax, [eax + 40]
+        push eax
+        call draw_captured
+        add esp, 8
+        popad
+        popfd
         ret
     }
 }
 
 uintptr_t intercept_address() {
-    return client_descriptor.hud_register == "ebx" ? reinterpret_cast<uintptr_t>(&draw_intercept_ebx)
-        : reinterpret_cast<uintptr_t>(&draw_intercept);
+    return reinterpret_cast<uintptr_t>(&draw_intercept);
 }
 
 int32_t FTHOOK_CALL cleanup(void*) {
@@ -340,6 +350,10 @@ extern "C" int32_t FTHOOK_CALL fthook_plugin_main(const fthook_host* host, fthoo
     }
     native_style::construct_options = reinterpret_cast<native_style::ConstructOptions>(image_base + client_descriptor.construct_options_rva);
     native_style::destroy_options = reinterpret_cast<native_style::DestroyOptions>(image_base + client_descriptor.destroy_options_rva);
+    native_style::construct_string = client_descriptor.construct_string_rva
+        ? reinterpret_cast<native_style::ConstructString>(image_base + client_descriptor.construct_string_rva) : nullptr;
+    native_style::release_string = client_descriptor.release_string_rva
+        ? reinterpret_cast<native_style::ReleaseString>(image_base + client_descriptor.release_string_rva) : nullptr;
     native_style::load_sprite = reinterpret_cast<native_style::LoadSprite>(image_base + client_descriptor.load_sprite_rva);
     native_style::measure_number = reinterpret_cast<native_style::MeasureNumber>(image_base + client_descriptor.measure_number_rva);
     const int32_t registered = host->register_locator(host->context,

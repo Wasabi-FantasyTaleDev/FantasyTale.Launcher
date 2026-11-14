@@ -1,5 +1,5 @@
 import { reactive, watch } from 'vue'
-import { call, inHost, type ClientComponent } from '../bridge'
+import { call, demoMode, inHost, type ClientComponent } from '../bridge'
 import { downloadTasks, trackDownload, downloadAction } from '../downloads/live'
 import type { DownloadTask } from '../downloads/model'
 import { refreshInstances } from '../state'
@@ -17,7 +17,7 @@ let finish: ((proceed: boolean) => void) | undefined
 
 /** Serializes prompts for independent clients; the host persists the one-time acknowledgement. */
 export function requestRecommendations(instanceId: string, name: string, serverId = '', launching = false, valid: () => boolean = () => true): Promise<boolean> {
-  if (!inHost) return Promise.resolve(true)
+  if (!(inHost || !!demoMode?.enabled)) return Promise.resolve(true)
   const existing = pending.get(instanceId)
   if (existing) return existing
   const request = tail.then(async () => {

@@ -41,6 +41,36 @@ public sealed partial class PluginImportTests
         Assert.True(active.Required);
     }
 
+    [Fact]
+    public async Task SupersededImportsAreRemovedWhileAnUnrelatedUpgradeIsStillPending()
+    {
+        var game = Game(); var build = game.Builds[0];
+        using var library = new PluginLibrary(Path.Combine(_root, "library"));
+        var other = Manifest.Replace("id = \"fixture.optional\"", "id = \"fixture.other\"", StringComparison.Ordinal);
+        foreach (var text in new[] { Manifest, Manifest.Replace("1.0.0", "2.0.0", StringComparison.Ordinal), other, other.Replace("1.0.0", "2.0.0", StringComparison.Ordinal) })
+        {
+            var preview = library.Prepare(Folder(text), game, build); library.Install(preview.Token, game, build);
+        }
+        var store = new InstanceStore(Path.Combine(_root, "instances"));
+        await store.CreateAsync(new("first", "First", game.Id, build.Id, null,
+            [new("fixture.optional", "1.0.0", true, false, new Dictionary<string, object>())]));
+        using var http = new HttpClient(new RecommendationHandler([], stalled: true));
+        await using var downloads = new ClientDownloadService(store, http, Path.Combine(_root, "tasks"),
+            _ => throw new InvalidOperationException("No network expected"),
+            _ => throw new InvalidOperationException("No network expected"), library, _ => game);
+        // The client is running, so its move to fixture.optional 2.0.0 stays pending, as a failed download's would.
+        var upgrades = new PluginUpgradeActivationService(Path.Combine(_root, "activations"), store, library, downloads,
+            _ => game, id => id == "first", _ => null, () => true);
+        upgrades.EnqueueImported(library.Packages(game).Single(p => p.Id == "fixture.optional" && p.Version == "2.0.0"), game);
+        Assert.Equal(1, upgrades.PendingCount);
+
+        upgrades.RetireSupersededImports();
+
+        // The unrelated superseded import goes; the selected old version and the pending target stay.
+        Assert.Equal(["fixture.optional@1.0.0", "fixture.optional@2.0.0", "fixture.other@2.0.0"],
+            library.Packages(game).Select(p => $"{p.Id}@{p.Version}").Order(StringComparer.Ordinal));
+    }
+
     [Theory]
     [InlineData("normal")]
     [InlineData("changed-selection")]

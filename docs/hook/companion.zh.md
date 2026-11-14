@@ -159,6 +159,65 @@ socket。集成测试已组合真实服务管理器和传输，完成通知、�
 通道可用性；有界结果投递失败时报告 `delivery-failed`。重连测试确认旧对话框被关闭、旧按钮的
 迟到点击不能进入新连接，而新通知仍能正常绘制。
 
+## 面板 consumer：无需启动器代码的新功能
+
+新增服务器功能时，启动器和通信组件都不需要改动：功能由两部分组成，一是提供并路由自身消息类型的服务器插件，
+二是入口页面使用这些消息的 overlay 插件包。插件包只声明它可以使用的类型：
+
+```toml
+[plugin]
+id = "bubblefighter.fantasy.example"
+kind = "overlay"
+
+[overlay]
+entry = "example.html"
+
+[companion.messages]
+"game.example.changed" = 1   # 页面监听的服务器事件
+"game.example.get" = 1       # 页面发出的请求
+```
+
+启动器以同样方式为每个这样的插件包建立桥接：每个包拥有自己的通道，只限于声明过的类型和 schema；这些类型的服务器
+事件会送到它的入口面板，页面也只能发送和请求这些类型，其他类型或 schema 一律返回 `not_granted`，不会到达服务器。
+这些授权与原生 consumer 共用每次启动的同一预算。
+
+入口页面或其挂载的游戏界面组件对所有功能使用同一套接口：
+
+```js
+const companion = overlayBus.companion(panelId);      // 组件内：inject('fantasyTaleCompanion')
+companion.onState(({ state, capabilities }) => {});   // 'connected' 以及服务器提供的已授权类型
+companion.on('game.example.changed', payload => {});
+const { status, response } = await companion.request('game.example.get', 1, { page: 1 }, { timeoutMs: 5000 });
+await companion.send('game.example.note', 1, { text: 'hi' });
+```
+
+每次调用都会返回：服务器的回复，或 `not_granted`、`busy`（同时超过 32 个调用）、`unavailable`、`not_bound`、
+`timeout`、`failed`。功能在没有浮层时也应能提供信息，因为没有安装插件包的玩家会在聊天中收到服务器发送的内容。
+
+### 插件包模块
+
+入口页面可以不使用组件库中的组件，而是指定本插件包中的 ES 模块：
+
+```html
+<div data-game-ui-root data-game-ui-module="feature.js"></div>
+```
+
+浮层会导入 `https://packages.fantasytale.local/<插件包 id>/feature.js`，并以
+`{ vue, components, theme, locale, panelId, buildContext, companion, nativeUi, packages, present, emit, on }` 调用其默认导出，
+由它返回要挂载的 Vue 组件。该组件自带 `BfUiProvider` 和资源根目录（通常来自它依赖的资源包），挂载时不使用共享
+provider。`present({ visible, interactive, modal, backdrop, layer, anchor })` 用于显示、隐藏和放置面板，效果与启动器
+自身的 show、hide、configure、anchor 消息相同。`nativeUi` 通过游戏控件支持插件调用游戏原生控件（消息框、通知、公告、本地聊天）；功能应优先使用它，只有原生操作不可用或失败时才用自己的浮层界面。功能的全部逻辑都在插件包里，发布或修改功能无需发布启动器。
+
+### 禁选（Ban Pick）
+
+商店插件包 `bubblefighter.fantasy.banpick` 就是这样的 overlay 插件包。它依赖共享资源包
+`bubblefighter.fantasy.item-previews` 和 `bubblefighter.fantasy.game-ui-resources`，并声明
+`game.ban.list.changed`、`game.ban.start.confirm`、`game.ban.list.get` 和 `game.command.execute`，均为 schema 1。
+一切由服务器决定：列表消息会说明玩家是否在房间内、是否为房主。房主会看到打开编辑器的按钮；其他成员在房主设置
+列表后才会看到该按钮，并以只读方式查看。应用时通过 `game.command.execute` 把整个列表作为一条 `bp set`（或
+`bp clear`）发送，并保留编辑器无法显示的分组和物品，因此服务器会像检查手动输入的命令一样检查它，并把来源记为
+Nirinsou。房主的开局确认是原生消息框，确认后执行服务器给出的命令。
+
 ## Native 插件调用（Runtime 3.3.3）
 
 可选 Native 插件在同一份清单中声明自己需要的消息类型和 schema，Launcher 与 Runtime 均读取：

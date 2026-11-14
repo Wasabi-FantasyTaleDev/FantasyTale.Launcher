@@ -26,7 +26,8 @@
     "installed": "已安装"
   },
   "dialog": {
-    "cancel": "取消"
+    "cancel": "取消",
+    "close": "关闭"
   },
   "home": {
     "launch": "启动游戏",
@@ -178,6 +179,7 @@
     "clientUnavailable": "目前还没有可添加的客户端版本。",
     "previousGame": "上一个游戏：{name}",
     "nextGame": "下一个游戏：{name}",
+    "buildNotServed": "此服务器暂无节点支持该客户端版本。",
     "gameComingSoon": "准备中",
     "gamePending": "游戏正在准备中，你可以切换到其他游戏继续游玩。",
     "subtitle": "熟悉的游戏，从这里开始。",
@@ -283,7 +285,8 @@
     "loginNeeded": "请先登录当前服务器。",
     "unknown": "暂无数据",
     "removeServerTitle": "移除这个服务器？",
-    "removeServerBody": "从本机移除“{name}”？已安装的客户端会保留。"
+    "removeServerBody": "从本机移除“{name}”？已安装的客户端会保留。",
+    "serverSection": "服务器"
   },
   "updates": {
     "totalSpeed": "总下载速度",
@@ -478,7 +481,8 @@
     "description": "可开启一些实验性功能或对商店源进行配置与维护",
     "tabs": {
       "options": "开发者选项",
-      "sources": "商店源管理"
+      "sources": "商店源管理",
+      "demo": "演示模式"
     },
     "pending": "待开发",
     "nsfw": {
@@ -490,6 +494,69 @@
       "description": "启动游戏后显示 Overlay Test 弹窗。下次启动游戏生效。",
       "passThrough": "框外点击穿透",
       "passThroughDescription": "允许点击消息框外的游戏界面。下次启动游戏生效。"
+    },
+    "demo": {
+      "title": "UI 演示模式",
+      "description": "在 npm run dev 浏览器开发模式下自动开启。使用可交互的模拟数据与实时动画进行界面测试，且除本标签页外不在任何位置显示演示标识。",
+      "disabledNotice": "UI 演示模式当前已关闭。请在上方重新开启后再触发交互弹窗与模拟动画。",
+      "reset": "重置模拟数据",
+      "resetDone": "已恢复初始模拟数据。",
+      "activeTransfers": "进行中的演示传输",
+      "groups": {
+        "store": "商店与下载动画",
+        "storeDesc": "打开商店安装弹窗，或直接启动会在各页面同步展示进度的实时安装动画。",
+        "instances": "客户端、多人游戏与本地开服",
+        "instancesDesc": "测试客户端配置、登录认证、服务器详情、在线玩家列表与本地开服弹窗。",
+        "plugins": "插件、策略与冲突处理",
+        "pluginsDesc": "测试插件依赖与冲突策略、推荐安装、启动警告、资源覆盖冲突与恢复通知。",
+        "updates": "启动器更新与镜像提示",
+        "updatesDesc": "测试新版本提示、实时下载进度动画、重启安装确认、强制升级要求与更新失败指引弹窗。",
+        "notices": "消息通知与错误横幅",
+        "noticesDesc": "触发全局插件消息提示与可展开诊断详情的故障横幅。"
+      },
+      "actions": {
+        "storeClient": "安装客户端弹窗",
+        "storePlugin": "安装插件弹窗",
+        "storeServer": "服务端包详情弹窗",
+        "storePluginUpdates": "插件批量更新弹窗",
+        "storeSources": "商店源管理弹窗",
+        "animateClient": "触发客户端安装动画",
+        "animatePlugin": "触发插件下载动画",
+        "animateServer": "触发服务端下载动画",
+        "instanceAdd": "添加客户端弹窗",
+        "instanceEdit": "编辑客户端弹窗",
+        "stopGame": "结束运行中游戏弹窗",
+        "auth": "登录与注册弹窗",
+        "serverDetails": "服务器详情与预设",
+        "serverEdit": "添加 / 编辑服务器弹窗",
+        "onlinePlayers": "在线玩家列表弹窗",
+        "serverPlugins": "服务器推荐插件弹窗",
+        "directorySources": "服务器目录源弹窗",
+        "hostingSetup": "本地服务器配置弹窗",
+        "hostingLog": "本地开服运行日志",
+        "pluginPolicy": "插件依赖与冲突策略",
+        "pluginRecommend": "推荐插件确认弹窗",
+        "pluginLaunchWarning": "已禁用依赖启动警告",
+        "pluginConflict": "资源覆盖冲突选择",
+        "pluginRequiredUpdate": "启动前必更插件弹窗",
+        "pluginSupport": "新适配客户端启用提示",
+        "pluginImport": "本地导入插件弹窗",
+        "pluginSchemeShare": "分享插件方案弹窗",
+        "pluginRecovery": "插件异常恢复通知",
+        "pluginDeprecation": "插件停用与下线公告",
+        "updateAvailable": "发现可用更新弹窗",
+        "updateProgress": "启动器下载进度动画",
+        "updateReady": "准备重启更新确认",
+        "updateMandatory": "强制升级要求弹窗",
+        "updateFailure": "更新失败手动指引",
+        "githubMirror": "GitHub 镜像加速提示",
+        "noticeSuccess": "插件成功提示条",
+        "noticeWarning": "插件警告提示条",
+        "serverError": "服务器请求失败详情",
+        "launchFailure": "游戏清理异常详情",
+        "instanceBusy": "客户端占用冲突详情",
+        "clearNotices": "清空提示与错误横幅"
+      }
     }
   },
   "nativeUi": {
@@ -913,6 +980,18 @@
   "featureAvailability": {
     "development": "正在开发中，将在未来版本开放。"
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "此服务器要求启用插件“{plugin}”。请为此客户端启用后重新启动。",
+    "server_plugin_version_low": "已安装的“{plugin}”版本低于此服务器允许的版本。请更新后重新启动。",
+    "server_plugin_version_high": "已安装的“{plugin}”版本高于此服务器允许的版本。请选择允许的版本后重新启动。",
+    "server_plugin_policy_conflict": "此服务器禁用了“{plugin}”，但此客户端需要它。请联系服务器管理员确认此规则。",
+    "client_policy_conflict": "“{plugin}”的规则相互矛盾。请联系服务器管理员确认此规则。",
+    "client_policy_source_conflict": "“{plugin}”的规则指定的下载来源没有交集。请联系服务器管理员确认此规则。",
+    "client_policy_disabled": "此服务器已禁用“{plugin}”。请为此客户端关闭它后重试。",
+    "plugin_policy_require_unmet": "请先安装或启用“{plugin}”。",
+    "plugin_policy_required_by": "“{plugin}”需要此插件。请先关闭“{plugin}”。",
+    "plugin_policy_conflict_active": "与“{plugin}”冲突。请先关闭“{plugin}”。"
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "上次安装结果",
     "phase": "安装阶段",
@@ -1219,5 +1298,86 @@
     "message": "客户端配置正由另一项操作使用，请稍后重试。",
     "title": "客户端占用详情",
     "explanation": "此锁用于避免启动、下载和设置保存同时修改同一客户端。即使没有游戏窗口，后台操作也可能持有它。下方显示被阻止的操作及锁文件路径，尚不能据此确定持有进程。"
+  },
+  "pluginPolicy": {
+    "title": "前置插件缺失",
+    "launchTitle": "前置插件缺失",
+    "disableTitle": "其他插件依赖此插件",
+    "body": "该插件需要前置插件，请先安装或启用前置插件后再继续。",
+    "launchBody": "该插件需要前置插件，请先安装或启用前置插件后再继续。",
+    "disableBody": "以下已启用的插件依赖你正在停用的插件。请先停用它们，或取消操作。",
+    "group": {
+      "require": "{name} 需要以下插件",
+      "conflict": "与 {name} 存在冲突"
+    },
+    "rule": {
+      "require": "{plugin} 需要 {other}",
+      "recommend": "{plugin} 推荐 {other}",
+      "conflict": "{plugin} 不能与 {other} 同时使用"
+    },
+    "status": {
+      "missing": "未安装 {name}。",
+      "disabled": "已安装 {name} {version}，但未启用。",
+      "version": "只安装了 {name} {version}，需要 {range}。",
+      "unavailable": "{name} 不支持此客户端。",
+      "conflict": "{name} 已启用。"
+    },
+    "install": "安装",
+    "update": "更新",
+    "installing": "正在安装",
+    "updating": "正在更新",
+    "enable": "启用",
+    "enabledDone": "已启用",
+    "disableAction": "停用",
+    "disabledDone": "已停用",
+    "notInstalled": "未安装",
+    "notEnabled": "未启用",
+    "disableOther": "关闭 {name}",
+    "dependentSwitch": "使用 {name}",
+    "confirm": "确认",
+    "continue": "确认",
+    "resolveFirst": "确认",
+    "recommendedLabel": "推荐",
+    "blockedHint": "继续前请安装或启用所需插件，或关闭该插件。",
+    "notInStore": "已启用的商店没有为此客户端提供 {name}。",
+    "importEnable": "安装后在所有支持的客户端上启用",
+    "supportTitle": "{name} 支持更多客户端",
+    "supportBody": "{name} {version} 现已支持以下客户端，请选择要启用的客户端。",
+    "supportEnable": "启用",
+    "supportLater": "暂不",
+    "chip": {
+      "require": "需要 {name}",
+      "recommend": "推荐 {name}",
+      "conflict": "与 {name} 冲突"
+    }
+  },
+  "maintenance": {
+    "title": "部分服务器正在维护",
+    "titleAll": "服务器正在维护",
+    "intro": "维护中的服务器暂时无法进入，标记为“可进入”的服务器仍可正常游戏。",
+    "introAll": "所有服务器都在维护中，请稍后再试。",
+    "introSection": "{section} 的所有服务器都在维护中。可以登录其他服务器分区游戏，或稍后再试。",
+    "continue": "继续",
+    "window": "{start} – {end}",
+    "until": "预计 {end} 结束",
+    "from": "{start} 开始",
+    "players": "{players} / {capacity} 人",
+    "canEnter": "可以进入",
+    "offlineHint": "暂时无法连接。",
+    "state": {
+      "maintenance": "维护中",
+      "online": "可进入",
+      "offline": "离线"
+    },
+    "playHere": "在此游戏",
+    "selected": "当前选择"
+  },
+  "notices": {
+    "title": "公告",
+    "next": "下一条",
+    "start": "知道了",
+    "showAll": "查看全部",
+    "allTitle": "公告",
+    "none": "暂无公告。"
   }
 }

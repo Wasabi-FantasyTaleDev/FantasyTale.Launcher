@@ -10,6 +10,12 @@ namespace numeric_health {
 enum class PlayerCapture {
     /// The preserved EDI value at the intercepted number-wrapper call is the player.
     CallerEdi,
+    /// The number-wrapper caller retains the selected player in EBX.
+    CallerEbx,
+    /// The number-wrapper caller retains the selected player in ESI.
+    CallerEsi,
+    /// A saved caller stack slot contains the selected player after registers are reused.
+    CallerStack,
     /// The preserved HUD object's first pointer is the player; ignore caller EDI.
     HudOwner
 };
@@ -44,6 +50,10 @@ struct ClientDescriptor {
     uint32_t wrapper_call_va = 0;
     uint32_t health_accessor_call_va = 0;
     std::vector<uint8_t> health_accessor_call_bytes;
+    /// Exact instructions between the HP call return and its floating-point store.
+    std::vector<uint8_t> health_result_bytes;
+    /// Complete native getter bytes when the HUD inlines the same access instead of calling it.
+    std::vector<uint8_t> health_accessor_bytes;
     uint32_t health_argument_setup_va = 0;
     std::vector<uint8_t> health_argument_setup_bytes;
     std::vector<uint8_t> wrapper_call_bytes;
@@ -66,13 +76,24 @@ struct ClientDescriptor {
     uint32_t maximum_health_rva = 0;
     uint32_t hud_anchor_offset = 0;
     PlayerCapture player_capture = PlayerCapture::CallerEdi;
+    /// Byte offset from the first original draw argument to the saved player pointer.
+    uint32_t player_stack_offset = 0;
+    /// Existing client number style used when the optional health sprite is unavailable.
+    uint32_t white_style_slot = 5;
     uint32_t resource_manager_rva = 0;
+    /// String representation consumed by the sprite loader; early COW strings are not MSVC strings.
+    std::string resource_string_abi;
     /// Inline capacity of the client string object, measured in UTF-16 code units.
     uint32_t resource_string_inline_capacity = 0;
     /// Size of the per-load resource options object in bytes.
     uint32_t resource_options_size = 0;
     uint32_t construct_options_rva = 0;
     uint32_t destroy_options_rva = 0;
+    /// Offset of the member passed to the options destructor; zero destroys the whole record.
+    uint32_t destroy_options_offset = 0;
+    /// Native constructor and release function for the four-byte COW path object.
+    uint32_t construct_string_rva = 0;
+    uint32_t release_string_rva = 0;
     uint32_t load_sprite_rva = 0;
     uint32_t measure_number_rva = 0;
     uint32_t native_style_slot = 0;

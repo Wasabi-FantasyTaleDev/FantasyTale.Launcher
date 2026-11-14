@@ -1,0 +1,199 @@
+[
+  {
+    "id": 202016,
+    "category": "weapons"
+  },
+  {
+    "id": 202025,
+    "category": "weapons"
+  },
+  {
+    "id": 201024,
+    "category": "weapons"
+  },
+  {
+    "id": 201014,
+    "category": "weapons"
+  },
+  {
+    "id": 203024,
+    "category": "weapons"
+  },
+  {
+    "id": 203016,
+    "category": "weapons"
+  },
+  {
+    "id": 204015,
+    "category": "weapons"
+  },
+  {
+    "id": 204024,
+    "category": "weapons"
+  },
+  {
+    "id": 204044,
+    "category": "weapons"
+  },
+  {
+    "id": 202044,
+    "category": "weapons"
+  },
+  {
+    "id": 201044,
+    "category": "weapons"
+  },
+  {
+    "id": 202026,
+    "category": "weapons"
+  },
+  {
+    "id": 300001,
+    "category": "characters"
+  },
+  {
+    "id": 300002,
+    "category": "characters"
+  },
+  {
+    "id": 300003,
+    "category": "characters"
+  },
+  {
+    "id": 300004,
+    "category": "characters"
+  },
+  {
+    "id": 300005,
+    "category": "characters"
+  },
+  {
+    "id": 300006,
+    "category": "characters"
+  },
+  {
+    "id": 300007,
+    "category": "characters"
+  },
+  {
+    "id": 300008,
+    "category": "characters"
+  },
+  {
+    "id": 300010,
+    "category": "characters"
+  },
+  {
+    "id": 300011,
+    "category": "characters"
+  },
+  {
+    "id": 100004,
+    "category": "clothes"
+  },
+  {
+    "id": 100007,
+    "category": "clothes"
+  },
+  {
+    "id": 100001,
+    "category": "clothes"
+  },
+  {
+    "id": 100006,
+    "category": "clothes"
+  },
+  {
+    "id": 100035,
+    "category": "clothes"
+  },
+  {
+    "id": 100037,
+    "category": "clothes"
+  },
+  {
+    "id": 100047,
+    "category": "clothes"
+  },
+  {
+    "id": 100048,
+    "category": "clothes"
+  },
+  {
+    "id": 100119,
+    "category": "clothes"
+  },
+  {
+    "id": 100020,
+    "category": "accessories"
+  },
+  {
+    "id": 100024,
+    "category": "accessories"
+  },
+  {
+    "id": 100032,
+    "category": "accessories"
+  },
+  {
+    "id": 100033,
+    "category": "accessories"
+  },
+  {
+    "id": 100043,
+    "category": "accessories"
+  },
+  {
+    "id": 100044,
+    "category": "accessories"
+  },
+  {
+    "id": 100046,
+    "category": "accessories"
+  },
+  {
+    "id": 100050,
+    "category": "accessories"
+  },
+  {
+    "id": 100057,
+    "category": "accessories"
+  },
+  {
+    "id": 207001,
+    "category": "weapons"
+  },
+  {
+    "id": 207020,
+    "category": "weapons"
+  },
+  {
+    "id": 205002,
+    "category": "weapons"
+  },
+  {
+    "id": 205017,
+    "category": "weapons"
+  },
+  {
+    "id": 100412,
+    "category": "accessories",
+    "preview_mode": "standalone_slot",
+    "preview_inset": 0.12,
+    "preview_quaternion": [0, 1, 0, 0]
+  },
+  {
+    "id": 100431,
+    "category": "accessories",
+    "preview_mode": "standalone_slot",
+    "preview_inset": 0.12,
+    "preview_quaternion": [0, 1, 0, 0]
+  },
+  {
+    "id": 100432,
+    "category": "accessories",
+    "preview_mode": "standalone_slot",
+    "preview_inset": 0.12,
+    "preview_quaternion": [0, 1, 0, 0]
+  }
+]

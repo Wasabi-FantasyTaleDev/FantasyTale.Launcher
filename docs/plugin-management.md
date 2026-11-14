@@ -227,6 +227,99 @@ installed versions have no fixed count ceiling. Changing clients discards the pr
 results. Downloads remain owned by the backend when the page is closed. Update
 checks do not hot-reload native code. The `clientPolicy` `latest` rule also checks before launch and handles required updates.
 
+## Shared data packages and requirements
+
+A package with `kind = "assets"` carries data only, such as pre-generated pictures that several packages use. It
+is never passed to the native hook loader, never patches or replaces client files, and has no options, patches,
+native library, overlay, service or companion tables. Its one table names the folder whose files are shared:
+
+```toml
+[plugin]
+id = "bubblefighter.fantasy.item-previews"
+kind = "assets"
+
+[assets]
+root = "data"        # package-relative folder; no traversal, absolute path or link
+```
+
+Importing or installing an assets package requires that folder to exist and hold at least one file. The package
+may be large: it is copied, hashed and installed as a stream like every other package.
+
+Any package may name what it needs in `[plugin]`:
+
+```toml
+requires = ["bubblefighter.fantasy.item-previews", "other.package@>=1.2.0 <2.0.0"]
+```
+
+An entry is a package id, optionally followed by `@` and space-separated comparisons (`>=`, `<=`, `>`, `<`, `=`)
+on SemVer versions. A former id (`aliases`) is accepted. Ids must be distinct and a package cannot require itself.
+
+- **Active without selection.** While an enabled package that is available for the client's build needs an
+  assets package, that package is active. The player does not enable it, and it does not appear in the client's
+  plugin selection. The newest installed version that satisfies the constraint and supports the build is used.
+  One installed copy serves every dependent. Assets packages may require other assets packages.
+- **Other kinds.** A required package that is not an assets package must itself be enabled for the client.
+- **Install.** Installing a package from a store also queues its requirements from the same store, newest
+  compatible release first and dependencies before dependents. Requirements already installed with a
+  satisfying version are reused. When the store does not offer a requirement for the client, installation
+  stops and the message names it. The store entry must carry the inline `plugin_definition` (see
+  [Self-hosted store](self-hosted-store.md)) so the requirements are known before the download. Launch waits for the
+  transfers of the data that the client's enabled packages require.
+- **Launch.** Before any client file is touched, launch fails with the existing definition error when a
+  requirement is not installed, only an unsatisfying version is installed, the package is not available for the
+  build, another-kind requirement is not enabled, the requirements form a cycle, or an assets package lost its
+  data folder.
+- **Uninstall.** An assets package is not removed while another installed package requires it. Uninstalling the
+  last dependent leaves the shared data installed, like any other package the player did not remove.
+
+Overlay pages read these files through the [package file host](hook/overlay.md#package-files).
+
+### Plugin policy (schema 2)
+
+A manifest with `schema = 2` may declare any number of rules about other packages, in the same shape as
+[client policy](client-policy.md) rules. Schema 1 manifests load unchanged; a schema 1 manifest that declares
+`[[plugin_policy]]` is rejected, and a launcher older than 0.1.71 rejects schema 2 rather than ignore its rules.
+
+```toml
+schema = 2
+
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.native-ui-bridge"
+type = "require"          # require | recommend | conflict
+version = ">=0.1.5"       # optional constraint, as in requires
+builds = ["kr-812"]       # optional: exact build ids; omitted applies to every build the package supports
+languages = ["zh"]        # optional: launcher languages; zh matches zh-CN and zh-TW
+default_selected = true   # recommend only: the card starts checked
+```
+
+| Type | Effect |
+| --- | --- |
+| `require` | The other package must be installed and enabled (an assets package only installed) before launch. |
+| `recommend` | Offered with a checkbox card when the package is turned on, and once per client at launch. Never blocks. |
+| `conflict` | The two packages cannot be enabled together. Launch refuses an enabled conflict. |
+
+A rule applies on its builds and launcher languages only. A language never forbids a package: outside its
+languages the rule simply does not apply, and the package can still be installed and enabled. A legacy `requires`
+entry is read as an unscoped `require` rule, and store installation still queues every `require` rule's package.
+
+Turning a package on, and launching, first check the rules. When one is unmet the launcher shows a card for each:
+**Install** a missing package from the enabled stores, **Turn on** an installed one, or **Turn off** a conflicting
+one. Each blocking card also carries a switch for the package that declares the rule; the launch continues only
+when every requirement is met or that package is switched off.
+
+### Installation and upgrades
+
+- **Install.** "Turn on after installation" is on by default for store installs and local imports. A first
+  installation is then enabled on every client whose build the package supports. A client where it would turn off
+  another enabled package is skipped and left unchanged.
+- **Upgrade.** A new version replaces the selected one on every client that selected it, keeping each client's
+  enabled state and compatible options.
+- **Old versions.** With *Remove old plugin versions* on (the default) a superseded version is deleted once no
+  client selects it. This covers local imports as well as store releases; with the setting off nothing is deleted.
+- **New client support.** When an upgrade supports builds that no earlier version did, the launcher asks with a
+  card for each client of those builds whether to turn it on there. The question survives restarts until answered,
+  and each client is asked once.
+
 ## Limits and storage
 
 Packages, ZIP input and the imported library have no fixed file-count, entry-count,

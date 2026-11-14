@@ -85,6 +85,9 @@ def verify(descriptor_path, client_path):
         if not expected or image.read(addresses[name], len(expected), executable=True) != expected:
             raise ValueError(f'Code signature mismatch: {name}')
         checked.add(name)
+    # The bridge accepts a function as signed when any signature covers its address, so aliases share one signature.
+    signed = {addresses[name] for name in checked}
+    checked |= {name for name, address in addresses.items() if address in signed}
     functions = {'allocate', 'construct_message', 'layout_message', 'modal_message', 'position_message', 'detach_message',
                  'string_create', 'string_release', 'notify', 'chat', 'append_announcement', 'clock_now', 'set_text'}
     missing = functions.intersection(addresses) - checked
@@ -94,7 +97,56 @@ def verify(descriptor_path, client_path):
         target = struct.unpack('<I', image.read(addresses['message_vtable'] + values['modal_slot'], 4))[0]
         if target != image.base + addresses['modal_message']:
             raise ValueError('Modal vtable slot does not point to the declared modal method')
-    return len(checked)
+    if 'control_abi' in values:
+        verify_controls(image, addresses, values, checked, definition.get('selection_groups', []))
+    return len(definition['signatures'])
+
+
+def verify_controls(image, addresses, values, checked, groups):
+    """Verify control signatures, vtable text methods and selection-group layouts."""
+    if values['control_abi'] not in (1, 2) or values.get('click_abi', 1) not in (1, 2):
+        raise ValueError('Unknown control_abi or click_abi')
+    if 'edit_text_abi' in values and (values['control_abi'] != 2 or values['edit_text_abi'] not in (1, 2)):
+        raise ValueError('edit_text_abi needs control_abi 2 and is 1 or 2')
+    text_abi = values.get('control_text_abi', 1)
+    if 'control_text_abi' in values and (values['control_abi'] != 1 or text_abi not in (1, 2)):
+        raise ValueError('control_text_abi needs control_abi 1 and is 1 or 2')
+    functions = {'control_load_form', 'control_initialize', 'control_destroy', 'control_click', 'control_set_text', 'edit_set_text'}
+    if values['control_abi'] == 1:
+        functions |= {'control_get_text', 'edit_get_text', 'edit_set_maximum', 'control_string_assign',
+                      'control_button_create', 'control_parent', 'control_geometry'}
+        functions |= {'control_string_release'} if text_abi == 1 else {'string_create', 'string_release'}
+    else:
+        functions.add('control_focus')
+    if 'control_set_enabled' in addresses:
+        functions.add('control_set_enabled')
+    missing = functions - checked
+    if missing:
+        raise ValueError(f'Missing control function signatures: {sorted(missing)}')
+    if values['control_abi'] == 1:
+        # The bridge recognizes writable controls by these vtable entries.
+        slot = lambda vtable, offset: struct.unpack('<I', image.read(addresses[vtable] + values[offset], 4))[0] - image.base
+        for vtable, getter, setter in (('button_vtable', 'control_get_text', 'control_set_text'), ('label_vtable', 'control_get_text', 'control_set_text'),
+                                       ('edit_vtable', 'edit_get_text', 'edit_set_text')):
+            if slot(vtable, 'get_text_slot') != addresses[getter] or slot(vtable, 'text_slot') != addresses[setter]:
+                raise ValueError(f'{vtable} text slots do not point to {getter} and {setter}')
+    for group in groups:
+        size = group['form_size']
+        marked = 'members_offset' in group
+        if marked == ('value_offset' in group) or (marked and 'records_offset' in group):
+            raise ValueError(f'Selection group {group["name"]} needs exactly one of value_offset and members_offset')
+        offset = group['members_offset'] if marked else group['value_offset']
+        layout = group.get('member_layout', 1)
+        if layout not in (1, 2) or ('member_layout' in group and not marked) or (layout == 2 and 'member_nil_offset' in group):
+            raise ValueError(f'Selection group {group["name"]} has an unknown member layout')
+        # Layout 2 keeps the 16-byte tree header node inside the form instead of a pointer to it.
+        if offset % 4 or not 0 < offset <= size - (16 if layout == 2 else 4):
+            raise ValueError(f'Selection group {group["name"]} reads beyond its form')
+        if marked and len({group['member_key_offset'], group['member_control_offset']}) != 2:
+            raise ValueError(f'Selection group {group["name"]} has overlapping member fields')
+        if 'records_offset' in group and (group['records_offset'] % 4 or not 0 < group['records_offset'] <= size - 8
+                                          or max(group['record_key_offset'], group['record_value_offset']) > group['record_size'] - 4):
+            raise ValueError(f'Selection group {group["name"]} records extend beyond their form or record')
 
 
 def main():

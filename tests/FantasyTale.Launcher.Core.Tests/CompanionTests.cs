@@ -279,7 +279,7 @@ public sealed class CompanionTests
         new(kind, id, "ui.notification", 1, JsonSerializer.SerializeToElement(payload), replyTo, "epoch-1");
 
     internal static async Task<CompanionConnection> ConnectAsync(SocketPair pair, string state = "connected", CompanionLimits? limits = null,
-        IReadOnlyDictionary<string, int>? types = null)
+        IReadOnlyDictionary<string, int>? types = null, string epoch = "epoch-1")
     {
         limits ??= Limits;
         types ??= Types;
@@ -288,7 +288,7 @@ public sealed class CompanionTests
             new("testgame", "kr-812", "launch-1", "zh-CN", types), limits, timeout.Token);
         Assert.Equal("hello", (await ReceiveAsync(pair.Server)).Kind);
         await SendAsync(pair.Server, new("welcome", "welcome-1", "companion.welcome", 1,
-            JsonSerializer.SerializeToElement(new { protocol = 1, build = "kr-812", launch_id = "launch-1", state, capabilities = types }), Epoch: "epoch-1"));
+            JsonSerializer.SerializeToElement(new { protocol = 1, build = "kr-812", launch_id = "launch-1", state, capabilities = types }), Epoch: epoch));
         return await connecting;
     }
 

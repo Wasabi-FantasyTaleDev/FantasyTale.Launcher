@@ -41,6 +41,14 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
         PostToPage(JsonSerializer.Serialize(new { type = "build-context", context }, JsonSerializerOptions.Web));
     }
 
+    /// <summary>Replaces the package folders overlay pages can read; throws without changes when an entry is invalid.</summary>
+    internal void SetPackageRoots(IReadOnlyDictionary<string, string> roots)
+    {
+        var window = _window ?? throw new InvalidOperationException("Attach the overlay before registering package folders.");
+        window.PackageFiles.SetRoots(roots);
+        OverlayLifecycleLog.Write("package-roots", new { count = roots.Count });
+    }
+
     /// <inheritdoc />
     public Task WaitUntilReadyAsync(CancellationToken cancellationToken = default) => _ready.Task.WaitAsync(cancellationToken);
 
@@ -60,14 +68,16 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
     /// <param name="resourceRoot">Optional external directory containing native theme resources.</param>
     /// <param name="preview">Whether to display the local native UI integration preview.</param>
     /// <param name="gameProcessId">Optional launch-bound game process id for tracking replacement windows.</param>
-    public void Attach(nint gameHwnd, string theme = "v2", string? resourceRoot = null, bool preview = false, uint gameProcessId = 0)
+    /// <param name="locale">Launcher UI language handed to overlay panels, or null for the overlay default.</param>
+    public void Attach(nint gameHwnd, string theme = "v2", string? resourceRoot = null, bool preview = false, uint gameProcessId = 0,
+        string? locale = null)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         if (_window is not null) throw new InvalidOperationException("The overlay is already attached.");
         _dispatcher = Application.Current?.Dispatcher ?? throw new InvalidOperationException("A WPF application must be running before attaching the overlay.");
         if (!_dispatcher.CheckAccess()) throw new InvalidOperationException("Attach must run on the WPF dispatcher thread.");
         if (theme is not ("v1" or "v2" or "v3")) throw new ArgumentException("The overlay theme must be v1, v2 or v3.", nameof(theme));
-        _window = new OverlayWindow(gameHwnd, theme, resourceRoot, preview, gameProcessId);
+        _window = new OverlayWindow(gameHwnd, theme, resourceRoot, preview, gameProcessId, locale);
         Application.Current.MainWindow = _window;
         _window.NavigationReady  += OnNavigationReady;
         _window.MessageFromPage  += OnMessageFromPage;

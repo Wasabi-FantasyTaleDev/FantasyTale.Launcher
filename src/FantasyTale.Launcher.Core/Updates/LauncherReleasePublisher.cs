@@ -16,7 +16,7 @@ public static class LauncherReleasePublisher
     public static async Task<string> PublishAsync(string configuration, CancellationToken ct = default)
     {
         var config = TomlReader.Load(configuration);
-        config.OnlyKeys("input", "output", "feed_path", "source_prefix", "platform", "revision", "version", "signature_path", "signature_private_key_env", "signature_public_key_path", "deprecated_max_version");
+        config.OnlyKeys("input", "output", "feed_path", "source_prefix", "platform", "revision", "version", "signature_path", "signature_private_key_env", "signature_public_key_path", "deprecated_before_version");
         var configRoot = Path.GetDirectoryName(Path.GetFullPath(configuration))!;
         var input = Path.GetFullPath(config.String("input", true), configRoot);
         var output = Path.GetFullPath(config.String("output", true), configRoot);
@@ -28,9 +28,9 @@ public static class LauncherReleasePublisher
         var revision = config.Integer("revision", min: 1) ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var version = config.String("version");
         if (version.Length > 64 || version.Any(char.IsControl)) throw new InvalidDataException("Invalid publication version label.");
-        var deprecated = config.String("deprecated_max_version");
-        if (deprecated.Length > 0 && PluginCatalog.CompareVersions(deprecated, version) >= 0)
-            throw new InvalidDataException("The deprecated version boundary must precede the published release.");
+        var deprecated = config.String("deprecated_before_version");
+        if (deprecated.Length > 0 && (PluginVersion.Parse(deprecated).Pre.Length > 0 || PluginCatalog.CompareVersions(deprecated, version) > 0))
+            throw new InvalidDataException("deprecated_before_version must be a release version no later than the published release.");
         var feed = SourceAddress.RelativePath(config.String("feed_path", fallback: $"launcher/{platform}/current.toml"));
         var prefix = SourceAddress.RelativePath(config.String("source_prefix", fallback: $"launcher/{platform}"));
         if (feed.StartsWith(prefix + "/objects/", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The feed cannot overwrite a content object.");
@@ -45,10 +45,14 @@ public static class LauncherReleasePublisher
         if (signaturePath.Length == 0 && File.Exists(signatureRecord))
             throw new InvalidDataException("A signed publication output cannot be reused for an unsigned release.");
         var text = new StringBuilder($"schema = 1\nproduct = \"fantasytale-launcher\"\nplatform = {Quote(platform)}\nrevision = {revision}\nversion = {Quote(version)}\n");
-        if (deprecated.Length > 0) text.Append(System.Globalization.CultureInfo.InvariantCulture, $"deprecated_max_version = {Quote(deprecated)}\n");
+        // Launchers before 0.2.0 only understand the inclusive deprecated_max_version. The lowest pre-release of the
+        // boundary ("0.2.0-0") is above every earlier release and below the boundary itself, so they are held to exactly
+        // the same rule.
+        if (deprecated.Length > 0) text.Append(System.Globalization.CultureInfo.InvariantCulture,
+            $"deprecated_before_version = {Quote(deprecated)}\ndeprecated_max_version = {Quote(deprecated + "-0")}\n");
         var rows = Enumerate(input); var destinations = rows.Select(p => Path.GetRelativePath(input, p).Replace('\\', '/')).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (destinations.Contains("launcher-release-policy.toml"))
-            throw new InvalidDataException("The retired release policy file cannot be packaged; configure deprecated_max_version in the release index.");
+            throw new InvalidDataException("The retired release policy file cannot be packaged; configure deprecated_before_version in the release index.");
         if (!destinations.Contains(LauncherRelease.Executable) || !destinations.Contains("wwwroot/index.html") || !destinations.Contains(LauncherRelease.UpdaterExecutable))
             throw new InvalidDataException("Publish a complete launcher build including its frontend and updater.");
         // Manifests are tracked but native payloads are staged separately; validate even optional plugins before exposing a feed.

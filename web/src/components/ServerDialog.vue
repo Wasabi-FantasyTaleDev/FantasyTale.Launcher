@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Server } from '../bridge'
+import { call, demoMode, inHost, type Server } from '../bridge'
 import { perform, refreshServers, selectedGame, state } from '../state'
 import { languages } from '../i18n'
 import { descriptionLanguages } from '../serverDescription'
@@ -89,7 +89,7 @@ function applyArtwork(target: 'icon' | 'gallery', references: string[], language
 async function chooseArtwork(target: 'icon' | 'gallery') {
   if (locked.value) return
   artworkError.value = ''
-  if (!inHost) {
+  if (!(inHost || !!demoMode?.enabled)) {
     pickerTarget.value = target
     pickerLanguage = descriptionLanguage.value; pickerGame = state.selectedGameId
     await nextTick()
@@ -118,7 +118,7 @@ async function imported(server: Server) {
   state.selectedServerId = server.id; await refreshServers(); emit('saved', server); emit('close')
 }
 async function save() {
-  if (!valid.value || locked.value || !inHost) return
+  if (!valid.value || locked.value || !(inHost || !!demoMode?.enabled)) return
   const motdTranslations = Object.fromEntries(Object.entries(descriptions.value).map(([language, text]) => [language, text.trim()]).filter(([, text]) => text))
   const summaryTranslations = Object.fromEntries(Object.entries(summaries.value).map(([language, text]) => [language, text.trim()]).filter(([, text]) => text))
   const iconUrlTranslations = Object.fromEntries(Object.entries(icons.value).map(([language, url]) => [language, url.trim()]).filter(([, url]) => url))
@@ -138,7 +138,7 @@ async function save() {
 }
 </script>
 <template>
-  <WDialog dismiss-on-backdrop :open="open" :title="t(server ? 'service.editServer' : 'service.addServer')" :primary-text="t('live.save')" :close-text="t('dialog.cancel')" :primary-disabled="!valid || locked || !inHost" :close-disabled="locked" @primary="save" @close="emit('close')">
+  <WDialog dismiss-on-backdrop :open="open" :title="t(server ? 'service.editServer' : 'service.addServer')" :primary-text="t('live.save')" :close-text="t('dialog.cancel')" :primary-disabled="!valid || locked || !(inHost || !!demoMode?.enabled)" :close-disabled="locked" @primary="save" @close="emit('close')">
     <WSelectorBar v-model="tab" class="server-tabs" :items="tabs" compact-indicator :aria-label="t(server ? 'service.editServer' : 'service.addServer')" />
     <WAnimatedSize><Transition name="server-form">
     <div v-if="tab === 'connection'" key="connection" class="form-stack server-form-panel" role="tabpanel" :aria-label="t('serverInfo.connectionConfig')">
@@ -162,7 +162,7 @@ async function save() {
       <ServerProfileActions :server="server" :game="state.selectedGameId" :disabled="locked" @saved="imported" />
     </div>
     </Transition></WAnimatedSize>
-    <input v-if="!inHost" ref="browserPicker" type="file" hidden accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.ico" :multiple="pickerTarget === 'gallery'" @change="browserFilesSelected" />
+    <input v-if="!(inHost || !!demoMode?.enabled)" ref="browserPicker" type="file" hidden accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.ico" :multiple="pickerTarget === 'gallery'" @change="browserFilesSelected" />
     <WInfoBar v-if="artworkError" severity="error" @close="artworkError = ''">{{ artworkError }}</WInfoBar>
   </WDialog>
 </template>

@@ -8,7 +8,7 @@ using FantasyTale.Launcher.Sdk;
 
 namespace FantasyTale.Launcher.Core.Tests;
 
-public sealed class GameNativeUiTests
+public sealed partial class GameNativeUiTests
 {
     [Fact]
     public void ChatRetainsOrderedColorsAndOnlyExplicitBannerClosureRequiresOwnership()
@@ -89,7 +89,7 @@ public sealed class GameNativeUiTests
         await peer.ReplyAsync("service-unavailable", "");
         var result = await capabilities;
         Assert.Equal("fixture", result.Build);
-        Assert.Equal(5, result.Operations.Count);
+        Assert.Equal(12, result.Operations.Count);
         Assert.All(result.Operations, operation => { Assert.False(operation.Supported); Assert.False(operation.Ready); });
         var ping = peer.Channel.RequestAsync("ping");
         await peer.ReplyAsync("ok", "pong");
@@ -203,6 +203,12 @@ public sealed class GameNativeUiTests
         internal Task ConnectAsync() => _peer.ConnectAsync(_timeout.Token);
         internal async Task<string> ReplyAsync(string result, string body)
         {
+            var request = await ReadRequestAsync();
+            await RespondAsync(request, result, body);
+            return request.String("payload");
+        }
+        internal async Task<TomlReader> ReadRequestAsync()
+        {
             var header = new byte[4];
             await _peer.ReadExactlyAsync(header, _timeout.Token);
             var request = new byte[BinaryPrimitives.ReadInt32LittleEndian(header)];
@@ -211,11 +217,15 @@ public sealed class GameNativeUiTests
             Requests++;
             Assert.Equal(Requests, table.Integer("request_id"));
             if (table.String("method") == "service") Assert.Equal("game.native-ui", table.String("service"));
-            var response = Encoding.UTF8.GetBytes($"protocol = 1\nrequest_id = {Requests}\nresult = {SessionWriter.Quote(result)}\nbody = {SessionWriter.Quote(body)}\n");
+            return table;
+        }
+        internal async Task RespondAsync(TomlReader request, string result, string body)
+        {
+            var response = Encoding.UTF8.GetBytes($"protocol = 1\nrequest_id = {request.Integer("request_id")}\nresult = {SessionWriter.Quote(result)}\nbody = {SessionWriter.Quote(body)}\n");
+            var header = new byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(header, response.Length);
             await _peer.WriteAsync(header, _timeout.Token);
             await _peer.WriteAsync(response, _timeout.Token);
-            return table.String("payload");
         }
         public void Dispose() { Channel.Dispose(); _peer.Dispose(); _timeout.Dispose(); }
     }

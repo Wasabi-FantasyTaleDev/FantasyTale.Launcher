@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost } from '../bridge'
+import { call, demoMode, inHost } from '../bridge'
 import { state } from '../state'
 import { updateFailureKey } from '../downloads/updateFailure'
 import WDialog from '../controls/WDialog.vue'
@@ -44,8 +44,19 @@ async function openDownload() {
   catch (error) { if (!stopped) state.error = (error as Error).message }
   finally { busy.value = false }
 }
-onMounted(() => { if (inHost) void refresh() })
-onBeforeUnmount(() => { stopped = true; if (timer) clearTimeout(timer) })
+const stopDemoWatch = demoMode
+  ? watch(() => demoMode.enabled, enabled => {
+      if (stopped) return
+      if (enabled && !timer) void refresh()
+      else if (!enabled && !inHost) {
+        if (timer) { clearTimeout(timer); timer = undefined }
+        open.value = false
+        lastFailure = ''
+      }
+    })
+  : () => {}
+onMounted(() => { if (inHost || !!demoMode?.enabled) void refresh() })
+onBeforeUnmount(() => { stopped = true; if (timer) clearTimeout(timer); stopDemoWatch() })
 </script>
 
 <template>

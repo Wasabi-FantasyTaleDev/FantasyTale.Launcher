@@ -1,8 +1,9 @@
 <Project>
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
-    <Version>0.1.69</Version>
-    <LauncherDeprecatedMaxVersion>0.1.59</LauncherDeprecatedMaxVersion>
+    <Version>0.2.0</Version>
+    <!-- Every launcher below this version must update before it can be used. -->
+    <LauncherDeprecatedBeforeVersion>0.2.0</LauncherDeprecatedBeforeVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

@@ -45,6 +45,11 @@ Branch selectors and wildcards are not policy scopes.
 | `max_version` | `version` | An enabled selection must not exceed this SemVer maximum. |
 | `latest` | None | Resolve the newest compatible release for an enabled selection before launch. |
 
+Any rule may also set `languages`, a list of launcher language tags (`zh-CN`, or `zh` for every Chinese
+variant). Such a rule applies only while the launcher shows one of those languages; for any other language it does
+not apply, and the plugin can still be installed and enabled. For example, the builds recommend the Chinese font
+plugin only to Chinese launchers. The server JSON field is also `languages`.
+
 Recommendations always remain visible in the offer list. `default_selected`
 defaults to `false` when omitted; only explicit `true` initially checks the card.
 The player may change either optional choice. The server JSON field is

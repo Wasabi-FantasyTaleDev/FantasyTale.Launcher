@@ -24,6 +24,9 @@ public partial class App : Application
     /// <inheritdoc />
     protected override void OnStartup(StartupEventArgs e)
     {
+        // The launcher's Photino profile can have incompatible browser options.
+        // An inherited override would replace the overlay's own user-data folder.
+        Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", null);
         base.OnStartup(e);
 
         nint gameHwnd = IntPtr.Zero;
@@ -44,7 +47,8 @@ public partial class App : Application
         var boundGamePid = options.TryGetValue("game-pid", out var boundPidText) && uint.TryParse(boundPidText, out var boundPid)
             ? boundPid : 0;
         overlayHost.Attach(gameHwnd, theme, resourceRoot,
-            options.TryGetValue("preview", out var preview) && preview == "game-ui", boundGamePid);
+            options.TryGetValue("preview", out var preview) && preview == "game-ui", boundGamePid,
+            options.TryGetValue("locale", out var locale) && OverlayLocales.IsKnown(locale) ? locale : null);
         if (options.TryGetValue("pipe", out var pipeName) && options.TryGetValue("launch-id", out var launchId)
             && options.TryGetValue("protocol", out var protocol) && int.TryParse(protocol, out var version)
             && options.TryGetValue("game-pid", out var gamePidText) && int.TryParse(gamePidText, out var gamePid))
@@ -132,6 +136,15 @@ public partial class App : Application
                         ?? throw new ArgumentException("Missing build context."));
                     await WriteResponseAsync(pipe, requestId, true, null, cancellationToken).ConfigureAwait(false);
                     break;
+                case "package-roots":
+                    {
+                        var roots = new Dictionary<string, string>(StringComparer.Ordinal);
+                        foreach (var entry in root.GetProperty("roots").EnumerateObject())
+                            roots.Add(entry.Name, entry.Value.GetString() ?? throw new ArgumentException("Missing package folder."));
+                        host.SetPackageRoots(roots);
+                        await WriteResponseAsync(pipe, requestId, true, null, cancellationToken).ConfigureAwait(false);
+                        break;
+                    }
                 case "register":
                     {
                         var panelId = root.GetProperty("panelId").GetString() ?? throw new ArgumentException("Missing panel id.");

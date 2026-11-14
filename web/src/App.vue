@@ -11,6 +11,9 @@ import AuthDialog from './components/AuthDialog.vue'
 import StopGameDialog from './components/StopGameDialog.vue'
 import LauncherUpdateFailureDialog from './components/LauncherUpdateFailureDialog.vue'
 import ClientPolicyActivationDialog from './components/ClientPolicyActivationDialog.vue'
+import PluginPolicyDialog from './components/PluginPolicyDialog.vue'
+import PluginSupportDialog from './components/PluginSupportDialog.vue'
+import { watchSupportOffers } from './plugins/supportOffers'
 import PluginLaunchWarningDialog from './components/PluginLaunchWarningDialog.vue'
 import PluginResourceConflictDialog from './components/PluginResourceConflictDialog.vue'
 import RequiredPluginUpdateDialog from './components/RequiredPluginUpdateDialog.vue'
@@ -22,7 +25,7 @@ import InstanceFailureNotice from './components/InstanceFailureNotice.vue'
 import { InstanceRequestError } from './instanceFailures'
 import ServerFailureNotice from './components/ServerFailureNotice.vue'
 import { ServerRequestError } from './serverFailures'
-import { call, inHost, on, type PluginRecoveryNotice } from './bridge'
+import { call, demoMode, inHost, on, onDemoModeChange, type PluginRecoveryNotice } from './bridge'
 import { loadGames, pollRunning, refreshInstances, refreshPluginSelectionsAfterDownload, forgetRecoveredPlugins, cancelStorePluginInstallation, state } from './state'
 import { pollClientUpdates, checkClientUpdates, clientUpdates } from './downloads/clientUpdates'
 import { downloads, pollDownloads, sessionDownloadIds } from './downloads/live'
@@ -52,7 +55,11 @@ const stopAutomaticPluginEvents = on('plugins.autoUpdated', async data => {
   } catch (error) { state.error = (error as Error).message }
 })
 onBeforeUnmount(stopAutomaticPluginEvents)
-watch(locale, language => { if (inHost) void call('window.language', { language }).catch(() => {}) }, { immediate: true })
+const stopSupportOffers = watchSupportOffers()
+onBeforeUnmount(stopSupportOffers)
+// Language-scoped plugin recommendations and requirements follow the launcher language.
+watch(() => String(locale.value), language => { if (inHost || !!demoMode?.enabled) void call('settings.launcherLanguage', { language }).catch(() => {}) }, { immediate: true })
+watch(locale, language => { if (inHost || !!demoMode?.enabled) void call('window.language', { language }).catch(() => {}) }, { immediate: true })
 const route = useRoute()
 const shellReady = ref(false)
 const recoveryNotices = ref<PluginRecoveryNotice[]>([])
@@ -118,7 +125,7 @@ onBeforeUnmount(() => stopUpdates?.())
 let stopRunning: (() => void) | undefined
 onBeforeUnmount(() => stopRunning?.())
 watch(() => downloads.tasks.filter(task => task.stage === 'completed').map(task => task.id).join(','), () => {
-  if (clientUpdates.preferences.autoCheck && inHost) void checkClientUpdates()
+  if (clientUpdates.preferences.autoCheck && (inHost || !!demoMode?.enabled)) void checkClientUpdates()
   void refreshPluginSelectionsAfterDownload().catch(error => { state.error = (error as Error).message })
 })
 const recommendedDownloads = new Set<string>()
@@ -142,8 +149,8 @@ if (inHost) document.documentElement.classList.add('mica-transparent')
 
 onMounted(async () => {
   stopRunning = pollRunning()
-  if (inHost) void call('plugins.recoveryNotices').then(addRecoveryNotices).catch(() => {})
-  if (inHost) void call('plugins.deprecationNotices').then(addDeprecationNotices).catch(() => {})
+  if (inHost || !!demoMode?.enabled) void call('plugins.recoveryNotices').then(addRecoveryNotices).catch(() => {})
+  if (inHost || !!demoMode?.enabled) void call('plugins.deprecationNotices').then(addDeprecationNotices).catch(() => {})
   await loadGames()
   stopStoreChecks = startStoreUpdateChecks()
   stopPolling = pollDownloads()
@@ -174,9 +181,22 @@ onMounted(async () => {
     document.documentElement.classList.remove('booting')
     entrance.cancel()
   } else document.documentElement.classList.remove('booting')
-  if (inHost) void call('window.ready').catch(error => { state.error = (error as Error).message })
+  if (inHost || !!demoMode?.enabled) void call('window.ready').catch(error => { state.error = (error as Error).message })
   shellReady.value = true
 })
+
+const stopDemoModeListener = onDemoModeChange(async () => {
+  state.error = ''
+  state.requestFailure = undefined
+  recoveryNotices.value = []
+  deprecationNotices.value = []
+  await loadGames()
+  if (inHost || !!demoMode?.enabled) {
+    void call('plugins.recoveryNotices').then(addRecoveryNotices).catch(() => {})
+    void call('plugins.deprecationNotices').then(addDeprecationNotices).catch(() => {})
+  }
+})
+onBeforeUnmount(stopDemoModeListener)
 </script>
 
 <template>
@@ -196,6 +216,8 @@ onMounted(async () => {
     <StopGameDialog />
     <LauncherUpdateFailureDialog />
     <ClientPolicyActivationDialog />
+    <PluginPolicyDialog />
+    <PluginSupportDialog />
     <PluginLaunchWarningDialog />
     <PluginResourceConflictDialog />
     <RequiredPluginUpdateDialog />

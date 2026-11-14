@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Server, type ServerProfileImport } from '../bridge'
+import { call, demoMode, inHost, type Server, type ServerProfileImport } from '../bridge'
 import WButton from '../controls/WButton.vue'
 import WDialog from '../controls/WDialog.vue'
 import WInfoBar from '../controls/WInfoBar.vue'
@@ -20,7 +20,7 @@ async function commit(text: string, expected: number, fingerprint?: string | nul
   if (expected === revision) { pending.value = undefined; emit('saved', server) }
 }
 async function importProfile() {
-  if (busy.value || props.disabled || !inHost) return
+  if (busy.value || props.disabled || !(inHost || demoMode?.enabled)) return
   const expected = ++revision, game = props.game
   busy.value = true; error.value = ''
   try {
@@ -42,7 +42,7 @@ async function overwrite() {
   finally { busy.value = false }
 }
 async function exportProfile() {
-  if (!props.server || busy.value || props.disabled || !inHost) return
+  if (!props.server || busy.value || props.disabled || !(inHost || demoMode?.enabled)) return
   busy.value = true; error.value = ''
   try {
     const profile = await call('servers.exportProfile', { id: props.server.id })
@@ -51,7 +51,7 @@ async function exportProfile() {
   finally { busy.value = false }
 }
 async function refreshProfile() {
-  if (!props.server?.apiUrl || busy.value || props.disabled || !inHost) return
+  if (!props.server?.apiUrl || busy.value || props.disabled || !(inHost || demoMode?.enabled)) return
   busy.value = true; error.value = ''
   try { emit('saved', await call('servers.refreshProfile', { id: props.server.id })) }
   catch (cause) { error.value = message(cause) }
@@ -60,9 +60,9 @@ async function refreshProfile() {
 </script>
 <template>
   <div class="profile-actions">
-    <WButton v-if="server?.apiUrl" :disabled="disabled || busy || !inHost" @click="refreshProfile"><FluentIcon glyph="refresh" />{{ t('serverInfo.refreshProfile') }}</WButton>
-    <WButton :disabled="disabled || busy || !server || !inHost" @click="exportProfile"><FluentIcon glyph="upload" />{{ t('serverInfo.exportProfile') }}</WButton>
-    <WButton :disabled="disabled || busy || !inHost" @click="importProfile"><FluentIcon glyph="download" />{{ t('serverInfo.importProfile') }}</WButton>
+    <WButton v-if="server?.apiUrl" :disabled="disabled || busy || !(inHost || demoMode?.enabled)" @click="refreshProfile"><FluentIcon glyph="refresh" />{{ t('serverInfo.refreshProfile') }}</WButton>
+    <WButton :disabled="disabled || busy || !server || !(inHost || demoMode?.enabled)" @click="exportProfile"><FluentIcon glyph="upload" />{{ t('serverInfo.exportProfile') }}</WButton>
+    <WButton :disabled="disabled || busy || !(inHost || demoMode?.enabled)" @click="importProfile"><FluentIcon glyph="download" />{{ t('serverInfo.importProfile') }}</WButton>
   </div>
   <WInfoBar v-if="error" severity="error" @close="error = ''">{{ error }}</WInfoBar>
   <WDialog :open="!!pending" :title="t('serverInfo.overwriteProfileTitle')" :primary-text="t('serverInfo.overwriteProfile')" :close-text="t('dialog.cancel')" :primary-disabled="busy" :close-disabled="busy" dismiss-on-backdrop @primary="overwrite" @close="pending = undefined">

@@ -155,6 +155,37 @@ class VerificationTests(unittest.TestCase):
         row["health_field_offset"] = 372
         self.assertFalse(self.check_research(row, image).failed)
 
+    def test_delayed_floating_store_requires_exact_nonfloating_prefix(self):
+        row, image = self.research_fixture()
+        row = {key: value for key, value in row.items() if not key.startswith(("life_", "wrapper_", "number_"))}
+        consumer = bytes.fromhex("8B 4D DC D9 5D E4")
+        image.blob = image.blob[:5] + consumer + b"\x90" * 45
+        row["health_result_bytes"] = consumer.hex(" ")
+        self.assertFalse(self.check_research(row, image).failed)
+        self.assertTrue(self.check_research({key: value for key, value in row.items() if key != "health_result_bytes"}, image).failed)
+        for invalid in ("8B ?? DC D9 5D E4", "8B 4D DC D9 55 E4", "8B 4D DC D9 DD E4", "E8 4D DC D9 5D E4"):
+            with self.subTest(consumer=invalid):
+                self.assertTrue(self.check_research(row | {"health_result_bytes": invalid}, image).failed)
+        image.blob = image.blob[:7] + b"\xdb" + image.blob[8:]
+        self.assertTrue(self.check_research(row, image).failed)
+
+    def test_separate_native_hp_getter_needs_complete_exact_float_return(self):
+        row, image = self.research_fixture()
+        row.pop("health_accessor_call_va")
+        row.pop("health_accessor_call_bytes")
+        getter = bytes.fromhex("51 D9 04 24 59 C3")
+        image.blob = image.blob[:48] + getter
+        row["health_accessor_bytes"] = getter.hex(" ")
+        result = self.check_research(row, image)
+        self.assertFalse(result.failed)
+        self.assertEqual(1, result.deferred)
+        for invalid in ("51 D9 04 24 59 ??", "51 8B 04 24 59 C3", "51 D9 04 24 58 C3", ""):
+            self.assertTrue(self.check_research(row | {"health_accessor_bytes": invalid}, image).failed)
+        self.assertTrue(self.check_research(row | {"health_accessor_abi": "thiscall_i32"}, image).failed)
+        self.assertTrue(self.check_research({key: value for key, value in row.items() if key != "health_accessor_va"}, image).failed)
+        image.blob = image.blob[:-1] + b"\x90"
+        self.assertTrue(self.check_research(row, image).failed)
+
     def test_research_checks_life_target_independently(self):
         row, image = self.research_fixture()
         row["life_accessor_va"] += 1
@@ -250,7 +281,9 @@ maximum_vtable_slot = 356
 hud_anchor_offset = 1
 player_capture = "caller_edi"
 hud_register = "ebp"
+white_style_slot = 5
 resource_manager_rva = 1
+resource_string_abi = "msvc_wstring24"
 resource_string_inline_capacity = 7
 resource_options_size = 88
 construct_options_rva = 1
@@ -270,10 +303,33 @@ bytes = "00 00 00 00 00 00 00 00"
             self.assertEqual([], verify_plugin.validate_client_descriptors(folder, plugin))
             descriptor = folder.joinpath("client-versions.toml")
             valid = descriptor.read_text(encoding="utf-8")
+            for before, after, key in (
+                ('resource_string_abi = "msvc_wstring24"', 'resource_string_abi = "cow_wstring4"', 'resource_string_inline_capacity'),
+                ('resource_string_abi = "msvc_wstring24"', '', 'resource_string_abi'),
+                ('white_style_slot = 5', 'white_style_slot = 31', 'white_style_slot'),
+                ('player_capture = "caller_edi"', 'player_capture = "caller_stack"', 'player_stack_offset'),
+                ('player_capture = "caller_edi"', 'player_capture = "caller_stack"\nplayer_stack_offset = 24', 'player_stack_offset'),
+                ('player_capture = "caller_edi"', 'player_capture = "caller_esi"\nplayer_stack_offset = 76', 'player_stack_offset'),
+            ):
+                descriptor.write_text(valid.replace(before, after), encoding="utf-8")
+                self.assertTrue(any(key in error for error in verify_plugin.validate_client_descriptors(folder, plugin)))
             for value in ('"1"', "true", "-1", "4294967296"):
                 with self.subTest(address=value):
                     descriptor.write_text(valid.replace("render_call_rva = 1", f"render_call_rva = {value}"), encoding="utf-8")
                     self.assertTrue(any("render_call_rva" in error for error in verify_plugin.validate_client_descriptors(folder, plugin)))
+            cow = valid.replace('resource_string_abi = "msvc_wstring24"', 'resource_string_abi = "cow_wstring4"')
+            cow = cow.replace('resource_string_inline_capacity = 7', 'construct_string_rva = 1\nrelease_string_rva = 1\ndestroy_options_offset = 32')
+            cow = cow.replace('resource_options_size = 88', 'resource_options_size = 36')
+            descriptor.write_text(cow, encoding="utf-8")
+            self.assertEqual([], verify_plugin.validate_client_descriptors(folder, plugin))
+            for before, after, key in (
+                    ('construct_string_rva = 1', '', 'construct_string_rva'),
+                    ('release_string_rva = 1', 'release_string_rva = 0', 'release_string_rva'),
+                    ('release_string_rva = 1', 'release_string_rva = 2', 'resource_signatures'),
+                    ('destroy_options_offset = 32', 'destroy_options_offset = 36', 'destroy_options_offset'),
+                    ('destroy_options_offset = 32', 'destroy_options_offset = 31', 'destroy_options_offset')):
+                descriptor.write_text(cow.replace(before, after), encoding="utf-8")
+                self.assertTrue(any(key in error for error in verify_plugin.validate_client_descriptors(folder, plugin)))
             for value in ("", "maximum_vtable_slot = 0", "maximum_vtable_slot = 355", "maximum_vtable_slot = 4100", "maximum_vtable_slot = true"):
                 with self.subTest(slot=value):
                     descriptor.write_text(valid.replace("maximum_vtable_slot = 356", value), encoding="utf-8")

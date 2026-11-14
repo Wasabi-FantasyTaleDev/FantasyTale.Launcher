@@ -26,6 +26,11 @@ function setup(name, dependencies) {
     if (id === 'vue-i18n') return { useI18n: () => ({ t: key => key }) }
     if (id === '../accounts/identity') return identity.exports
     if (id === '../state') return dependencies
+    // Ungrouped servers: no sections, so the section helpers change nothing.
+    if (id === '../servers/sections') return { serverStatus: { serverId: '', value: null }, pendingAuthSection: { value: null },
+      loadServerStatus: async () => ({ sections: [], servers: [] }), sectionsShown: () => false, accountSectionsShown: () => false,
+      signInSections: () => [], accountSection: () => null, defaultSection: () => null, sectionName: id => id ?? '',
+      accountKey: account => account ? `${account.section ?? ''}\u0000${account.username}` : '' }
     if (id === '../bridge') return { inHost: true, call: dependencies.call }
     if (id === '../i18n') return { localized: value => value }
     if (id.endsWith('.vue')) return { default: {} }

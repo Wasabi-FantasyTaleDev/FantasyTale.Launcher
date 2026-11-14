@@ -49,6 +49,16 @@ public sealed partial class LauncherApiClient
         if (directory.Schema != 1 || directory.Build != build
             || directory.Servers is null)
             throw new InvalidDataException("Invalid native server directory contract.");
+        var sections = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var section in directory.Sections ?? [])
+            if (section is null || !Identifier(section.Id) || !sections.Add(section.Id) || string.IsNullOrWhiteSpace(section.Name)
+                || section.Name.Length > 128 || !Printable(section.Name)
+                || section.ApiUrl is not null && (section.ApiUrl.Length > 2048 || !Uri.TryCreate(section.ApiUrl, UriKind.Absolute, out var sectionApi)
+                    || sectionApi.Scheme is not ("http" or "https") || sectionApi.UserInfo.Length != 0 || sectionApi.Query.Length != 0 || sectionApi.Fragment.Length != 0))
+                throw new InvalidDataException("Invalid server section.");
+        // A grouped directory places every selector in one of its sections; an ungrouped one places none.
+        if (directory.Servers.Any(selector => selector is not null && (sections.Count == 0 ? selector.Section is not null : selector.Section is null || !sections.Contains(selector.Section))))
+            throw new InvalidDataException("Server selectors and sections do not match.");
         var selectors = new HashSet<int>();
         var labels = new HashSet<string>(StringComparer.Ordinal);
         var nodes = new Dictionary<string, (string Host, int Port, string DataScope, string JoinScope, ServerDirectoryAuthentication? Authentication)>(StringComparer.Ordinal);
@@ -67,7 +77,8 @@ public sealed partial class LauncherApiClient
             {
                 if (target is null || !Backend(target.NodeId) || !candidateIds.Add(target.NodeId) || target.Host is not { Length: > 0 and <= 253 }
                     || Uri.CheckHostName(target.Host) == UriHostNameType.Unknown || target.Port is < 1 or > 65535
-                    || !Scope(target.DataScope) || !Scope(target.JoinScope) || target.Players < 0 || target.Capacity < 1)
+                    || !Scope(target.DataScope) || !Scope(target.JoinScope) || target.Players < 0 || target.Capacity < 1
+                    || target.Maintenance is { } maintenance && (maintenance.Description is null || maintenance.Description.Length > 1024))
                     throw new InvalidDataException("Invalid physical server target.");
                 if (target.Authentication is { } authentication)
                 {
@@ -124,4 +135,30 @@ public sealed partial class LauncherApiClient
     }
 
     private sealed record SelectionRefreshReply(LaunchServerSelection? ServerSelection);
+
+    /// <summary>Reads the published operator notices for a section, newest first; a server without notices returns none.</summary>
+    public async Task<IReadOnlyList<ServerNotice>> NoticesAsync(ServerDefinition server, string? section, CancellationToken ct = default)
+    {
+        if (section is not null) Definitions.InstanceFile.ValidateId("server section", section);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        NoticeList list;
+        try
+        {
+            list = await SendAsync<NoticeList>(server, HttpMethod.Get, "v1/notices" + (section is null ? "" : "?section=" + Uri.EscapeDataString(section)),
+                null, null, timeout.Token, maximumResponseBytes: 4 * 1024 * 1024).ConfigureAwait(false);
+        }
+        catch (ServerFailureException error) when (error.StatusCode == HttpStatusCode.NotFound) { return []; }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        { throw new ServerFailureException("network_timeout", transportCode: "timeout"); }
+        if (list.Schema != 1 || list.Notices is null) throw new InvalidDataException("Invalid server notice list.");
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var notice in list.Notices)
+            if (notice is null || notice.Id is not { Length: > 0 and <= 64 } || !ids.Add(notice.Id) || string.IsNullOrWhiteSpace(notice.Title)
+                || notice.Title.Length > 200 || notice.Body is null || notice.Body.Length > 8192 || notice.Level is not ("info" or "warning" or "important"))
+                throw new InvalidDataException("Invalid server notice.");
+        return list.Notices;
+    }
+
+    private sealed record NoticeList(int Schema, IReadOnlyList<ServerNotice> Notices);
 }

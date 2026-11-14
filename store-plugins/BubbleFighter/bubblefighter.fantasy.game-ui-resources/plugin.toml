@@ -1,0 +1,32 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.game-ui-resources"
+version = "0.1.2"
+game = "bubblefighter"
+kind = "assets"
+minimum_launcher_version = "0.1.70"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Game Interface Graphics"
+"zh-CN" = "游戏界面素材"
+"zh-TW" = "遊戲介面素材"
+ko = "게임 화면 그래픽"
+id = "Grafis Antarmuka Game"
+vi = "Đồ họa giao diện trò chơi"
+
+[plugin.description]
+"zh-CN" = "为其他组件提供与游戏一致的窗口、按钮和字体，让它们在游戏中的界面看起来和原版一样。本组件自身不改变游戏，会在需要它的组件启用时自动使用。"
+"zh-TW" = "為其他元件提供與遊戲一致的視窗、按鈕和字型，讓它們在遊戲中的介面看起來和原版一樣。本元件本身不會改變遊戲，會在需要它的元件啟用時自動使用。"
+"en" = "Provides the game's own windows, buttons and fonts so that other components look like the original game. It does not change the game by itself and is used automatically while a component that needs it is enabled."
+ko = "다른 구성 요소가 원래 게임처럼 보이도록 게임의 창, 버튼, 글꼴을 제공합니다. 이 구성 요소 자체는 게임을 바꾸지 않으며, 필요로 하는 구성 요소가 켜져 있을 때 자동으로 사용됩니다."
+id = "Menyediakan jendela, tombol, dan huruf asli game agar komponen lain terlihat seperti game aslinya. Komponen ini tidak mengubah game sendiri dan dipakai otomatis selama komponen yang membutuhkannya aktif."
+vi = "Cung cấp cửa sổ, nút bấm và phông chữ của chính trò chơi để các thành phần khác trông giống bản gốc. Thành phần này tự nó không thay đổi trò chơi và được dùng tự động khi một thành phần cần đến nó được bật."
+
+[compatibility]
+builds = ["*"]
+
+[assets]
+root = "data"

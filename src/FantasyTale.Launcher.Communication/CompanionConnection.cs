@@ -29,6 +29,8 @@ public sealed class CompanionConnection : IAsyncDisposable
     private readonly Task[] _loops;
     private int _outboundBytes, _inboundBytes;
     private CompanionChannelState _state;
+    private long _stateRevision;
+    private readonly CompanionStateObservers _states;
     private string? _heartbeatId;
     private TaskCompletionSource? _heartbeat;
     private Task? _dispose;
@@ -37,6 +39,7 @@ public sealed class CompanionConnection : IAsyncDisposable
         CompanionChannelState state, IReadOnlyDictionary<string, int> capabilities)
     {
         _socket = socket; _limits = limits; _epoch = epoch; _state = state; _capabilities = capabilities; _lifetime = _stop.Token;
+        _states = new(new(epoch, state, capabilities.Keys.ToFrozenSet(StringComparer.Ordinal)), limits.Routes);
         _loops = [Task.Run(SendLoopAsync), Task.Run(ReceiveLoopAsync), Task.Run(DispatchLoopAsync), Task.Run(HeartbeatLoopAsync)];
     }
 
@@ -50,6 +53,10 @@ public sealed class CompanionConnection : IAsyncDisposable
     public Task Completion => Task.WhenAll(_loops);
 
     internal CancellationToken StopToken => _lifetime;
+    internal string Epoch => _epoch;
+    internal int StateObserverLimit => _limits.Routes;
+    internal CompanionConnectionSnapshot ConnectionSnapshot => _states.Current;
+    internal IDisposable SubscribeState(Action<CompanionConnectionSnapshot> handler) => _states.Subscribe(handler);
 
     /// <summary>Upgrades a WSS connection using an in-memory grant and negotiates the launch identity.</summary>
     public static async Task<CompanionConnection> ConnectAsync(CompanionAuthorization authorization, CompanionIdentity identity,
@@ -144,8 +151,9 @@ public sealed class CompanionConnection : IAsyncDisposable
             ObjectDisposedException.ThrowIf(_state == CompanionChannelState.Closed, this);
             if (_owners.Count >= _limits.Routes || _owners.Values.Sum(c => c.Types.Count) + allowedTypes.Count > _limits.Routes)
                 throw new InvalidOperationException("Companion owner/route limit reached.");
+            if (_owners.ContainsKey(owner)) throw new InvalidOperationException("Companion owner already registered.");
             var channel = new CompanionChannel(this, owner, allowedTypes.ToFrozenDictionary(StringComparer.Ordinal));
-            if (!_owners.TryAdd(owner, channel)) throw new InvalidOperationException("Companion owner already registered.");
+            _owners.Add(owner, channel);
             return channel;
         }
     }
@@ -223,6 +231,7 @@ public sealed class CompanionConnection : IAsyncDisposable
     {
         var window = Stopwatch.StartNew();
         var count = 0;
+        long receiveSequence = 0;
         try
         {
             while (!_stop.IsCancellationRequested)
@@ -232,11 +241,14 @@ public sealed class CompanionConnection : IAsyncDisposable
                 if (window.Elapsed >= TimeSpan.FromSeconds(1)) { window.Restart(); count = 0; }
                 if (++count > _limits.MessagesPerSecond) throw new IOException("companion.rate-limit");
                 if (message.Epoch != _epoch) throw new IOException("companion.stale-epoch");
+                long stateRevision = -1;
                 lock (_gate)
                 {
                     if (!_seenIds.Add(message.Id)) throw new IOException("companion.duplicate-id");
                     _seenOrder.Enqueue(message.Id);
                     if (_seenOrder.Count > 1024) _seenIds.Remove(_seenOrder.Dequeue());
+                    if (receiveSequence == long.MaxValue) throw new IOException("companion.receive-sequence-exhausted");
+                    receiveSequence++;
                     if (message.Kind == "heartbeat_ack")
                     {
                         if (message.Type != "companion.heartbeat" || message.Version != 1 || message.ReplyTo != _heartbeatId)
@@ -255,6 +267,7 @@ public sealed class CompanionConnection : IAsyncDisposable
                             || message.Payload.GetProperty("state").GetString() != "connected" || _state != CompanionChannelState.PendingGame)
                             throw new IOException("companion.invalid-binding-state");
                         _state = CompanionChannelState.Connected;
+                        stateRevision = ++_stateRevision;
                     }
                     else if (message.Kind is "response" or "error")
                     {
@@ -263,7 +276,8 @@ public sealed class CompanionConnection : IAsyncDisposable
                             if (pending.Envelope.Type != message.Type || pending.Envelope.Version != message.Version || !pending.Sending)
                                 throw new IOException("companion.response-mismatch");
                             pending.Completion.TrySetResult(new(message.Kind == "response" ? CompanionOperationStatus.Completed
-                                : CompanionOperationStatus.Rejected, pending.Envelope.Id, message.Payload.Clone()));
+                                : CompanionOperationStatus.Rejected, pending.Envelope.Id, message.Payload.Clone())
+                                { ConnectionEpoch = _epoch, ReceiveSequence = receiveSequence });
                         }
                     }
                     else if (message.Kind == "event")
@@ -274,11 +288,13 @@ public sealed class CompanionConnection : IAsyncDisposable
                         var bytes = message.ReceivedBytes;
                         if (_inbound.Count >= _limits.QueueMessages || _inboundBytes + bytes > _limits.QueueBytes)
                             throw new IOException("companion.slow-consumer");
-                        _inbound.Enqueue(new(message, bytes)); _inboundBytes += bytes;
+                        _inbound.Enqueue(new(message, bytes, receiveSequence)); _inboundBytes += bytes;
                         _inboundAvailable.Release();
                     }
                     else throw new IOException("companion.unexpected-kind");
                 }
+                if (stateRevision >= 0) _states.Update(_epoch, CompanionChannelState.Connected,
+                    _capabilities.Keys.ToFrozenSet(StringComparer.Ordinal), stateRevision);
             }
         }
         catch (Exception error) when (error is IOException or WebSocketException or OperationCanceledException or ObjectDisposedException
@@ -302,7 +318,7 @@ public sealed class CompanionConnection : IAsyncDisposable
                     owners = _owners.Values.Where(c => c.Types.TryGetValue(incoming.Envelope.Type, out var version)
                         && version == incoming.Envelope.Version).ToArray();
                 }
-                foreach (var owner in owners) await owner.DispatchAsync(incoming.Envelope).ConfigureAwait(false);
+                foreach (var owner in owners) await owner.DispatchAsync(incoming.Envelope, incoming.ReceiveSequence).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) { }
@@ -350,15 +366,18 @@ public sealed class CompanionConnection : IAsyncDisposable
 
     private void Stop(string reason)
     {
+        long revision;
         lock (_gate)
         {
             if (_state == CompanionChannelState.Closed) return;
             _state = CompanionChannelState.Closed; FailureCode = reason;
+            revision = ++_stateRevision;
             foreach (var request in _pending.Values)
                 request.Completion.TrySetResult(new(request.Sending ? CompanionOperationStatus.OutcomeUnknown : CompanionOperationStatus.Canceled,
                     request.Envelope.Id));
             _outbound.Clear(); _control.Clear(); _inbound.Clear(); _outboundBytes = _inboundBytes = 0;
         }
+        _states.Update(_epoch, CompanionChannelState.Closed, FrozenSet<string>.Empty, revision);
         try { _stop.Cancel(); }
         catch (AggregateException) { FailureCode = "companion.cancellation-handler-failed"; }
         finally { _socket.Abort(); }
@@ -391,7 +410,7 @@ public sealed class CompanionConnection : IAsyncDisposable
 
     private static string NewId() => Guid.NewGuid().ToString("N");
     private sealed record Outgoing(CompanionChannel Owner, CompanionEnvelope Envelope, byte[] Bytes, PendingRequest? Pending, CancellationToken Token);
-    private sealed record Incoming(CompanionEnvelope Envelope, int Bytes);
+    private sealed record Incoming(CompanionEnvelope Envelope, int Bytes, long ReceiveSequence);
     private sealed class PendingRequest(CompanionChannel owner, CompanionEnvelope envelope)
     {
         internal CompanionChannel Owner { get; } = owner;

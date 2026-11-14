@@ -93,6 +93,10 @@ video {
   border: 3px solid transparent;
   border-radius: 10px;
   background-clip: padding-box;
+  /* Hidden until the area scrolls or the pointer moves over it (scrollbars.ts marks it active for a short while). */
+  background-color: transparent;
+}
+[data-scrollbar-active]::-webkit-scrollbar-thumb {
   background-color: color-mix(in srgb, var(--scrollbar-thumb) 45%, transparent);
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -263,3 +267,10 @@ a:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/* Top and bottom fade of a scroll area while content is hidden past the edge (useScrollEdges sets the variables). */
+.scroll-edges {
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / var(--scroll-edge-top, 1)) 0, #000 min(24px, 25%), #000 calc(100% - min(24px, 25%)), rgb(0 0 0 / var(--scroll-edge-bottom, 1)) 100%);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / var(--scroll-edge-top, 1)) 0, #000 min(24px, 25%), #000 calc(100% - min(24px, 25%)), rgb(0 0 0 / var(--scroll-edge-bottom, 1)) 100%);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) { .scroll-edges { -webkit-mask-image: none; mask-image: none; } }

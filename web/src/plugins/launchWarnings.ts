@@ -1,5 +1,5 @@
 import { reactive, watch } from 'vue'
-import { call, inHost, type LocalizedText } from '../bridge'
+import { call, demoMode, inHost, type LocalizedText } from '../bridge'
 import { downloadTasks, trackDownload, downloadAction } from '../downloads/live'
 import type { DownloadTask } from '../downloads/model'
 
@@ -15,7 +15,7 @@ let completionAttempted = false
 
 /** Confirms disabled or missing startup components for one launch; dismissal never authorizes execution. */
 export async function requestLaunchWarnings(instanceId: string, serverId = '', valid: () => boolean = () => true): Promise<string[] | null> {
-  if (!inHost) return []
+  if (!(inHost || !!demoMode?.enabled)) return []
   if (finish) return null
   const items = await call('plugins.launchWarnings', { instanceId, serverId: serverId || undefined })
   if (!valid()) return null

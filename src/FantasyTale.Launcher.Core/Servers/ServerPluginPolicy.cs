@@ -35,10 +35,14 @@ public sealed record ServerPluginRule(string Id)
 /// <summary>Applies a server's client policy to launches without turning it into a global client lock.</summary>
 public static class ServerPluginPolicy
 {
-    /// <summary>Combines the rules that apply to one exact build into one entry per plugin.</summary>
-    public static IReadOnlyList<ServerPluginRule> ForBuild(ClientPolicy policy, string build) => policy.Plugins.Select(plugin =>
+    /// <summary>Combines the rules that apply to one exact build and the current launcher language into one entry per plugin.</summary>
+    public static IReadOnlyList<ServerPluginRule> ForBuild(ClientPolicy policy, string build) => ForBuild(policy, build, LauncherLanguage.Current);
+
+    /// <summary>Combines the rules that apply to one exact build and launcher language into one entry per plugin.</summary>
+    public static IReadOnlyList<ServerPluginRule> ForBuild(ClientPolicy policy, string build, string? language) => policy.Plugins.Select(plugin =>
     {
-        var rules = plugin.Rules.Where(rule => rule.Builds.Count == 0 || rule.Builds.Contains(build, StringComparer.Ordinal)).ToArray();
+        var rules = plugin.Rules.Where(rule => (rule.Builds.Count == 0 || rule.Builds.Contains(build, StringComparer.Ordinal))
+            && (rule.Languages is not { Count: > 0 } || language is { Length: > 0 } && rule.Languages.Any(tag => PluginPolicy.LanguageMatches(tag, language)))).ToArray();
         if (rules.Length == 0) return null;
         var recommend = rules.FirstOrDefault(rule => rule.Type == "recommend");
         return new ServerPluginRule(plugin.Id)

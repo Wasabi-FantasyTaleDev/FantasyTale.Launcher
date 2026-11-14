@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type PluginSummary, type PolicyPluginEntry, type ServerStoreSource } from '../bridge'
+import { call, demoMode, inHost, type PluginSummary, type PolicyPluginEntry, type ServerStoreSource } from '../bridge'
 import { state } from '../state'
 import { localized } from '../i18n'
 import { newestFirst } from '../store/versions'
@@ -39,7 +39,7 @@ async function refresh() {
   } catch (e) { if (props.active && expected === revision) error.value = (e as Error).message }
 }
 async function addSource(item: ServerStoreSource) {
-  if (busy.value || !inHost) return
+  if (busy.value || !(inHost || demoMode?.enabled)) return
   const expected = revision; busy.value = true; error.value = ''
   try {
     const existing = matchingSource(item)
@@ -50,7 +50,7 @@ async function addSource(item: ServerStoreSource) {
   finally { if (expected === revision) busy.value = false }
 }
 async function install(id: string) {
-  if (busy.value || !inHost) return
+  if (busy.value || !(inHost || demoMode?.enabled)) return
   const expected = revision; busy.value = true; error.value = ''
   try {
     const queue = sources.value.filter(s => s.enabled && s.baseUrl)
@@ -85,8 +85,8 @@ onBeforeUnmount(() => { ++revision })
     <div class="plugin-list">
       <label v-if="clients.length"><span>{{ t('hosting.version') }}</span><WComboBox v-model="instanceId" :options="clients.map(i => ({ value: i.id, label: i.name }))" :disabled="busy" /></label>
       <div v-if="!recommendations.length" class="plugin-empty"><FluentIcon glyph="puzzle" :size="36" /><p>{{ t('serverInfo.noPlugins') }}</p></div>
-      <article v-for="item in recommendations" :key="item.id" class="plugin-row" :class="{ 'disabled-rule': item.disabled }"><span class="plugin-icon"><FluentIcon :glyph="item.disabled ? 'blocked' : 'puzzle'" :size="20" /></span><div><strong>{{ localized(plugin(item.id)?.name) || item.id }}</strong><small class="rule-badge" :class="{ required: item.required, disabled: item.disabled }">{{ t(item.disabled ? 'serverInfo.disabled' : item.required ? 'serverInfo.required' : 'serverInfo.recommended') }}</small></div><span v-if="item.disabled" class="plugin-result"><FluentIcon glyph="blocked" :size="14" />{{ t('serverInfo.temporarilyDisabled') }}</span><span v-else-if="enabled(item.id)" class="plugin-result installed"><FluentIcon glyph="checkMark" :size="14" />{{ t('serverInfo.installed') }}</span><WButton v-else :disabled="busy || !inHost" @click="install(item.id)">{{ t('plugins.install') }}</WButton></article>
-      <template v-if="props.sources.length"><h3>{{ t('serverInfo.sources') }}</h3><article v-for="item in props.sources" :key="`${item.kind}:${item.baseUrl}:${item.catalogPath}`" class="plugin-row source-row"><span class="plugin-icon"><FluentIcon glyph="shop" :size="20" /></span><div><strong>{{ item.name }}</strong><small :title="`${item.baseUrl} · ${item.catalogPath}`">{{ sourceHost(item) }}</small></div><WButton :disabled="busy || !inHost || matchingSource(item)?.enabled" @click="addSource(item)">{{ t(matchingSource(item)?.enabled ? 'serverInfo.sourceAdded' : 'serverInfo.addSource') }}</WButton></article></template>
+      <article v-for="item in recommendations" :key="item.id" class="plugin-row" :class="{ 'disabled-rule': item.disabled }"><span class="plugin-icon"><FluentIcon :glyph="item.disabled ? 'blocked' : 'puzzle'" :size="20" /></span><div><strong>{{ localized(plugin(item.id)?.name) || item.id }}</strong><small class="rule-badge" :class="{ required: item.required, disabled: item.disabled }">{{ t(item.disabled ? 'serverInfo.disabled' : item.required ? 'serverInfo.required' : 'serverInfo.recommended') }}</small></div><span v-if="item.disabled" class="plugin-result"><FluentIcon glyph="blocked" :size="14" />{{ t('serverInfo.temporarilyDisabled') }}</span><span v-else-if="enabled(item.id)" class="plugin-result installed"><FluentIcon glyph="checkMark" :size="14" />{{ t('serverInfo.installed') }}</span><WButton v-else :disabled="busy || !(inHost || demoMode?.enabled)" @click="install(item.id)">{{ t('plugins.install') }}</WButton></article>
+      <template v-if="props.sources.length"><h3>{{ t('serverInfo.sources') }}</h3><article v-for="item in props.sources" :key="`${item.kind}:${item.baseUrl}:${item.catalogPath}`" class="plugin-row source-row"><span class="plugin-icon"><FluentIcon glyph="shop" :size="20" /></span><div><strong>{{ item.name }}</strong><small :title="`${item.baseUrl} · ${item.catalogPath}`">{{ sourceHost(item) }}</small></div><WButton :disabled="busy || !(inHost || demoMode?.enabled) || matchingSource(item)?.enabled" @click="addSource(item)">{{ t(matchingSource(item)?.enabled ? 'serverInfo.sourceAdded' : 'serverInfo.addSource') }}</WButton></article></template>
       <WInfoBar v-if="error" severity="error" @close="error = ''">{{ error }}</WInfoBar>
     </div>
     <StorePluginDialog v-if="installTarget" :open="!!installTarget" :item="installTarget.item" :source="installTarget.source" :server-id="serverId" @close="installTarget = undefined" />

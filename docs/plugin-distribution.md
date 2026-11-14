@@ -80,6 +80,16 @@ downloads them explicitly. KR1256 requires its authentication and shop-access
 components; Chinese profiles require their authentication component. Required
 and recommended rules cannot overlap on the same build.
 
+Assets packages (`kind = "assets"`, see
+[shared data packages](plugin-management.md#shared-data-packages-and-requirements)) keep only their manifest in
+the repository; the generated game art is never committed (`store-plugins/**/data/` is ignored).
+At packaging time `tools/publish-store/stage_assets_package.py --package <package folder> --pack <generated pack> --output <staging folder>`
+copies the manifest and the pack into a new staging folder and checks the pack layout (`pack.json`, `atlas/<hash>.webp`,
+`builds/<build id>.json`, no links) and that every file named inside its JSON exists. Publish the staging folder with
+`publish_plugins.py --package`. The publisher refuses an assets package whose data folder is empty or missing, and
+embeds `plugin_definition` for every package that declares `requires`, so the launcher can install requirements before
+the download. A repository checkout without the data still loads and tests normally.
+
 Unfinished Forward Jump packages live in `experimental-plugins/BubbleFighter`.
 They are neither bundled nor published; the store publisher also rejects their
 identities. Moving authoring folders does not remove user-installed library

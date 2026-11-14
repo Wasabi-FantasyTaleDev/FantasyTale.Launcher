@@ -4,10 +4,11 @@ import type { StorePackageGroup, StorePackageOffer } from './groups'
 import { compareVersions } from './versions'
 
 export type LocalPlugin = Pick<PluginSummary, 'id' | 'game' | 'version'>
+export type PluginIdentity = Pick<StorePackage, 'id' | 'pluginDefinition'> & { aliases?: readonly string[] }
 
 /** Former identifiers are declared by the successor package, never inferred from display names. */
-export function matchesPluginIdentity(item: StorePackage, id: string): boolean {
-  return item.id === id || !!item.pluginDefinition?.aliases.includes(id)
+export function matchesPluginIdentity(item: PluginIdentity, id: string): boolean {
+  return item.id === id || !!item.aliases?.includes(id) || !!item.pluginDefinition?.aliases.includes(id)
 }
 
 export interface StorePluginUpdate {

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using FantasyTale.Launcher.Sdk;
 using Microsoft.Web.WebView2.Core;
 
 namespace FantasyTale.Launcher.Overlay;
@@ -38,6 +39,7 @@ public partial class OverlayWindow : Window
     private readonly string _theme;
     private readonly string? _resourceRoot;
     private readonly bool _preview;
+    private readonly string? _locale;
     private nint          _hwnd;
     private int           _originalExStyle;
     private bool          _styleCaptured;
@@ -78,8 +80,11 @@ public partial class OverlayWindow : Window
     /// <param name="resourceRoot">Optional external directory containing native theme resources.</param>
     /// <param name="preview">Whether to show a native UI component for local integration testing.</param>
     /// <param name="gameProcessId">Optional launch-bound process identity, retained if the initial window was destroyed.</param>
-    public OverlayWindow(nint gameHwnd, string theme = "v2", string? resourceRoot = null, bool preview = false, uint gameProcessId = 0)
+    /// <param name="locale">Launcher UI language handed to overlay panels, or null for the overlay default.</param>
+    public OverlayWindow(nint gameHwnd, string theme = "v2", string? resourceRoot = null, bool preview = false, uint gameProcessId = 0,
+        string? locale = null)
     {
+        _locale = locale is null || OverlayLocales.IsKnown(locale) ? locale : throw new ArgumentException("Unsupported overlay locale.", nameof(locale));
         _gameHwnd = gameHwnd;
         _gamePid = gameProcessId;
         if (_gamePid == 0 && gameHwnd != IntPtr.Zero) _ = GetWindowThreadProcessId(gameHwnd, out _gamePid);
@@ -134,6 +139,7 @@ public partial class OverlayWindow : Window
     // ── WebView2 ──────────────────────────────────────────────────────────────
 
     private static CoreWebView2Environment? _sharedEnv;
+    private string _webViewInitializationStage = "environment";
 
     private void QueueWebViewInitialization()
     {
@@ -163,7 +169,9 @@ public partial class OverlayWindow : Window
         catch (Exception error) when (error is InvalidOperationException or ObjectDisposedException
             or System.Runtime.InteropServices.COMException or IOException or UnauthorizedAccessException)
         {
-            OverlayLifecycleLog.Write("browser-initialization-failed", new { errorType = error.GetType().Name });
+            OverlayLifecycleLog.Write("browser-initialization-failed", new { errorType = error.GetType().Name,
+                hresult = error.HResult.ToString("X8", System.Globalization.CultureInfo.InvariantCulture),
+                stage = _webViewInitializationStage });
             Close();
         }
     }
@@ -214,17 +222,43 @@ public partial class OverlayWindow : Window
         finally { _suspending = false; }
     }
 
+    /// <summary>Folders of the launch's overlay and assets packages that pages may read through the package host.</summary>
+    internal OverlayPackageFiles PackageFiles { get; } = new();
+
+    private void OnPackageFileRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs args)
+    {
+        var environment = WebView.CoreWebView2.Environment;
+        var file = new OverlayPackageFile(404, null, "", false);
+        Stream? body = null;
+        try
+        {
+            file = PackageFiles.Resolve(args.Request.Method, args.Request.Uri);
+            // The browser pulls the stream as it needs bytes, so a large file is never held in memory.
+            if (file.Status == 200)
+                body = new FileStream(file.Path!, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            file = new OverlayPackageFile(404, null, "", false);
+            OverlayLifecycleLog.Write("package-file-unavailable", new { errorType = error.GetType().Name });
+        }
+        var reason = file.Status switch { 200 => "OK", 400 => "Bad Request", 403 => "Forbidden", 405 => "Method Not Allowed", _ => "Not Found" };
+        args.Response = environment.CreateWebResourceResponse(body, file.Status, reason, file.Headers("https://overlay.fantasytale.local"));
+    }
+
     private async Task InitWebViewAsync()
     {
-        // One shared browser process for the whole launcher family.
+        // Overlay windows in this process share one browser environment.
         _sharedEnv ??= await CoreWebView2Environment.CreateAsync(
             userDataFolder: Path.Combine(AppContext.BaseDirectory, "OverlayWebData"));
 
         var opts = _sharedEnv.CreateCoreWebView2ControllerOptions();
         opts.ProfileName = "Overlay";
 
+        _webViewInitializationStage = "controller";
         await WebView.EnsureCoreWebView2Async(_sharedEnv, opts);
 
+        _webViewInitializationStage = "configuration";
         // Set transparent background as early as possible after controller creation.
         WebView.DefaultBackgroundColor = System.Drawing.Color.Transparent;
 
@@ -233,6 +267,8 @@ public partial class OverlayWindow : Window
         settings.AreDefaultScriptDialogsEnabled   = false;
         settings.AreDevToolsEnabled               = false;
         settings.AreBrowserAcceleratorKeysEnabled = false;
+        settings.IsZoomControlEnabled             = false;
+        ApplyNativeScale();
 
         // Serve the overlay page from a virtual host so ES modules and fetch work normally.
         var overlayDir = Path.Combine(AppContext.BaseDirectory, "overlay");
@@ -254,8 +290,12 @@ public partial class OverlayWindow : Window
             OverlayLifecycleLog.Write("navigation-completed", new { args.IsSuccess, status = args.WebErrorStatus.ToString() });
         };
 
+        // Package files are answered here, never fetched: every request for the virtual host gets a response from the registered folders.
+        WebView.CoreWebView2.AddWebResourceRequestedFilter("https://" + OverlayPackageFiles.Host + "/*", CoreWebView2WebResourceContext.All);
+        WebView.CoreWebView2.WebResourceRequested += OnPackageFileRequested;
+
         var document = "https://overlay.fantasytale.local/index.html?theme=" + _theme
-            + (_resourceRoot is null ? "" : "&resources=external") + (_preview ? "&preview=game-ui" : "");
+            + (_resourceRoot is null ? "" : "&resources=external") + (_locale is null ? "" : "&locale=" + _locale) + (_preview ? "&preview=game-ui" : "");
         var policy = new OverlayWebViewPolicy(WebView.CoreWebView2, document,
             category => OverlayLifecycleLog.Write("browser-rejected-" + category));
         WebView.CoreWebView2.WebMessageReceived += (_, args) =>
@@ -385,8 +425,22 @@ public partial class OverlayWindow : Window
         if (_viewport != viewport)
         {
             _viewport = viewport;
+            ApplyNativeScale();
             PublishViewport();
         }
+    }
+
+    /// <summary>
+    /// Makes one CSS pixel one physical pixel, which is one game pixel: legacy clients draw their UI one to one in client
+    /// pixels and ignore display scaling, so every overlay page then matches the native dialogs' size. Without this a
+    /// 150% display draws each page half as large again as the game around it.
+    /// </summary>
+    private void ApplyNativeScale()
+    {
+        if (_hwnd == IntPtr.Zero || WebView.CoreWebView2 is null) return;
+        var dpi = Math.Max(1, GetDpiForWindow(_hwnd)) / 96.0;
+        var zoom = 1 / dpi;
+        if (Math.Abs(WebView.ZoomFactor - zoom) > 0.0001) WebView.ZoomFactor = zoom;
     }
 
     private void PublishViewport()
@@ -622,8 +676,9 @@ public partial class OverlayWindow : Window
     private void RoutePointer()
     {
         if (!GetCursorPos(out var cursor) || !GetWindowRect(_hwnd, out var rect)) return;
-        var dpi = Math.Max(1, GetDpiForWindow(_hwnd)) / 96.0;
-        var point = new Point((cursor.X - rect.Left) / dpi, (cursor.Y - rect.Top) / dpi);
+        // Input regions are page (CSS) pixels: device-independent pixels divided by the page zoom.
+        var scale = Math.Max(1, GetDpiForWindow(_hwnd)) / 96.0 * (WebView.CoreWebView2 is null ? 1 : WebView.ZoomFactor);
+        var point = new Point((cursor.X - rect.Left) / scale, (cursor.Y - rect.Top) / scale);
         ApplyClickThrough(!_inputRegions.Any(region => region.Contains(point)));
     }
 

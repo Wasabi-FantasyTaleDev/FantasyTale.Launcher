@@ -59,6 +59,11 @@ public sealed record ServerInstance(string Id, string Build, IReadOnlyDictionary
     public IReadOnlyList<string>? ClientLanguages { get; init; }
     /// <summary>Optional client distribution recommendation, accepted only through an explicit installation.</summary>
     public ServerClientSource? DownloadSource { get; init; }
+    /// <summary>
+    /// Whether a node of the server's cluster serves this build: a cluster's builds are the union of its nodes' builds.
+    /// False keeps the preset listed but not launchable; null means the server has no cluster.
+    /// </summary>
+    public bool? ClusterServed { get; init; }
 }
 
 /// <summary>A server's client distribution recommendation without credentials or launcher update authority.</summary>
@@ -128,6 +133,10 @@ public sealed record AccountProfile(string Username, string DisplayName, IReadOn
 {
     /// <summary>Whether the server confirms a created game character; null means the endpoint has not supplied this status.</summary>
     public bool? HasCharacter { get; init; }
+
+    /// <summary>The server section the account belongs to when a section signs players in separately; set by the Launcher, never by a server.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Section { get; init; }
 
     /// <summary>Optional explicit icon variant, such as star, resolved only through the game's rank data.</summary>
     public string? RankVariant { get; init; }

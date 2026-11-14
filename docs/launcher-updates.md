@@ -2,7 +2,7 @@
 
 [Chinese](launcher-updates.zh.md)
 
-The deprecation transition has ended. Releases declare the inclusive `deprecated_max_version` boundary directly in the update index. Packaging does not generate a separate release-policy file, and update discovery and offline restoration read the verified index. Unknown additive fields remain optional; product, platform, paths and file integrity retain strict validation.
+Releases declare `deprecated_before_version` in the update index: every launcher below that version must install the release before it can be used, however close it is (with `0.2.0`, 0.1.99 and 0.2.0 pre-releases must update; 0.2.0 and later need not). Packaging reads it from `LauncherDeprecatedBeforeVersion` in `Directory.Build.props`. For launchers released before this rule, the index also carries the older inclusive `deprecated_max_version`, set to the lowest pre-release of the boundary (`0.2.0-0`), which every earlier release is below and the boundary itself is above; this launcher ignores that key. Packaging does not generate a separate release-policy file, and update discovery and offline restoration read the verified index. Unknown additive fields remain optional; product, platform, paths and file integrity retain strict validation.
 
 ## Native update and rollback acceptance
 

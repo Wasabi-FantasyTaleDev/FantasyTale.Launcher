@@ -52,6 +52,8 @@ default_selected = true
 plugin = "bubblefighter.fantasy.font-support-cn"
 id = "profile-recommend"
 type = "recommend"
+# Chinese fonts are recommended to players using a Chinese launcher; others can still install them.
+languages = ["zh"]
 builds = ["kr-812"]
 sources = []
 default_selected = true

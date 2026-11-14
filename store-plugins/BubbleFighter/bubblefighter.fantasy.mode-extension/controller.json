@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "pollMs": 150,
+  "operationTimeoutMs": 2000,
+  "resultPollMs": 50,
+  "startupTimeoutMs": 30000,
+  "maxPendingActions": 16,
+  "selectedCaption": {
+    "zh-CN": "（已选择{mode}）",
+    "zh-TW": "（已選擇{mode}）",
+    "ko": " ({mode} 선택됨)",
+    "en": " (Selected: {mode})",
+    "id": " (Dipilih: {mode})",
+    "vi": " (Đã chọn: {mode})",
+    "th": " (เลือก: {mode})"
+  }
+}

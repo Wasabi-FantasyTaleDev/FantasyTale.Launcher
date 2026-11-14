@@ -374,5 +374,32 @@ public sealed class InstanceTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task SavingWaitsForAReaderThatStillHoldsTheReplacedFile()
+    {
+        // Windows refuses a replacing rename while a reader holds the old file, even one that allows deletion; a plugin
+        // listing once failed with "Access to the path is denied" because a concurrent reader held instance.toml.
+        var store = new InstanceStore(Path.Combine(_root, "metadata"));
+        await store.CreateAsync(Definition());
+        var file = Path.Combine(_root, "metadata", "sample", "instance.toml");
+        var reader = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+        var release = Task.Delay(150).ContinueWith(_ => reader.Dispose(), TaskScheduler.Default);
+        store.Save(store.Load("sample") with { Name = "Renamed while read" });
+        await release;
+        Assert.Equal("Renamed while read", store.Load("sample").Name);
+    }
+
+    [Fact]
+    public async Task SavingFailsLoudWhenAReaderNeverReleasesTheFile()
+    {
+        var store = new InstanceStore(Path.Combine(_root, "metadata"));
+        await store.CreateAsync(Definition());
+        var file = Path.Combine(_root, "metadata", "sample", "instance.toml");
+        using (new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+            Assert.Throws<UnauthorizedAccessException>(() => store.Save(store.Load("sample") with { Name = "Never saved" }));
+        Assert.Equal("Sample 客户端", store.Load("sample").Name);
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_root, "metadata", "sample"), ".instance-*"));
+    }
+
     public void Dispose() => Directory.Delete(_root, true);
 }

@@ -39,6 +39,7 @@ function setup(mode, instance, reply) {
     if (id === '../clientLanguages') return clientLanguages
     if (id === '../clientVersion') return clientVersion
     if (id === '../downloads/live') return { trackDownload() {} }
+    if (id === '../plugins/pluginPolicy') return { requestPluginPolicy: async () => true }
     if (id === '../plugins/recommendations') return { requestRecommendations: async () => {} }
     if (id === '../plugins/clientInstallComponents') return { useClientInstallComponents: () => ({ confirm: () => async () => [] }) }
     if (id.endsWith('.vue')) return { default: {} }

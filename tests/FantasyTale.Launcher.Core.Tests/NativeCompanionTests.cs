@@ -54,6 +54,22 @@ public sealed class NativeCompanionTests
         Assert.Equal("not-found", (await router.HandleAsync(new("test.native", "state"), default)).Result);
     }
 
+    /// <summary>An enabled overlay page with companion grants is a panel consumer, never rejected as a non-native one.</summary>
+    [Fact]
+    public void AnEnabledOverlayConsumerIsLeftToThePanelBridge()
+    {
+        var plugin = PluginCatalog.LoadFile(Path.Combine(Repository, "store-plugins", "BubbleFighter",
+            "bubblefighter.fantasy.banpick", "plugin.toml"));
+        Assert.Equal("overlay", plugin.Kind);
+        Assert.NotEmpty(plugin.CompanionMessages);
+        var game = GameCatalog.Load(Path.Combine(Repository, "games")).Single(g => g.Id == "bubblefighter");
+        var build = game.Builds.Single(b => b.Id == "kr-812");
+        var instance = new InstanceDefinition("test-overlay", "Overlay", game.Id, build.Id, null,
+            [new(plugin.Id, plugin.Version, true, false, new Dictionary<string, object>())]);
+        Assert.Empty(LauncherServicePlan.NativeConsumers(instance, build, [plugin]));
+        Assert.Equal(plugin.CompanionMessages, LauncherServicePlan.PanelConsumers(instance, build, [plugin])[plugin.Id]);
+    }
+
     [Fact]
     public void NativeManifestGrantsAreOptionalAndConflictBeforeLaunch()
     {

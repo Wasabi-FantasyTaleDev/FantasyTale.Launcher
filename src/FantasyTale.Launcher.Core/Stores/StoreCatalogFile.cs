@@ -226,10 +226,14 @@ public static class StoreCatalogFile
         }).ToArray();
         var rules = row.Tables("client_policy_rules").Select(item =>
         {
-            item.OnlyKeys("plugin", "id", "type", "builds", "version", "sources", "default_selected");
+            item.OnlyKeys("plugin", "id", "type", "builds", "version", "sources", "default_selected", "languages");
+            var languages = item.Has("languages") ? item.Strings("languages") : null;
+            if (languages is not null && (languages.Count == 0 || languages.Any(language => language.Length is 0 or > 35
+                || !language.All(c => char.IsAsciiLetterOrDigit(c) || c == '-')) || languages.Distinct(StringComparer.OrdinalIgnoreCase).Count() != languages.Count))
+                throw item.Error("languages", "must be distinct launcher language tags such as zh-CN");
             return (Plugin: item.String("plugin", true), Rule: new ClientPolicyRule(item.String("id", true), item.String("type", true), item.Strings("builds"),
                 item.Has("version") ? item.String("version", true) : null, item.Has("sources") ? item.Strings("sources") : null)
-                { DefaultSelected = item.Has("default_selected") ? item.Boolean("default_selected") : null });
+                { DefaultSelected = item.Has("default_selected") ? item.Boolean("default_selected") : null, Languages = languages });
         }).ToArray();
         return new ClientPolicy(1, sources, rules.Select(r => r.Plugin).Distinct(StringComparer.Ordinal)
             .Select(plugin => new ClientPluginRules(plugin, rules.Where(r => r.Plugin == plugin).Select(r => r.Rule).ToArray())).ToArray());
@@ -252,6 +256,7 @@ public static class StoreCatalogFile
             if (rule.Version is not null) Line("version", rule.Version);
             if (rule.Sources is not null) List("sources", rule.Sources);
             if (rule.DefaultSelected is { } selected) text.Append("default_selected = ").Append(selected ? "true" : "false").Append('\n');
+            if (rule.Languages is not null) List("languages", rule.Languages);
         }
     }
 

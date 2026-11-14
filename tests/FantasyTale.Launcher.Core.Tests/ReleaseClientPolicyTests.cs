@@ -24,7 +24,9 @@ public sealed class ReleaseClientPolicyTests
         var root = TestRepository.StartDirectory();
         while (root is not null && !File.Exists(Path.Combine(root.FullName, "AGENTS.md"))) root = root.Parent;
         var build = GameCatalog.LoadBuild(Path.Combine(root!.FullName, "games/BubbleFighter/builds", buildId + ".toml"), "bubblefighter");
-        var rules = ProfileClientPolicy.Rules(build);
+        // The approved matrix is for a Chinese launcher; the Chinese font is recommended to Chinese launchers only.
+        var rules = ProfileClientPolicy.Rules(build, "zh-CN");
+        Assert.DoesNotContain(ProfileClientPolicy.Rules(build, "en"), rule => rule.Id == "bubblefighter.fantasy.font-support-cn");
         static string[] Ids(string values) => values.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(value => "bubblefighter.fantasy." + value).Order(StringComparer.Ordinal).ToArray();
         Assert.Equal(Ids(required), rules.Where(rule => rule.Required).Select(rule => rule.Id).Order(StringComparer.Ordinal));
         Assert.Equal(Ids(selected), rules.Where(rule => rule.Recommendation is not null && rule.DefaultSelected).Select(rule => rule.Id).Order(StringComparer.Ordinal));

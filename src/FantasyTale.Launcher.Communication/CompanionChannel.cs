@@ -11,6 +11,8 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
     private readonly Dictionary<string, Subscription> _handlers = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource _stop;
     private readonly CancellationToken _token;
+    private readonly CompanionStateObservers _states;
+    private readonly IDisposable _stateSubscription;
     private int _disposed;
     private int _active;
     private bool _cancellationComplete;
@@ -21,6 +23,10 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
         Capabilities = types.Keys.ToFrozenSet(StringComparer.Ordinal);
         _stop = CancellationTokenSource.CreateLinkedTokenSource(connection.StopToken);
         _token = _stop.Token;
+        var initial = connection.ConnectionSnapshot;
+        _states = new(initial with { Capabilities = Capabilities }, connection.StateObserverLimit, () => HandlerFailed = true);
+        _stateSubscription = connection.SubscribeState(snapshot => _states.Update(snapshot.Epoch, snapshot.State,
+            snapshot.State == CompanionChannelState.Closed ? FrozenSet<string>.Empty : Capabilities, snapshot.Revision));
     }
 
     internal string Owner { get; }
@@ -32,6 +38,12 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
     public CompanionChannelState State => IsDisposed ? CompanionChannelState.Closed : _connection.State;
     /// <inheritdoc />
     public IReadOnlySet<string> Capabilities { get; }
+
+    /// <inheritdoc />
+    public CompanionConnectionSnapshot ConnectionSnapshot => _states.Current;
+
+    /// <inheritdoc />
+    public IDisposable SubscribeState(Action<CompanionConnectionSnapshot> handler) => _states.Subscribe(handler);
 
     /// <summary>Whether this owner's most recent callback failed; exception text is never retained.</summary>
     public bool HandlerFailed { get; private set; }
@@ -72,7 +84,7 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
             throw new ArgumentException("The companion route is not granted to this plugin.");
     }
 
-    internal async ValueTask DispatchAsync(CompanionEnvelope envelope)
+    internal async ValueTask DispatchAsync(CompanionEnvelope envelope, long receiveSequence)
     {
         Subscription? handler;
         lock (_gate)
@@ -83,7 +95,8 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
         }
         try
         {
-            await handler.Handler(new CompanionEvent(envelope.Type, envelope.Version, envelope.Id, envelope.Payload.Clone()), Token).ConfigureAwait(false);
+            await handler.Handler(new CompanionEvent(envelope.Type, envelope.Version, envelope.Id, envelope.Payload.Clone())
+                { ConnectionEpoch = _connection.Epoch, ReceiveSequence = receiveSequence }, Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (Token.IsCancellationRequested) { }
         catch (Exception) { HandlerFailed = true; }
@@ -102,6 +115,8 @@ public sealed class CompanionChannel : ICompanionChannel, IDisposable
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
         lock (_gate) _handlers.Clear();
+        _stateSubscription.Dispose();
+        _states.Update(_connection.Epoch, CompanionChannelState.Closed, FrozenSet<string>.Empty, long.MaxValue);
         _connection.RemoveOwner(this);
         try { _stop.Cancel(); }
         catch (AggregateException) { HandlerFailed = true; }

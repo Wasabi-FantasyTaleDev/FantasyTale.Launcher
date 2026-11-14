@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import MarkdownText from './MarkdownText.vue'
 import type { ServerPresentation, PolicyPluginEntry, ServerStoreSource } from '../bridge'
 import { state } from '../state'
 import { localized } from '../i18n'
@@ -29,7 +30,7 @@ watch(rosterEnabled, enabled => { if (!enabled) rosterOpen.value = false })
     <button type="button" class="card-open" :aria-label="`${t('serverInfo.details')}: ${name}`" @click="emit('details')" />
     <div class="card-overview">
       <div class="card-heading"><span class="card-icon"><ServerIcon :server-id="serverId" :url="presentation?.iconUrl" :translations="presentation?.iconUrlTranslations" :asset="iconAsset" :room="room" :size="28" /></span><div class="card-title"><h3 :title="name">{{ name }}</h3><div class="card-state"><span v-if="presentation?.state && presentation.state !== 'online'" :class="presentation.state">{{ t(`serverInfo.${presentation.state}`) }}</span><span v-if="presentation?.whitelist">{{ t('serverInfo.whitelist') }}</span><span v-if="selected" class="selection-label">{{ t('live.selected') }}</span></div></div></div>
-      <p class="card-motd">{{ motd || t('serverInfo.noIntroduction') }}</p>
+      <MarkdownText v-if="motd" class="card-motd" :source="motd" /><p v-else class="card-motd">{{ t('serverInfo.noIntroduction') }}</p>
       <div v-if="hasCounts" class="card-counts">
         <component :is="rosterEnabled ? 'button' : 'span'" v-if="presentation?.onlinePlayers != null && presentation.onlinePlayers >= 0" :type="rosterEnabled ? 'button' : undefined" class="count-item" :title="t(presentation?.presenceComplete === false ? 'serverInfo.populationIncomplete' : 'serverInfo.onlinePlayers')" :aria-label="`${t('serverInfo.onlinePlayers')}: ${presentation.presenceComplete === false ? '≥ ' : ''}${presentation.onlinePlayers}`" @click="rosterEnabled && (rosterOpen = true)"><FluentIcon glyph="contact" :size="16" /><span>{{ presentation.presenceComplete === false ? '≥ ' : '' }}{{ presentation.onlinePlayers }}<template v-if="presentation.playerLimit != null && !presentation.presenceGroup"> / {{ presentation.playerLimit }}</template></span></component>
         <span v-if="presentation?.playerLimit != null && (presentation.presenceGroup || (presentation.onlinePlayers ?? -1) < 0)" class="count-item" :title="t('serverInfo.playerLimit')"><FluentIcon glyph="contact" :size="16" /><span>{{ presentation.playerLimit }}</span></span>
@@ -62,7 +63,10 @@ watch(rosterEnabled, enabled => { if (!enabled) rosterOpen.value = false })
 .card-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 8px; background: var(--subtle-secondary); color: var(--accent-default); }
 .card-title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }.card-title h3 { min-width: 0; font-size: 15px; line-height: 1.4; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-state { display: flex; flex: none; gap: 5px; font-size: 11px; color: var(--text-secondary); }.card-state:empty { display: none; }.card-state > span { padding: 2px 6px; line-height: 16px; border-radius: 4px; white-space: nowrap; background: var(--subtle-secondary); }.card-state .maintenance { color: var(--fill-caution); background: color-mix(in srgb,var(--fill-caution) 8%,transparent); }.card-state .selection-label { color: var(--accent-text-primary); background: color-mix(in srgb,var(--accent-default) 8%,transparent); }
-.card-motd { flex: 1; min-height: 0; margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.65; overflow: hidden; overflow-wrap: anywhere; white-space: pre-line; mask-image: linear-gradient(to bottom,#000 calc(100% - 10px),transparent); }
+/* The card shows a preview of the description: headings and spacing stay at the preview's size. */
+.card-motd :deep(:is(h1, h2, h3, h4, h5, h6)) { margin: 0 0 4px; font-size: inherit; }
+.card-motd :deep(:is(p, ul, ol, blockquote, pre, table)) { margin-bottom: 4px; }
+.card-motd { flex: 1; min-height: 0; margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.65; overflow: hidden; overflow-wrap: anywhere; mask-image: linear-gradient(to bottom,#000 calc(100% - 10px),transparent); }
 .card-counts { display: flex; align-items: center; gap: 20px; min-height: 24px; color: var(--text-secondary); font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }.count-item { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0; color: inherit; font: inherit; }.count-item span { line-height: 20px; }.count-item svg { display: block; flex: none; }button.count-item:hover { color: var(--accent-default); }button.count-item { position: relative; z-index: 2; border-radius: 4px; }
 .card-builds { display: flex; align-items: center; flex: none; height: 26px; min-width: 0; overflow: hidden; white-space: nowrap; }
 .build-labels, .build-placeholders { display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%; }

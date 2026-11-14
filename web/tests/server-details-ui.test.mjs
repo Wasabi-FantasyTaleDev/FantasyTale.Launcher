@@ -35,6 +35,7 @@ function setup(file, initialProps, reply = async () => ({ schema: 1, enabled: tr
     if (id === '../levels') return { accountLevel }
     if (id === '../serverArtwork') return { serverImageUrl }
     if (id === '../clientPolicy') return { policyPlugins, policySources }
+    if (id === '../scrollEdges') return { useScrollEdges: () => ({ style: vue.ref({}), measure() {}, edges: vue.ref({ top: 1, bottom: 1 }) }) }
     if (id === '../bridge') return { inHost: true, call: async (method, args) => { calls.push({ method, args }); return reply(method, args) } }
     if (id.endsWith('.vue')) return { default: {} }
     throw new Error(`Unexpected dependency ${id}`)

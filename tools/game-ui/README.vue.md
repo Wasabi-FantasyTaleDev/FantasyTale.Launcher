@@ -30,6 +30,12 @@ The demo is a Vite Vue app in `src/demo`. Run `npm run dev` for a local preview,
 
 `BfDialog` supplies the shared message/custom-body dialog. `BfMessageBox` wraps it. `BfTutorialDialogue` supplies the cn2011 narrator with original character/balloon assets, glyph atlas and typing samples. Its separate resource root and copy-generation workflow are described in [TUTORIAL.md](TUTORIAL.md) and [TUTORIAL.zh.md](TUTORIAL.zh.md).
 
+## Native-sized buttons and anchored panels
+
+`BfCaptionButton` draws a native O/X button with its own caption. With `fit` it sizes itself like the client's own buttons instead of taking `width`/`height`: the widest of `fit-captions` (default: its label) plus the 37-pixel icon margin, at least 65 pixels wide, 27 high. `fitCaptionWidth(captions, measure)` and `measureCaptionWidth(captions, family)` expose the same rule to plain JavaScript.
+
+`BfAnchoredPanel` lays out its content in game client pixels (`width`/`height`, the anchor's size) and zooms it to the panel box it was given. The box is measured with a `ResizeObserver` rather than taken from the shared overlay page, so display scaling never draws the content larger than the native controls next to it. Its slot receives the zoom as `zoom`; pass it to FreeType text as `text-scale`.
+
 ## Shared extension settings
 
 ```vue

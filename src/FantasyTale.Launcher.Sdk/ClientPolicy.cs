@@ -35,4 +35,11 @@ public sealed record ClientPolicyRule(string Id, string Type, IReadOnlyList<stri
     /// <summary>Optional initial check state for a recommendation; omitted means unchecked and other rule types cannot specify it.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? DefaultSelected { get; init; }
+
+    /// <summary>
+    /// Launcher languages the rule applies to (for example <c>zh-CN</c>, or <c>zh</c> for every Chinese variant); null or
+    /// empty applies to every language. A language never forbids a plugin: elsewhere the rule simply does not apply.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Languages { get; init; }
 }

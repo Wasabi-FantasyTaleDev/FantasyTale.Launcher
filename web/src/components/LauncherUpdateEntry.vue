@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, on } from '../bridge'
+import { call, demoMode, inHost, on } from '../bridge'
 import { state } from '../state'
 import { launcherUpdate, launcherUpdatePreview } from '../downloads/launcherUpdate'
 import { formatBytes, transferMetrics } from '../downloads/model'
@@ -68,14 +68,22 @@ async function poll() {
   await launcherUpdate.refresh()
   if (!stopped) timer = setTimeout(poll, 500)
 }
-onMounted(async () => {
-  if (inHost) {
+async function syncEntryState() {
+  if (inHost || !!demoMode?.enabled) {
     try { const info = await call('app.info'); if (!stopped) currentVersion.value = info.version }
     catch (error) { if (!stopped) state.error = (error as Error).message }
+  } else if (!launcherUpdatePreview) {
+    currentVersion.value = null
   }
-  if (!stopped && (inHost || launcherUpdatePreview)) void poll()
-})
-onBeforeUnmount(() => { stopped = true; if (timer) clearTimeout(timer); removeRequirementListener(); launcherUpdate.stop() })
+  if (!stopped && (inHost || !!demoMode?.enabled || launcherUpdatePreview) && !timer) void poll()
+  else if (!inHost && !demoMode?.enabled && !launcherUpdatePreview) {
+    if (timer) { clearTimeout(timer); timer = undefined }
+    launcherUpdate.stop()
+  }
+}
+const stopDemoWatch = demoMode ? watch(() => demoMode.enabled, () => { if (!stopped) void syncEntryState() }) : () => {}
+onMounted(() => { void syncEntryState() })
+onBeforeUnmount(() => { stopped = true; if (timer) clearTimeout(timer); stopDemoWatch(); removeRequirementListener(); launcherUpdate.stop() })
 </script>
 
 <template>

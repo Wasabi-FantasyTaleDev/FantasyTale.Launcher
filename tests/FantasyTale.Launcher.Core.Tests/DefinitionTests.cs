@@ -40,7 +40,8 @@ public sealed class DefinitionTests
     public void FontWeightRecommendationsBelongOnlyToDeclaredLocalizationBuilds()
     {
         var game = GameCatalog.Load(RepoGames()).Single(g => g.Id == "bubblefighter");
-        Assert.Equal(["id-1809", "id-400", "kr-1256", "kr-812"], game.Builds.Where(build => FantasyTale.Launcher.Core.Plugins.ProfileClientPolicy.Offered(build).Contains("bubblefighter.fantasy.font-support-cn")).Select(build => build.Id).Order(StringComparer.Ordinal));
+        Assert.Equal(["id-1809", "id-400", "kr-1256", "kr-812"], game.Builds.Where(build => FantasyTale.Launcher.Core.Plugins.ProfileClientPolicy.Offered(build, "zh-TW").Contains("bubblefighter.fantasy.font-support-cn")).Select(build => build.Id).Order(StringComparer.Ordinal));
+        Assert.DoesNotContain(game.Builds, build => FantasyTale.Launcher.Core.Plugins.ProfileClientPolicy.Offered(build, "ko").Contains("bubblefighter.fantasy.font-support-cn"));
         var storePlugins = PluginCatalog.Load(Path.Combine(Directory.GetParent(RepoGames())!.FullName, "store-plugins", "BubbleFighter"));
         var font = storePlugins.Single(p => p.Id == "bubblefighter.fantasy.font-support-cn");
         Assert.Equal("中文字体支持", font.Name.Resolve("zh-CN"));

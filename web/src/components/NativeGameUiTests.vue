@@ -10,6 +10,7 @@ import WComboBox from '../controls/WComboBox.vue'
 import WTextBox from '../controls/WTextBox.vue'
 import WButton from '../controls/WButton.vue'
 import NativeChatColorPicker from './NativeChatColorPicker.vue'
+import NativeControlTests from './NativeControlTests.vue'
 import { hexColor } from '../colors'
 
 const { t, te } = useI18n()
@@ -183,6 +184,7 @@ onUnmounted(() => { stopped = true; generation++; clearInterval(timer); clearPol
       <div class="client-actions"><WComboBox v-model="selected" :options="options" :disabled="!clients.length" :aria-label="t('nativeUi.client')" /><WButton @click="refreshCapabilities()">{{ t('nativeUi.refresh') }}</WButton></div>
     </WSettingsCard>
     <p v-if="error" class="test-error" role="alert">{{ error }}</p>
+    <NativeControlTests :client="selectedTarget()" :capabilities="capabilities" />
     <WExpander settings :header="t('nativeUi.messageBox')" :description="availability('messageBox')">
       <div class="test-form">
         <label><span>{{ t('nativeUi.heading') }}</span><WTextBox v-model="title" /></label>

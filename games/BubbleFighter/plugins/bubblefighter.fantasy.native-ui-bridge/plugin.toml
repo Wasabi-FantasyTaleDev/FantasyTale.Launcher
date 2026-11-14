@@ -4,7 +4,7 @@ schema = 1
 update_source = "fantasy-tale"
 id = "bubblefighter.fantasy.native-ui-bridge"
 aliases = ["bubblefighter.fantasy.overlay-notifications"]
-version = "0.1.2"
+version = "0.1.20"
 game = "bubblefighter"
 kind = "native"
 runtime = ">=3.7.2 <4.0.0"
@@ -21,6 +21,22 @@ builds = ["*"]
 library = "game_controls.dll"
 
 [[options]]
+key = "signature_timeout_ms"
+type = "int"
+default = 15000
+min = 1
+max = 60000
+label = { "zh-CN" = "原生代码就绪等待上限（毫秒）", "zh-TW" = "原生程式碼就緒等待上限（毫秒）", en = "Native code readiness timeout (ms)", ko = "기본 코드 준비 대기 시간 (ms)", id = "Batas waktu kesiapan kode bawaan (ms)", vi = "Thời gian chờ mã gốc sẵn sàng (ms)" }
+
+[[options]]
+key = "signature_poll_ms"
+type = "int"
+default = 10
+min = 1
+max = 1000
+label = { "zh-CN" = "原生代码就绪检查间隔（毫秒）", "zh-TW" = "原生程式碼就緒檢查間隔（毫秒）", en = "Native code readiness check interval (ms)", ko = "기본 코드 준비 확인 간격 (ms)", id = "Interval pemeriksaan kesiapan kode bawaan (ms)", vi = "Khoảng kiểm tra mã gốc sẵn sàng (ms)" }
+
+[[options]]
 key = "max_pending"
 type = "int"
 default = 4
@@ -35,3 +51,43 @@ default = 256
 min = 64
 max = 4096
 label = { "zh-CN" = "保留的调用结果数", "zh-TW" = "保留的呼叫結果數", en = "Retained control results", ko = "보관된 컨트롤 호출 결과 수", id = "Hasil panggilan kontrol tersimpan", vi = "Số kết quả gọi điều khiển được lưu" }
+
+[[options]]
+key = "max_controls"
+type = "int"
+default = 512
+min = 16
+max = 4096
+label = { "zh-CN" = "原生控件标识上限", "zh-TW" = "原生控制項識別碼上限", en = "Maximum native control handles", ko = "최대 기본 컨트롤 핸들 수", id = "Handle kontrol bawaan maksimum", vi = "Số định danh điều khiển gốc tối đa" }
+
+[[options]]
+key = "max_tracked_forms"
+type = "int"
+default = 1024
+min = 64
+max = 8192
+label = { "zh-CN" = "原生界面跟踪上限", "zh-TW" = "原生介面追蹤上限", en = "Maximum tracked native forms", ko = "최대 기본 양식 추적 수", id = "Formulir bawaan terlacak maksimum", vi = "Số biểu mẫu gốc được theo dõi tối đa" }
+
+[[options]]
+key = "max_tree_nodes"
+type = "int"
+default = 8192
+min = 256
+max = 32768
+label = { "zh-CN" = "原生控件树节点上限", "zh-TW" = "原生控制項樹節點上限", en = "Maximum native control tree nodes", ko = "최대 기본 컨트롤 트리 노드 수", id = "Simpul pohon kontrol bawaan maksimum", vi = "Số nút cây điều khiển gốc tối đa" }
+
+[[options]]
+key = "retained_control_events"
+type = "int"
+default = 256
+min = 16
+max = 4096
+label = { "zh-CN" = "保留的原生控件事件数", "zh-TW" = "保留的原生控制項事件數", en = "Retained native control events", ko = "보관된 기본 컨트롤 이벤트 수", id = "Peristiwa kontrol bawaan tersimpan", vi = "Số sự kiện điều khiển gốc được lưu" }
+
+[[options]]
+key = "max_control_text"
+type = "int"
+default = 4096
+min = 256
+max = 32768
+label = { "zh-CN" = "原生控件文字读取与写入上限", "zh-TW" = "原生控制項文字讀寫上限", en = "Maximum native control text length", ko = "최대 기본 컨트롤 텍스트 길이", id = "Panjang teks kontrol bawaan maksimum", vi = "Độ dài văn bản điều khiển gốc tối đa" }

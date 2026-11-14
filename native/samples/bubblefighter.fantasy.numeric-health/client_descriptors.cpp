@@ -134,6 +134,55 @@ bool resource_layout(const toml::table& t, const std::string& path, ClientDescri
     return true;
 }
 
+bool capture_layout(const toml::table& t, const std::string& path, ClientDescriptor& descriptor,
+    std::string& error, bool required) {
+    std::string capture;
+    if (!string_value(t, "hud_register", path, descriptor.hud_register, error, required) ||
+        !string_value(t, "player_capture", path, capture, error, required) ||
+        !integer_value(t, "white_style_slot", path, descriptor.white_style_slot, error, required)) return false;
+    if ((required || !descriptor.hud_register.empty()) && descriptor.hud_register != "ebp" &&
+        descriptor.hud_register != "ebx" && descriptor.hud_register != "edi")
+        return fail(error, path + ".hud_register", "must be ebp, ebx or edi");
+    if (capture == "hud_owner") descriptor.player_capture = PlayerCapture::HudOwner;
+    else if (capture == "caller_ebx") descriptor.player_capture = PlayerCapture::CallerEbx;
+    else if (capture == "caller_esi") descriptor.player_capture = PlayerCapture::CallerEsi;
+    else if (capture == "caller_stack") descriptor.player_capture = PlayerCapture::CallerStack;
+    else if ((required || !capture.empty()) && capture != "caller_edi")
+        return fail(error, path + ".player_capture", "must be caller_edi, caller_ebx, caller_esi, caller_stack or hud_owner");
+    if (descriptor.player_capture == PlayerCapture::CallerStack) {
+        if (!integer_value(t, "player_stack_offset", path, descriptor.player_stack_offset, error, true)) return false;
+        if (descriptor.player_stack_offset < 28 || descriptor.player_stack_offset > 4096 || descriptor.player_stack_offset % 4)
+            return fail(error, path + ".player_stack_offset", "must be a four-byte-aligned offset in 28..4096 after the original arguments");
+    } else if (t.contains("player_stack_offset"))
+        return fail(error, path + ".player_stack_offset", "requires caller_stack capture");
+    if (descriptor.white_style_slot > 30)
+        return fail(error, path + ".white_style_slot", "must be in 0..30");
+    return true;
+}
+
+bool resource_string_layout(const toml::table& t, const std::string& path, ClientDescriptor& descriptor,
+    std::string& error, bool supported) {
+    if (!string_value(t, "resource_string_abi", path, descriptor.resource_string_abi, error, supported)) return false;
+    if (descriptor.resource_string_abi.empty()) {
+        if (t.contains("resource_string_inline_capacity"))
+            return fail(error, path + ".resource_string_abi", "required when a string capacity is declared");
+        return true;
+    }
+    if (descriptor.resource_string_abi == "cow_wstring4") {
+        if (t.contains("resource_string_inline_capacity"))
+            return fail(error, path + ".resource_string_inline_capacity", "COW strings have no inline storage");
+        return integer_value(t, "construct_string_rva", path, descriptor.construct_string_rva, error, supported) &&
+            integer_value(t, "release_string_rva", path, descriptor.release_string_rva, error, supported) &&
+            (!supported || (descriptor.construct_string_rva && descriptor.release_string_rva) ||
+                fail(error, path + ".construct_string_rva", "COW construction and release must have nonzero addresses"));
+    }
+    if (descriptor.resource_string_abi != "msvc_wstring24")
+        return fail(error, path + ".resource_string_abi", "must be msvc_wstring24 or cow_wstring4");
+    if (t.contains("construct_string_rva") || t.contains("release_string_rva"))
+        return fail(error, path + ".resource_string_abi", "native string functions require cow_wstring4");
+    return true;
+}
+
 } // namespace
 
 bool load_client_descriptor(const std::string& text, const std::string& source,
@@ -163,8 +212,10 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                  "render_call_bytes", "original_draw_rva", "current_health_rva", "maximum_entry_rva",
                  "maximum_health_rva", "hud_anchor_offset", "player_capture", "resource_manager_rva",
                  "construct_options_rva", "destroy_options_rva", "load_sprite_rva", "measure_number_rva",
+                 "destroy_options_offset", "construct_string_rva", "release_string_rva",
                  "resource_signatures", "hud_entry_va", "number_wrapper_va", "wrapper_call_va",
                  "health_accessor_call_va", "health_accessor_call_bytes", "health_argument_setup_va", "health_argument_setup_bytes", "wrapper_call_bytes",
+                 "health_result_bytes", "health_accessor_bytes", "player_stack_offset", "white_style_slot", "resource_string_abi",
                  "health_accessor_va", "health_accessor_abi", "health_field_offset", "maximum_health_field_offset", "maximum_health_source",
                  "life_accessor_va", "life_accessor_call_va", "life_accessor_call_bytes", "life_field_offset", "life_divisor", "maximum_vtable_slot",
                  "hud_register", "resource_string_inline_capacity", "resource_options_size", "native_style_slot", "native_style_sprite_index", "sprite_frames_offset", "sprite_texture_offset", "texture_resident_offset"}, error)) return false;
@@ -173,9 +224,12 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                 !integer_array(*item, "image_sizes", path, descriptor.image_sizes, error, true)) return false;
             if (descriptor.status != "supported" && descriptor.status != "research")
                 return fail(error, path + ".status", "must be supported or research");
+            if (!capture_layout(*item, path, descriptor, error, descriptor.status == "supported") ||
+                !resource_string_layout(*item, path, descriptor, error, descriptor.status == "supported")) return false;
             if (descriptor.status == "research") {
                 integer_value(*item, "resource_string_inline_capacity", path, descriptor.resource_string_inline_capacity, error);
                 integer_value(*item, "resource_options_size", path, descriptor.resource_options_size, error);
+                integer_value(*item, "destroy_options_offset", path, descriptor.destroy_options_offset, error);
                 if (!error.empty()) return false;
                 if (descriptor.resource_string_inline_capacity > 64)
                     return fail(error, path + ".resource_string_inline_capacity", "must be in 1..64 when present");
@@ -184,6 +238,9 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                 if (descriptor.resource_options_size > 4096 ||
                     (item->contains("resource_options_size") && descriptor.resource_options_size < 4))
                     return fail(error, path + ".resource_options_size", "must be in 4..4096 when present");
+                if (descriptor.destroy_options_offset && (descriptor.resource_options_size < 4 ||
+                    descriptor.destroy_options_offset % 4 || descriptor.destroy_options_offset > descriptor.resource_options_size - 4))
+                    return fail(error, path + ".destroy_options_offset", "must select an aligned member within the options record");
                 if ((item->contains("native_style_slot") || item->contains("native_style_sprite_index") ||
                     item->contains("sprite_frames_offset") || item->contains("sprite_texture_offset") || item->contains("texture_resident_offset")) &&
                     !resource_layout(*item, path, descriptor, error)) return false;
@@ -193,6 +250,8 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                 integer_value(*item, "wrapper_call_va", path, descriptor.wrapper_call_va, error);
                 integer_value(*item, "health_accessor_call_va", path, descriptor.health_accessor_call_va, error);
                 hex_bytes(*item, "health_accessor_call_bytes", path, descriptor.health_accessor_call_bytes, error);
+                hex_bytes(*item, "health_result_bytes", path, descriptor.health_result_bytes, error);
+                hex_bytes(*item, "health_accessor_bytes", path, descriptor.health_accessor_bytes, error);
                 integer_value(*item, "health_argument_setup_va", path, descriptor.health_argument_setup_va, error);
                 hex_bytes(*item, "health_argument_setup_bytes", path, descriptor.health_argument_setup_bytes, error);
                 hex_bytes(*item, "wrapper_call_bytes", path, descriptor.wrapper_call_bytes, error);
@@ -206,13 +265,13 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                 integer_value(*item, "life_field_offset", path, descriptor.life_field_offset, error);
                 integer_value(*item, "life_divisor", path, descriptor.life_divisor, error);
                 integer_value(*item, "maximum_vtable_slot", path, descriptor.maximum_vtable_slot, error);
-                string_value(*item, "hud_register", path, descriptor.hud_register, error);
-                std::string capture;
-                string_value(*item, "player_capture", path, capture, error);
                 if (!error.empty()) return false;
-                if (capture == "hud_owner") descriptor.player_capture = PlayerCapture::HudOwner;
-                else if (!capture.empty() && capture != "caller_edi")
-                    return fail(error, path + ".player_capture", "must be caller_edi or hud_owner");
+                if (descriptor.health_result_bytes.size() > 32 ||
+                    (item->contains("health_result_bytes") && (!descriptor.health_accessor_call_va || descriptor.health_result_bytes.empty())))
+                    return fail(error, path + ".health_result_bytes", "requires an HP call and 1..32 exact return-consumer bytes");
+                if (descriptor.health_accessor_bytes.size() > 128 ||
+                    (item->contains("health_accessor_bytes") && (!descriptor.health_accessor_va || descriptor.health_accessor_bytes.empty())))
+                    return fail(error, path + ".health_accessor_bytes", "requires an HP accessor and 1..128 exact getter bytes");
                 if (item->contains("health_argument_setup_va") || item->contains("health_argument_setup_bytes")) {
                     if (!descriptor.health_argument_setup_va || descriptor.health_argument_setup_bytes.empty() ||
                         descriptor.health_argument_setup_bytes.size() > 64 ||
@@ -256,32 +315,35 @@ bool load_client_descriptor(const std::string& text, const std::string& source,
                 if (item->contains("maximum_entry_rva") || item->contains("maximum_health_rva") || item->contains("maximum_vtable_slot"))
                     return fail(error, path + ".maximum_health_source", "player_field_f32 cannot also declare vtable access");
             } else return fail(error, path + ".maximum_health_source", "must be vtable_f64 or player_field_f32");
-            if (!string_value(*item, "hud_register", path, descriptor.hud_register, error, true)) return false;
-            if (descriptor.hud_register != "ebp" && descriptor.hud_register != "ebx")
-                return fail(error, path + ".hud_register", "must be ebp or ebx");
-            std::string capture;
-            if (!string_value(*item, "player_capture", path, capture, error, true)) return false;
-            if (capture == "caller_edi") descriptor.player_capture = PlayerCapture::CallerEdi;
-            else if (capture == "hud_owner") descriptor.player_capture = PlayerCapture::HudOwner;
-            else return fail(error, path + ".player_capture", "must be caller_edi or hud_owner");
             if (!hex_bytes(*item, "render_call_bytes", path, descriptor.render_call_bytes, error, true) ||
                 !integer_value(*item, "render_call_rva", path, descriptor.render_call_rva, error, true) ||
                 !integer_value(*item, "original_draw_rva", path, descriptor.original_draw_rva, error, true) ||
                 !integer_value(*item, "current_health_rva", path, descriptor.current_health_rva, error, true) ||
                 !integer_value(*item, "hud_anchor_offset", path, descriptor.hud_anchor_offset, error, true) ||
                 !integer_value(*item, "resource_manager_rva", path, descriptor.resource_manager_rva, error, true) ||
-                !integer_value(*item, "resource_string_inline_capacity", path, descriptor.resource_string_inline_capacity, error, true) ||
+                !integer_value(*item, "resource_string_inline_capacity", path, descriptor.resource_string_inline_capacity, error,
+                    descriptor.resource_string_abi == "msvc_wstring24") ||
                 !integer_value(*item, "resource_options_size", path, descriptor.resource_options_size, error, true) ||
+                !integer_value(*item, "destroy_options_offset", path, descriptor.destroy_options_offset, error) ||
                 !integer_value(*item, "construct_options_rva", path, descriptor.construct_options_rva, error, true) ||
                 !integer_value(*item, "destroy_options_rva", path, descriptor.destroy_options_rva, error, true) ||
                 !integer_value(*item, "load_sprite_rva", path, descriptor.load_sprite_rva, error, true) ||
                 !integer_value(*item, "measure_number_rva", path, descriptor.measure_number_rva, error, true) ||
                 !resource_signatures(*item, path, descriptor.resource_signatures, error) ||
                 !resource_layout(*item, path, descriptor, error)) return false;
-            if (descriptor.resource_string_inline_capacity < 1 || descriptor.resource_string_inline_capacity > 64)
+            if (descriptor.resource_string_abi == "msvc_wstring24" &&
+                (descriptor.resource_string_inline_capacity < 1 || descriptor.resource_string_inline_capacity > 64))
                 return fail(error, path + ".resource_string_inline_capacity", "must be in 1..64");
             if (descriptor.resource_options_size < 4 || descriptor.resource_options_size > 4096)
                 return fail(error, path + ".resource_options_size", "must be in 4..4096");
+            if (descriptor.destroy_options_offset % 4 || descriptor.destroy_options_offset > descriptor.resource_options_size - 4)
+                return fail(error, path + ".destroy_options_offset", "must select an aligned member within the options record");
+            for (const auto address : {descriptor.construct_options_rva, descriptor.destroy_options_rva,
+                descriptor.load_sprite_rva, descriptor.measure_number_rva, descriptor.construct_string_rva, descriptor.release_string_rva}) {
+                if (address && std::none_of(descriptor.resource_signatures.begin(), descriptor.resource_signatures.end(),
+                    [address](const auto& signature) { return signature.rva == address; }))
+                    return fail(error, path + ".resource_signatures", "every native resource entry point requires a signature");
+            }
             descriptor.complete = true;
             return true;
         }

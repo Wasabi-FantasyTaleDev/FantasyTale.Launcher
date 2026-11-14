@@ -10,6 +10,7 @@ internal sealed class HostLifecycleLog(string dataRoot) : ILaunchDiagnosticSink
 {
     private readonly string _path = Path.Combine(dataRoot, "host-lifecycle.jsonl");
     private readonly string _launchPath = Path.Combine(dataRoot, "launch-lifecycle.jsonl");
+    private readonly string _controllerPath = Path.Combine(dataRoot, "overlay-controller.jsonl");
     private readonly object _gate = new();
     internal const int MaximumBytes = 64 * 1024;
 
@@ -24,18 +25,12 @@ internal sealed class HostLifecycleLog(string dataRoot) : ILaunchDiagnosticSink
         }) + "\n");
         lock (_gate)
         {
-            try
-            {
-                Append(_path, bytes);
-                // Frequent UI polling must not rotate away launch and resource-recovery evidence.
-                if (name.StartsWith("launch-", StringComparison.Ordinal) || name.StartsWith("gateway-", StringComparison.Ordinal))
-                    Append(_launchPath, bytes);
-            }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-            {
-                // An optional diagnostic sink must not make a usable window impossible to close.
-                Trace.WriteLine("Lifecycle recording unavailable: " + error.GetType().Name);
-            }
+            TryAppend(_path, bytes);
+            // Frequent UI polling must not rotate away launch, recovery or controller evidence.
+            if (name.StartsWith("launch-", StringComparison.Ordinal) || name.StartsWith("gateway-", StringComparison.Ordinal))
+                TryAppend(_launchPath, bytes);
+            if (name.EndsWith("-controller", StringComparison.Ordinal) || name.StartsWith("overlay-controller-", StringComparison.Ordinal))
+                TryAppend(_controllerPath, bytes);
         }
     }
 
@@ -74,6 +69,16 @@ internal sealed class HostLifecycleLog(string dataRoot) : ILaunchDiagnosticSink
             }
         }
         return string.Join('\n', records.TakeLast(512));
+    }
+
+    private static void TryAppend(string path, byte[] bytes)
+    {
+        try { Append(path, bytes); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            // Each optional sink fails independently, without affecting the window or another sink.
+            Trace.WriteLine("Lifecycle recording unavailable: " + error.GetType().Name);
+        }
     }
 
     private static void Append(string path, byte[] bytes)

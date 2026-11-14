@@ -30,7 +30,8 @@ SUPPORTED_DESCRIPTOR_FIELDS = {
     "current_health_rva", "health_accessor_abi", "maximum_health_source", "hud_anchor_offset",
     "player_capture", "hud_register", "resource_manager_rva", "construct_options_rva", "destroy_options_rva",
     "load_sprite_rva", "measure_number_rva", "resource_signatures",
-    "resource_string_inline_capacity", "resource_options_size",
+    "resource_options_size",
+    "resource_string_abi", "white_style_slot",
     "native_style_slot", "native_style_sprite_index", "sprite_frames_offset", "sprite_texture_offset", "texture_resident_offset",
 }
 
@@ -102,11 +103,42 @@ def validate_client_descriptors(folder: Path, plugin: dict) -> list[str]:
         options_size = row.get("resource_options_size")
         if "resource_options_size" in row and (type(options_size) is not int or not 4 <= options_size <= 4096):
             errors.append(f"{prefix}.resource_options_size: must be in 4..4096")
+        string_abi = row.get("resource_string_abi")
+        if string_abi is not None and string_abi not in ("msvc_wstring24", "cow_wstring4"):
+            errors.append(f"{prefix}.resource_string_abi: must be msvc_wstring24 or cow_wstring4")
+        if string_capacity is not None and string_abi != "msvc_wstring24":
+            errors.append(f"{prefix}.resource_string_inline_capacity: requires msvc_wstring24")
+        destroy_offset = row.get("destroy_options_offset", 0)
+        if (type(destroy_offset) is not int or destroy_offset < 0 or destroy_offset % 4
+                or (destroy_offset and (type(options_size) is not int or destroy_offset > options_size - 4))):
+            errors.append(f"{prefix}.destroy_options_offset: must select an aligned member within the options record")
+        string_functions = ("construct_string_rva", "release_string_rva")
+        if string_abi != "cow_wstring4" and any(field in row for field in string_functions):
+            errors.append(f"{prefix}.resource_string_abi: native string functions require cow_wstring4")
+        if row.get("player_capture") is not None and row["player_capture"] not in ("caller_edi", "caller_ebx", "caller_esi", "caller_stack", "hud_owner"):
+            errors.append(f"{prefix}.player_capture: invalid capture source")
+        if row.get("hud_register") is not None and row["hud_register"] not in ("ebp", "ebx", "edi"):
+            errors.append(f"{prefix}.hud_register: must be ebp, ebx or edi")
+        if row.get("player_capture") == "caller_stack":
+            offset = row.get("player_stack_offset")
+            if type(offset) is not int or not 28 <= offset <= 4096 or offset % 4:
+                errors.append(f"{prefix}.player_stack_offset: must be a four-byte-aligned offset in 28..4096")
+        elif "player_stack_offset" in row:
+            errors.append(f"{prefix}.player_stack_offset: requires caller_stack capture")
+        if "white_style_slot" in row and (type(row["white_style_slot"]) is not int or not 0 <= row["white_style_slot"] <= 30):
+            errors.append(f"{prefix}.white_style_slot: must be in 0..30")
         if status != "supported":
             if RESOURCE_LAYOUT_FIELDS & row.keys():
                 errors.extend(validate_resource_layout(row, prefix))
             continue
         supported.add(build)
+        if string_abi == "cow_wstring4":
+            for field in string_functions:
+                value = row.get(field)
+                if type(value) is not int or not 0 < value <= 0xFFFFFFFF:
+                    errors.append(f"{prefix}.{field}: must be a positive unsigned 32-bit address")
+        elif string_abi == "msvc_wstring24" and string_capacity is None:
+            errors.append(f"{prefix}.resource_string_inline_capacity: missing for msvc_wstring24")
         if build not in compatibility:
             errors.append(f"{prefix}.id: supported build is missing from plugin compatibility")
         for field in SUPPORTED_DESCRIPTOR_FIELDS:
@@ -124,10 +156,10 @@ def validate_client_descriptors(folder: Path, plugin: dict) -> list[str]:
                 if type(value) is not int or not 0 < value <= 0xFFFFFFFF:
                     errors.append(f"{prefix}.{field}: must be a positive unsigned 32-bit address")
         errors.extend(validate_resource_layout(row, prefix))
-        if row.get("player_capture") not in ("caller_edi", "hud_owner"):
-            errors.append(f"{prefix}.player_capture: must be caller_edi or hud_owner")
-        if row.get("hud_register") not in ("ebp", "ebx"):
-            errors.append(f"{prefix}.hud_register: must be ebp or ebx")
+        if row.get("player_capture") not in ("caller_edi", "caller_ebx", "caller_esi", "caller_stack", "hud_owner"):
+            errors.append(f"{prefix}.player_capture: missing or invalid capture source")
+        if row.get("hud_register") not in ("ebp", "ebx", "edi"):
+            errors.append(f"{prefix}.hud_register: must be ebp, ebx or edi")
         abi = row.get("health_accessor_abi")
         if abi not in ("thiscall_f64", "edi_field_f64"):
             errors.append(f"{prefix}.health_accessor_abi: must be thiscall_f64 or edi_field_f64")
@@ -165,6 +197,11 @@ def validate_client_descriptors(folder: Path, plugin: dict) -> list[str]:
         if not isinstance(signatures, list) or not signatures:
             errors.append(f"{prefix}.resource_signatures: must be a non-empty array")
         else:
+            signed_addresses = {signature.get("rva") for signature in signatures if isinstance(signature, dict)}
+            for field in ("construct_options_rva", "destroy_options_rva", "load_sprite_rva", "measure_number_rva",
+                          "construct_string_rva", "release_string_rva"):
+                if row.get(field) and row[field] not in signed_addresses:
+                    errors.append(f"{prefix}.resource_signatures: missing signature for {field}")
             for sig_index, signature in enumerate(signatures):
                 sig_prefix = f"{prefix}.resource_signatures[{sig_index}]"
                 if not isinstance(signature, dict) or type(signature.get("rva")) is not int or not 0 < signature["rva"] <= 0xFFFFFFFF or not isinstance(signature.get("bytes"), str):
@@ -278,10 +315,24 @@ def check_research_descriptor(row: dict, image: Image) -> CheckResult:
         ("wrapper", "wrapper_call_va", "wrapper_call_bytes", "number_wrapper_va"),
     ):
         values = (row.get(site_key), row.get(bytes_key), row.get(target_key))
-        if all(value is None for value in values):
+        if all(value is None for value in values) and not (prefix == "health" and "health_accessor_bytes" in row):
             continue
         result.checked += 1
         site, signature, target = values
+        if prefix == "health" and site is None and signature is None and "health_accessor_bytes" in row:
+            try:
+                getter, mask = parse_pattern(row["health_accessor_bytes"])
+            except (TypeError, ValueError, OverflowError, AttributeError):
+                getter, mask = b"", b""
+            # cn-774 sub_531A60 and tw-454 sub_748EC0 end with FLD [ESP]; POP ECX; RET.
+            good = (type(target) is int and image.base <= target < image.base + image.size and
+                    5 <= len(getter) <= 128 and mask == b"\xff" * len(getter) and
+                    getter.endswith(b"\xd9\x04\x24\x59\xc3") and
+                    row.get("health_accessor_abi") == "thiscall_f64" and
+                    image.read(target - image.base, len(getter)) == getter)
+            print(f"  {build} native HP getter: verified={'yes' if good else 'NO'}")
+            result.failed |= not good
+            continue
         if (type(site) is not int or not image.base <= site < image.base + image.size or
                 type(target) is not int or not image.base <= target < image.base + image.size or
                 not isinstance(signature, str)):
@@ -298,6 +349,17 @@ def check_research_descriptor(row: dict, image: Image) -> CheckResult:
         if prefix == "health":
             # The measured CN HUD consumes HP from x87 ST(0); Life uses EAX instead.
             following = image.read(site - image.base + 5, 2)
+            if "health_result_bytes" in row:
+                try:
+                    consumer, consumer_mask = parse_pattern(row["health_result_bytes"])
+                except (TypeError, ValueError, OverflowError, AttributeError):
+                    consumer, consumer_mask = b"", b""
+                # A general-purpose MOV preserves ST(0); kr-1256 68E28C reloads ECX before FSTP.
+                valid_consumer = (len(consumer) == 6 and consumer_mask == b"\xff" * 6 and
+                                  consumer[:2] == b"\x8b\x4d" and consumer[3] in (0xD9, 0xDD) and
+                                  consumer[4] & 0xF8 == 0x58 and consumer[4] & 7 != 4)
+                good = good and valid_consumer and image.read(site - image.base + 5, len(consumer)) == consumer
+                following = consumer[3:5] if valid_consumer else None
             abi = row.get("health_accessor_abi")
             good = (good and abi in ("thiscall_f64", "edi_field_f64") and following is not None and
                     following[0] in (0xD9, 0xDD) and (following[1] >> 3) & 7 == 3 and

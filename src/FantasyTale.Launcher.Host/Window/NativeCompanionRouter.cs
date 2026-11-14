@@ -78,13 +78,13 @@ internal sealed class NativeCompanionRouter : IDisposable
 
     private static CompanionBrokerResponse Json(object value) => new("ok", JsonSerializer.Serialize(value, JsonOptions));
 
-    private static string StateName(CompanionChannelState state) => state switch
+    internal static string StateName(CompanionChannelState state) => state switch
     {
         CompanionChannelState.PendingGame => "pending_game",
         _ => state.ToString().ToLowerInvariant(),
     };
 
-    private static string OutcomeName(CompanionOperationStatus status) => status switch
+    internal static string OutcomeName(CompanionOperationStatus status) => status switch
     {
         CompanionOperationStatus.NotBound => "not_bound",
         CompanionOperationStatus.OutcomeUnknown => "outcome_unknown",

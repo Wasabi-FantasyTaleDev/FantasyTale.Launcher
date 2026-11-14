@@ -119,7 +119,7 @@ name = { en = "Community store", zh-CN = "社区商店" }
 | `update_mode` | 客户端当前文件快照使用 `files`；版本化发行使用 `release` |
 | `revision` | 发行排序值；有序发行使用唯一、递增的正数 |
 | `authors`、`uploader` | 可选作者列表和上传者名称；上传者为空时省略 |
-| `plugin_definition` | schema 2 中内联的完整 `plugin.toml` 文本 |
+| `plugin_definition` | schema 2 中内联的完整 `plugin.toml` 文本；声明 `requires` 的包必须提供，这样启动器才能在下载前从同一目录安装其依赖 |
 | `minimum_launcher_version` | schema 2 可选最低 Launcher SemVer；须与内联插件定义一致 |
 
 资源身份绑定其配置的来源。其他源不能仅凭相同 ID 替换已安装资源。路径不允许 URL、

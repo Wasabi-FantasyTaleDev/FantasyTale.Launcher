@@ -78,7 +78,7 @@ public sealed class LocalServerProfiles
         var path = Safe(profile.Id + ".toml"); var temp = Safe("saving.tmp");
         using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
         { stream.Write(Encoding.UTF8.GetBytes(text.ToString())); stream.Flush(true); }
-        File.Move(temp, path, true);
+        AtomicFile.Replace(temp, path);
     }
 
     /// <summary>Removes only the saved configuration; server files and player data are preserved.</summary>

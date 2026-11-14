@@ -388,7 +388,8 @@ public sealed partial class PluginImportTests : IDisposable
             var reply = replies.Single(item => item["id"]?.GetValue<long>() == id);
             Assert.Null(reply["error"]); return reply["result"];
         }
-        await Call("settings.setUpdates", new { autoCheck = false, autoDownload = false });
+        // Several versions stay installed side by side, so superseded imports are kept for this test.
+        await Call("settings.setUpdates", new { autoCheck = false, autoDownload = false, removeOldPluginVersions = false });
         foreach (var version in new[] { "1.0.0", "2.0.0" })
         {
             var preview = await Call("plugins.prepareImport", new { game = "fixture", path = Folder(Manifest.Replace("1.0.0", version, StringComparison.Ordinal)) });
@@ -515,7 +516,8 @@ public sealed partial class PluginImportTests : IDisposable
             if (fails) Assert.NotNull(reply["error"]); else Assert.Null(reply["error"]);
             return reply["result"];
         }
-        await Call("settings.setUpdates", new { autoCheck = false, autoDownload = false });
+        // Several versions stay installed side by side, so superseded imports are kept for this test.
+        await Call("settings.setUpdates", new { autoCheck = false, autoDownload = false, removeOldPluginVersions = false });
         await Call("instances.create", new { id = "client", name = "Client", game = game.Id, build = game.Builds[0].Id });
         const string color = "\n[[options]]\nkey = \"font_color\"\ntype = \"enum\"\ndefault = \"white\"\nvalues = [\"white\", \"yellow\"]\nlabel = { en = \"Color\" }\n";
         const string removed = "\n[[options]]\nkey = \"old_setting\"\ntype = \"bool\"\ndefault = false\nlabel = { en = \"Old setting\" }\n";

@@ -19,11 +19,41 @@ public static class LauncherServicePlan
             var matches = packages.Where(p => p.Id == selection.Id && p.Version == selection.Version).ToArray();
             if (matches.Length != 1) throw new DefinitionException("instance.toml", "plugins", "native consumers must resolve to exactly one package");
             var package = matches[0];
-            if (package.CompanionMessages.Count == 0) continue;
+            // Overlay grants belong to either the package's controller or its page bridge.
+            if (package.CompanionMessages.Count == 0 || package.Kind == "overlay") continue;
             if (package.Kind != "native" || package.Game != instance.Game || instance.Build != build.Id)
                 throw new DefinitionException("plugin.toml", "companion", "consumer must be a native plugin for this game and build");
             _ = PluginCatalog.ResolveOptions(package, build, selection.Options);
             if (!result.TryAdd(package.Id, package.CompanionMessages)) throw new DefinitionException("instance.toml", "plugins", "duplicate native companion owner");
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Resolves companion grants for enabled overlay pages without a game-owned controller.
+    /// Controlled packages receive their grants through the backend controller instead of a raw page bridge.
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> PanelConsumers(InstanceDefinition instance,
+        BuildDefinition build, IReadOnlyList<PluginDefinition> packages) => OverlayConsumers(instance, build, packages, false);
+
+    /// <summary>Resolves enabled game-controller grants separately from pages so backend-owned messages never reach a raw page bridge.</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, int>> ControllerConsumers(InstanceDefinition instance,
+        BuildDefinition build, IReadOnlyList<PluginDefinition> packages) => OverlayConsumers(instance, build, packages, true);
+
+    private static Dictionary<string, IReadOnlyDictionary<string, int>> OverlayConsumers(InstanceDefinition instance,
+        BuildDefinition build, IReadOnlyList<PluginDefinition> packages, bool controllers)
+    {
+        var result = new Dictionary<string, IReadOnlyDictionary<string, int>>(StringComparer.Ordinal);
+        foreach (var selection in instance.Plugins.Where(p => p.Enabled))
+        {
+            var matches = packages.Where(p => p.Id == selection.Id && p.Version == selection.Version).ToArray();
+            if (matches.Length != 1) throw new DefinitionException("instance.toml", "plugins", "panel consumers must resolve to exactly one package");
+            var package = matches[0];
+            if (package.Kind != "overlay" || package.CompanionMessages.Count == 0 || !PluginCatalog.IsAvailable(package, build)) continue;
+            if ((package.Overlay?.Controller is not null) != controllers) continue;
+            if (package.Game != instance.Game || instance.Build != build.Id)
+                throw new DefinitionException("plugin.toml", "companion", "consumer must be an overlay plugin for this game and build");
+            if (!result.TryAdd(package.Id, package.CompanionMessages)) throw new DefinitionException("instance.toml", "plugins", "duplicate panel companion owner");
         }
         return result;
     }

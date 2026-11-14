@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Instance, type ServerClientRelease, type ServerPreset } from '../bridge'
+import { call, demoMode, inHost, type Instance, type ServerClientRelease, type ServerPreset } from '../bridge'
 import { localized, clientRegion } from '../i18n'
 import { clientVersionCaption } from '../clientVersion'
 import { perform, selectedGame, state } from '../state'
@@ -46,7 +46,7 @@ const preset = computed(() => props.preset?.build === build.value ? props.preset
 async function discover() {
   const revision = ++discoveryRevision
   recommendation.value = undefined; downloadClient.value = false; downloadError.value = undefined; discovering.value = false
-  if (!props.open || !createMode.value || !inHost || (!createdRequest.value && !preset.value?.downloadSource)) return
+  if (!props.open || !createMode.value || !(inHost || !!demoMode?.enabled) || (!createdRequest.value && !preset.value?.downloadSource)) return
   const serverId = createdRequest.value?.serverId ?? state.selectedServerId, presetId = createdRequest.value?.presetId ?? preset.value?.id
   if (!presetId) return
   discovering.value = true
@@ -93,7 +93,7 @@ watch(installationPath, () => {
   downloadClient.value = !!recommendation.value
 }, { flush: 'sync' })
 async function identifyPath() {
-  if (!props.open || !createMode.value || !inHost || !installationPath.value.trim() || createdRequest.value) return
+  if (!props.open || !createMode.value || !(inHost || !!demoMode?.enabled) || !installationPath.value.trim() || createdRequest.value) return
   const revision = ++identificationRevision, path = installationPath.value.trim(), gameId = selectedGame.value!.id
   detectedExisting.value = false
   checking.value = true
@@ -186,7 +186,7 @@ async function save() {
 
 <template>
   <WDialog :open="open" :title="title" :primary-text="admissionDone ? t('updates.close') : state.busy || checking || discovering ? t('live.working') : createdRequest ? t('serverClient.retry') : createMode && (!detectedExisting || downloadClient) ? t('serverClient.install') : t('live.save')" :close-text="t('dialog.cancel')"
-    :primary-disabled="state.busy || checking || !admissionDone && (discovering || createMode && (components.loading.value || !!components.error.value) || !!pendingCreate || (!!createdRequest?.download && !recommendation) || !inHost || !resolvedName || !build)" :primary-busy="state.busy || checking" @close="close" @primary="save">
+    :primary-disabled="state.busy || checking || !admissionDone && (discovering || createMode && (components.loading.value || !!components.error.value) || !!pendingCreate || (!!createdRequest?.download && !recommendation) || !(inHost || !!demoMode?.enabled) || !resolvedName || !build)" :primary-busy="state.busy || checking" @close="close" @primary="save">
     <div class="form-stack">
       <DownloadTaskProgress v-if="state.busy || checking" pending />
       <InstallationTaskList v-if="tasks.length" :tasks="tasks" />
@@ -195,7 +195,7 @@ async function save() {
       <label class="field"><span>{{ t('live.build') }}</span><WComboBox v-model="build" :options="builds" :disabled="state.busy || !!createdRequest || mode === 'edit' || mode === 'clone'" /></label>
       <p v-if="!builds.length" class="muted">{{ t('live.clientUnavailable') }}</p>
       <template v-if="!mode || mode === 'create'">
-        <label class="field"><span>{{ t('live.source') }}</span><div class="input-action"><WTextBox v-model="installationPath" :placeholder="t('live.installPathDefault')" :disabled="state.busy || checking || !!createdRequest" @change="identifyPath" /><WButton :disabled="state.busy || checking || !!createdRequest || !inHost" @click="browse">{{ t('live.browse') }}</WButton></div></label>
+        <label class="field"><span>{{ t('live.source') }}</span><div class="input-action"><WTextBox v-model="installationPath" :placeholder="t('live.installPathDefault')" :disabled="state.busy || checking || !!createdRequest" @change="identifyPath" /><WButton :disabled="state.busy || checking || !!createdRequest || !(inHost || !!demoMode?.enabled)" @click="browse">{{ t('live.browse') }}</WButton></div></label>
       </template>
       <div v-if="recommendation" class="server-download">
         <div class="server-download-heading"><span id="server-download-label">{{ t('serverClient.download') }}</span><WToggleSwitch v-model="downloadClient" aria-labelledby="server-download-label" :disabled="state.busy || checking || !!createdRequest" /></div>

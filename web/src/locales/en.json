@@ -26,7 +26,8 @@
     "installed": "Installed"
   },
   "dialog": {
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "home": {
     "launch": "Launch",
@@ -178,6 +179,7 @@
     "clientUnavailable": "No client build is available to add yet.",
     "previousGame": "Previous game: {name}",
     "nextGame": "Next game: {name}",
+    "buildNotServed": "No server node serves this client version yet.",
     "gameComingSoon": "Preparing",
     "gamePending": "This game is being prepared. Switch to another game to start playing.",
     "subtitle": "Your games, ready when you are.",
@@ -283,7 +285,8 @@
     "loginNeeded": "Sign in to this server to continue.",
     "unknown": "Not available",
     "removeServerTitle": "Remove this server?",
-    "removeServerBody": "Remove “{name}” from this device? Installed clients are kept."
+    "removeServerBody": "Remove “{name}” from this device? Installed clients are kept.",
+    "serverSection": "Server"
   },
   "updates": {
     "totalSpeed": "Total download speed",
@@ -478,7 +481,8 @@
     "description": "Enable experimental features or configure and maintain store sources.",
     "tabs": {
       "options": "Developer options",
-      "sources": "Store source management"
+      "sources": "Store source management",
+      "demo": "Demo mode"
     },
     "pending": "Coming soon",
     "nsfw": {
@@ -490,6 +494,69 @@
       "description": "Show an Overlay Test dialog after the game starts. Applies to the next game launch.",
       "passThrough": "Pass clicks outside the dialog",
       "passThroughDescription": "Allow clicks on the game outside the message box. Applies to the next game launch."
+    },
+    "demo": {
+      "title": "UI Demo mode",
+      "description": "Enabled automatically during browser development (npm run dev). Provides interactive mock data and animations without showing any indicator outside this tab.",
+      "disabledNotice": "UI Demo mode is currently turned off. Turn it back on above to test interactive dialogs and mock animations.",
+      "reset": "Reset mock data",
+      "resetDone": "Mock workspace data has been restored.",
+      "activeTransfers": "Active demo transfers",
+      "groups": {
+        "store": "Store & download animations",
+        "storeDesc": "Open store installation dialogs and trigger live download progress across pages and dialogs.",
+        "instances": "Clients, multiplayer & hosting",
+        "instancesDesc": "Open client editors, sign-in prompts, server details, online rosters, and local hosting dialogs.",
+        "plugins": "Plugins, policies & conflicts",
+        "pluginsDesc": "Test dependency resolution, recommendations, launch warnings, resource conflicts, and recovery notices.",
+        "updates": "Launcher updates & mirror",
+        "updatesDesc": "Test available, animated download, restart confirmation, mandatory upgrade, and failure guidance prompts.",
+        "notices": "Notifications & error banners",
+        "noticesDesc": "Trigger shell toast notifications and structured diagnostic error banners."
+      },
+      "actions": {
+        "storeClient": "Client install dialog",
+        "storePlugin": "Plugin install dialog",
+        "storeServer": "Server package dialog",
+        "storePluginUpdates": "Plugin batch updates",
+        "storeSources": "Store sources dialog",
+        "animateClient": "Animate client install",
+        "animatePlugin": "Animate plugin download",
+        "animateServer": "Animate server download",
+        "instanceAdd": "Add client dialog",
+        "instanceEdit": "Edit client dialog",
+        "stopGame": "Stop game dialog",
+        "auth": "Sign-in dialog",
+        "serverDetails": "Server details & presets",
+        "serverEdit": "Add or edit server dialog",
+        "onlinePlayers": "Online players roster",
+        "serverPlugins": "Server plugin list",
+        "directorySources": "Server directories dialog",
+        "hostingSetup": "Local server setup dialog",
+        "hostingLog": "Hosting runtime log",
+        "pluginPolicy": "Plugin policy dialog",
+        "pluginRecommend": "Recommended plugins dialog",
+        "pluginLaunchWarning": "Launch warnings dialog",
+        "pluginConflict": "Resource conflict dialog",
+        "pluginRequiredUpdate": "Required plugin updates",
+        "pluginSupport": "Support new client offer",
+        "pluginImport": "Import plugin dialog",
+        "pluginSchemeShare": "Share scheme dialog",
+        "pluginRecovery": "Plugin recovery notice",
+        "pluginDeprecation": "Retired plugin notice",
+        "updateAvailable": "Available update dialog",
+        "updateProgress": "Animate update download",
+        "updateReady": "Ready to restart dialog",
+        "updateMandatory": "Mandatory upgrade dialog",
+        "updateFailure": "Update failure guidance",
+        "githubMirror": "GitHub mirror suggestion",
+        "noticeSuccess": "Plugin success notice",
+        "noticeWarning": "Plugin warning notice",
+        "serverError": "Server failure banner",
+        "launchFailure": "Launch cleanup banner",
+        "instanceBusy": "Instance in-use banner",
+        "clearNotices": "Clear banners & errors"
+      }
     }
   },
   "nativeUi": {
@@ -913,6 +980,18 @@
   "featureAvailability": {
     "development": "Under development. Available in a future release."
   },
+  "pluginPolicyErrors": {
+    "server_plugin_required": "This server requires the plugin \"{plugin}\". Enable it for this client, then launch again.",
+    "server_plugin_version_low": "The installed version of \"{plugin}\" is older than this server allows. Update it, then launch again.",
+    "server_plugin_version_high": "The installed version of \"{plugin}\" is newer than this server allows. Choose an allowed version, then launch again.",
+    "server_plugin_policy_conflict": "This server disables \"{plugin}\", but this client needs it. Ask the server operator about this rule.",
+    "client_policy_conflict": "The rules for \"{plugin}\" contradict each other. Ask the server operator about this rule.",
+    "client_policy_source_conflict": "The rules for \"{plugin}\" name download sources with nothing in common. Ask the server operator about this rule.",
+    "client_policy_disabled": "This server has disabled \"{plugin}\". Turn it off for this client, then try again.",
+    "plugin_policy_require_unmet": "Install or enable \"{plugin}\" first.",
+    "plugin_policy_required_by": "\"{plugin}\" requires this plugin. Turn \"{plugin}\" off first.",
+    "plugin_policy_conflict_active": "Conflicts with \"{plugin}\". Turn \"{plugin}\" off first."
+  },
   "launcherUpdateDiagnostics": {
     "lastAttempt": "Last installation attempt",
     "phase": "Installation stage",
@@ -1219,5 +1298,86 @@
     "message": "Another operation is using this client configuration. Please try again shortly.",
     "title": "Client in use details",
     "explanation": "The lease prevents launches, downloads and settings changes from modifying the same client concurrently. A background operation can hold it even when no game window is open. Details show the blocked operation and lease path; they do not identify the holder process."
+  },
+  "pluginPolicy": {
+    "title": "Required plugins missing",
+    "launchTitle": "Required plugins missing",
+    "disableTitle": "Other plugins require this plugin",
+    "body": "This plugin requires prerequisite plugins. Install or turn them on before continuing.",
+    "launchBody": "This plugin requires prerequisite plugins. Install or turn them on before continuing.",
+    "disableBody": "Enabled plugins depend on the plugin you are turning off. Disable them first, or cancel.",
+    "group": {
+      "require": "Required by {name}",
+      "conflict": "Conflicts with {name}"
+    },
+    "rule": {
+      "require": "{plugin} requires {other}",
+      "recommend": "{plugin} recommends {other}",
+      "conflict": "{plugin} cannot run with {other}"
+    },
+    "status": {
+      "missing": "{name} is not installed.",
+      "disabled": "{name} {version} is installed but turned off.",
+      "version": "Only {name} {version} is installed; {range} is needed.",
+      "unavailable": "{name} is not available for this client.",
+      "conflict": "{name} is turned on."
+    },
+    "install": "Install",
+    "update": "Update",
+    "installing": "Installing",
+    "updating": "Updating",
+    "enable": "Turn on",
+    "enabledDone": "Enabled",
+    "disableAction": "Turn off",
+    "disabledDone": "Turned off",
+    "notInstalled": "Not installed",
+    "notEnabled": "Turned off",
+    "disableOther": "Turn off {name}",
+    "dependentSwitch": "Use {name}",
+    "confirm": "Confirm",
+    "continue": "Confirm",
+    "resolveFirst": "Confirm",
+    "recommendedLabel": "Recommended",
+    "blockedHint": "Install or turn on what is required, or switch the plugin off, before continuing.",
+    "notInStore": "{name} is not offered by your enabled stores for this client.",
+    "importEnable": "Turn on for every supported client after installation",
+    "supportTitle": "{name} supports more clients",
+    "supportBody": "Version {version} of {name} now supports these clients. Choose where to turn it on.",
+    "supportEnable": "Turn on",
+    "supportLater": "Not now",
+    "chip": {
+      "require": "Requires {name}",
+      "recommend": "Recommends {name}",
+      "conflict": "Conflicts with {name}"
+    }
+  },
+  "maintenance": {
+    "title": "Some servers are under maintenance",
+    "titleAll": "Servers are under maintenance",
+    "intro": "Servers under maintenance cannot be entered right now. You can still play on the servers marked Available.",
+    "introAll": "Every server is under maintenance. Please try again later.",
+    "introSection": "All servers of {section} are under maintenance. Sign in to another server section to play now, or try again later.",
+    "continue": "Continue",
+    "window": "{start} – {end}",
+    "until": "Until {end}",
+    "from": "From {start}",
+    "players": "{players} / {capacity} players",
+    "canEnter": "Available to enter",
+    "offlineHint": "Currently unreachable.",
+    "state": {
+      "maintenance": "Maintenance",
+      "online": "Available",
+      "offline": "Offline"
+    },
+    "playHere": "Play here",
+    "selected": "Selected"
+  },
+  "notices": {
+    "title": "Notice",
+    "next": "Next",
+    "start": "Got it",
+    "showAll": "Show All",
+    "allTitle": "Notices",
+    "none": "There are no notices yet."
   }
 }

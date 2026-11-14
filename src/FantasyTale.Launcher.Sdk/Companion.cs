@@ -15,7 +15,7 @@ public enum CompanionChannelState
     Connected,
     /// <summary>The transport is retrying a bounded reconnect.</summary>
     Reconnecting,
-    /// <summary>The owner or game launch has ended and the channel will not reconnect.</summary>
+    /// <summary>The current transport or its owner has closed; a surviving launch-scoped view may later reconnect.</summary>
     Closed,
 }
 
@@ -41,10 +41,36 @@ public enum CompanionOperationStatus
 }
 
 /// <summary>Result returned by a companion send or request.</summary>
-public sealed record CompanionOperationResult(CompanionOperationStatus Status, string? RequestId = null, object? Response = null);
+public sealed record CompanionOperationResult(CompanionOperationStatus Status, string? RequestId = null, object? Response = null)
+{
+    /// <summary>Gets the originating transport epoch of a received response, or null for a local outcome without a response.</summary>
+    public string? ConnectionEpoch { get; init; }
+
+    /// <summary>Gets this response frame's position within its connection epoch; zero means no received-frame identity is available.</summary>
+    /// <remarks>Compare with event receive sequences from the same epoch, never with callback arrival order or another epoch.</remarks>
+    public long ReceiveSequence { get; init; }
+}
 
 /// <summary>A structured event delivered by a registered companion message type.</summary>
-public sealed record CompanionEvent(string Type, int Version, string MessageId, object? Payload);
+public sealed record CompanionEvent(string Type, int Version, string MessageId, object? Payload)
+{
+    /// <summary>Gets the transport epoch captured when this event was received, independent of later reconnects.</summary>
+    public string? ConnectionEpoch { get; init; }
+
+    /// <summary>Gets this event frame's position within its connection epoch, captured before queuing its callback; zero means unavailable.</summary>
+    /// <remarks>Events and responses share one increasing sequence, which may contain gaps for control frames.</remarks>
+    public long ReceiveSequence { get; init; }
+}
+
+/// <summary>Describes a channel's current connection identity, binding state and owner-granted capabilities.</summary>
+/// <param name="Epoch">The opaque negotiated transport epoch, or null before a transport has been attached.</param>
+/// <param name="State">The transport and game-binding state at this revision.</param>
+/// <param name="Capabilities">Negotiated message types restricted to this channel's grants.</param>
+public sealed record CompanionConnectionSnapshot(string? Epoch, CompanionChannelState State, IReadOnlySet<string> Capabilities)
+{
+    /// <summary>Gets the monotonically increasing revision of this stable channel view.</summary>
+    public long Revision { get; init; }
+}
 
 /// <summary>Options for a request that may have a bounded response timeout.</summary>
 public sealed record CompanionRequestOptions
@@ -64,6 +90,15 @@ public interface ICompanionChannel : IDisposable
 
     /// <summary>Capabilities negotiated for the current build and server session.</summary>
     IReadOnlySet<string> Capabilities { get; }
+
+    /// <summary>Gets a coherent connection snapshot; implementations without observable lifecycle support have no epoch.</summary>
+    CompanionConnectionSnapshot ConnectionSnapshot => new(null, State, Capabilities);
+
+    /// <summary>Subscribes to ordered lifecycle snapshots, immediately replaying the latest state; callbacks must return promptly.</summary>
+    /// <remarks>Callbacks run outside transport locks. A slow callback may receive the latest revision after intermediate states were superseded.</remarks>
+    /// <exception cref="NotSupportedException">This channel does not expose lifecycle notifications; consumers requiring them must remain inactive.</exception>
+    IDisposable SubscribeState(Action<CompanionConnectionSnapshot> handler) =>
+        throw new NotSupportedException("The companion channel does not expose lifecycle notifications.");
 
     /// <summary>Sends a low-frequency event without exposing the underlying transport.</summary>
     ValueTask<CompanionOperationResult> SendAsync(string type, int version, object? payload = null,

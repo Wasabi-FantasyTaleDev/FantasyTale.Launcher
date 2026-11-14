@@ -1,0 +1,56 @@
+schema = 2
+
+[plugin]
+id = "bubblefighter.fantasy.mode-extension"
+version = "0.1.25"
+game = "bubblefighter"
+kind = "overlay"
+minimum_launcher_version = "0.1.71"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Mode Extension"
+"zh-CN" = "模式扩展"
+"zh-TW" = "模式擴充"
+ko = "모드 확장"
+id = "Ekstensi Mode"
+vi = "Mở rộng chế độ"
+th = "โหมดเพิ่มเติม"
+
+[plugin.description]
+en = "Choose any server mode while creating a room. The choice is applied after confirmation and requires native UI support for the client."
+"zh-CN" = "创建房间时选择服务器支持的全部模式，确认后才应用选择。需要当前客户端的原生控件支持。"
+"zh-TW" = "建立房間時選擇伺服器支援的全部模式，確認後才套用選擇。需要目前用戶端的原生控制項支援。"
+ko = "방을 만들 때 서버가 지원하는 모든 모드를 선택할 수 있습니다. 확인한 뒤 적용되며 해당 클라이언트의 기본 UI 지원이 필요합니다."
+id = "Pilih semua mode yang didukung server saat membuat ruangan. Pilihan diterapkan setelah konfirmasi dan memerlukan dukungan UI bawaan klien."
+vi = "Chọn mọi chế độ máy chủ hỗ trợ khi tạo phòng. Lựa chọn chỉ được áp dụng sau khi xác nhận và cần hỗ trợ giao diện gốc của máy khách."
+th = "เลือกโหมดทั้งหมดที่เซิร์ฟเวอร์รองรับขณะสร้างห้อง ตัวเลือกจะมีผลหลังยืนยันและต้องมีการรองรับ UI ดั้งเดิมของไคลเอนต์"
+
+[compatibility]
+builds = ["*"]
+
+# The dialog's native entry, mode activation and description use the bridge's form read and control.setEnabled.
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.native-ui-bridge"
+type = "require"
+version = ">=0.1.20"
+
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.game-ui-resources"
+type = "require"
+version = ">=0.1.2"            # 0.1.2 adds the v3 theme that kr-1256 draws with, and the UI sounds
+
+[[plugin_policy]]
+plugin = "bubble.fighter.fantasy.nirinsoulink"
+type = "require"
+
+[overlay]
+entry = "mode-extension.html"
+controller = "room-mode"
+
+[companion.messages]
+"game.room.create.context" = 1
+"game.room.create.context.get" = 1
+"game.session.changed" = 1
+"game.session.state" = 1

@@ -76,7 +76,7 @@ public sealed partial class HookChannel : IDisposable
         // Validate frame size before taking the channel; user input cannot break a healthy stream.
         if (Encoding.UTF8.GetByteCount(extra) > 65000) throw new ArgumentException("Native service request exceeds the control frame budget.");
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        if (!await _request.WaitAsync(0, cancellationToken).ConfigureAwait(false)) throw new InvalidOperationException("A hook request is already in progress.");
+        if (!await _request.WaitAsync(0, cancellationToken).ConfigureAwait(false)) throw new HookChannelBusyException();
         string body;
         bool pending;
         string result;

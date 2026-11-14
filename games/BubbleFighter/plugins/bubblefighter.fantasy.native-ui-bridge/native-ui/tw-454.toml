@@ -18,6 +18,17 @@ append_announcement = 0x75F550 # tw-454 sub_B51470 supplies vector/end/record; t
 clock_now = 0xADB9A0 # tw-454 sub_EDB9A0 returns the paused or running game clock without arguments.
 
 set_text = 0xAEE790 # tw-454 sub_EEE790 invokes the text callback and copies text when it declines.
+control_load_form = 0xAF5130 # tw-454 sub_EF5130 loads a .ui resource into the supplied UiForm (cn-774 sub_F571F0).
+control_initialize = 0xAED440 # tw-454 sub_EECE60 initializes every Control through sub_EED440 (cn-774 sub_F4F6C0).
+control_destroy = 0xAECF30 # tw-454 sub_EED3B0 calls this Control destructor before freeing 784 bytes.
+control_click = 0xAFD2A0 # tw-454 sub_EFD2A0 fires the click event, the owner form at +620 and the command at +912.
+control_set_text = 0xAEE7D0 # tw-454 sub_EEE7D0 copies borrowed text into the Control's string at +420 (cn-774 sub_F505E0).
+edit_set_text = 0xB0B120 # tw-454 sub_F0B120 (UiEdit vtable +220) copies text, truncates to +884 and clamps the caret.
+control_focus = 0xAECAC0 # tw-454 sub_EECAC0 is the stdcall focus setter that stores UI manager +20.
+button_vtable = 0xFE7074 # tw-454 RTTI Lambda::UiButton primary vtable (single base).
+edit_vtable = 0xFE786C # tw-454 RTTI Lambda::UiEdit primary vtable.
+label_vtable = 0xFE8574 # tw-454 RTTI Lambda::UiLabel primary vtable.
+create_room_vtable = 0xF9E57C # tw-454 sub_ADE670 assigns DlgCreateRoom before loading its .ui resource.
 
 [values]
 message_abi = 2 # tw-454 sub_9F0710 passes four stack arguments to the thiscall constructor.
@@ -46,6 +57,42 @@ icon_notice = 0 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 0 to MsgBoxIconNotice.
 icon_warning = 1 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 1 to MsgBoxIconWarning.png.
 icon_question = 2 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 2 to MsgBoxIconQuestion.png.
 icon_error = 3 # tw-454 Ui/DlgMessageBox.ui maps pnlIcon 3 to MsgBoxIconError.png.
+control_abi = 2 # tw-454 Controls keep text in place and inline their enable setter, as cn-774 does.
+edit_text_abi = 2 # tw-454 sub_F0B120 takes the text alone and returns with RET 4.
+text_offset = 420 # tw-454 sub_EEE790 and sub_F0B120 store the Control's text string here.
+name_offset = 396 # tw-454 sub_F0E8D0 copies the resource attribute Name to +396.
+array_index_offset = 512 # tw-454 sub_F0E8D0 reads ArrayIndex to +512; tw-454 sub_EEF920 matches children by it.
+x_offset = 532 # tw-454 sub_F0E8D0 reads PosX, PosY, Width and Height to +532..+544.
+y_offset = 536
+width_offset = 540
+height_offset = 544
+enabled_offset = 589 # tw-454 sub_AE2820 clears +589 on the selected btnGameMode; tw-454 sub_EF03E0 ignores input while it is clear.
+owner_form_offset = 620 # tw-454 sub_EF03E0 and sub_EFD2A0 walk owners through +620.
+children_offset = 640 # tw-454 sub_EEF920 iterates child pointers between +640 and +644.
+visible_offset = 588 # tw-454 sub_F0E8D0 reads the resource attribute Visible to +588.
+edit_maximum_offset = 884 # tw-454 sub_F0B120 truncates edit text to the limit at +884.
+focus_offset = 20 # tw-454 sub_EECAC0 stores the focused control at UI manager +20.
+control_root_offset = 28 # tw-454 sub_EFB8D0 returns the UI root from manager +28.
+control_layer_offset = 8 # tw-454 sub_EFBB60 stores the active form at manager +8.
+control_modal_offset = 4 # tw-454 sub_EFBD40 installs the modal form at manager +4.
+# Observer prologue lengths that end on an instruction boundary in tw-454.
+load_hook_bytes = 5 # tw-454 sub_EF5130: push ebp; mov ebp,esp; push -1.
+initialize_hook_bytes = 5 # tw-454 sub_EED440: push ebp; mov ebp,esp; push -1.
+destroy_hook_bytes = 5 # tw-454 sub_EECF30: push ebp; mov ebp,esp; push -1.
+click_hook_bytes = 9 # tw-454 sub_EFD2A0: push ebp; mov ebp,esp; mov eax,fs:[0].
+
+[[selection_groups]]
+form = "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui" # tw-454 sub_ADE670 loads this resource for DlgCreateRoom.
+name = "btnGameMode"
+form_vtable = "create_room_vtable"
+form_size = 1352 # tw-454 sub_89DEC0 allocates 1352 bytes for DlgCreateRoom.
+value_offset = 1348 # tw-454 sub_AE2BF0 stores the selected game mode here.
+# tw-454 sub_AE2820 walks 52-byte mode records between +1272 and +1276: record +0 is the btnGameMode ArrayIndex
+# (matched against the map key) and record +4 the game mode it passes to tw-454 sub_AE2BF0.
+records_offset = 1272
+record_size = 52
+record_key_offset = 0
+record_value_offset = 4
 
 [[signatures]]
 address = "construct_message"
@@ -78,3 +125,31 @@ bytes = "80 3D EC 05 64 01 00 74 06 A1 E0 05 64 01 C3 FF"
 [[signatures]]
 address = "set_text"
 bytes = "56 8B 74 24 08 57 8B F9 56 8B 07 8B 80 DC 00 00"
+
+[[signatures]]
+address = "control_load_form"
+bytes = "55 8B EC 6A FF 68 C0 3E 27 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_initialize"
+bytes = "55 8B EC 6A FF 68 33 C3 27 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_destroy"
+bytes = "55 8B EC 6A FF 68 83 C1 27 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "control_click"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 10 E1 27 01"
+
+[[signatures]]
+address = "control_set_text"
+bytes = "55 8B EC 6A FF 68 81 C4 27 01 64 A1 00 00 00 00"
+
+[[signatures]]
+address = "edit_set_text"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 28 BB 10 01"
+
+[[signatures]]
+address = "control_focus"
+bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 18 5A 10 01"

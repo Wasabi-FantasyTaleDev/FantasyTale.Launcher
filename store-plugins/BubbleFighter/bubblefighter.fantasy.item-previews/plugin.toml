@@ -1,0 +1,32 @@
+schema = 1
+
+[plugin]
+id = "bubblefighter.fantasy.item-previews"
+version = "0.1.0"
+game = "bubblefighter"
+kind = "assets"
+minimum_launcher_version = "0.1.70"
+authors = ["Fantasy Tale Studio"]
+license = "MIT"
+
+[plugin.name]
+en = "Item Previews"
+"zh-CN" = "物品预览图"
+"zh-TW" = "物品預覽圖"
+ko = "아이템 미리보기"
+id = "Pratinjau Item"
+vi = "Ảnh xem trước vật phẩm"
+
+[plugin.description]
+"zh-CN" = "为其他组件提供物品预览图片。本组件自身不改变游戏，会在需要它的组件启用时自动使用。"
+"zh-TW" = "為其他元件提供物品預覽圖片。本元件本身不會改變遊戲，會在需要它的元件啟用時自動使用。"
+"en" = "Provides item preview pictures for other components. It does not change the game by itself and is used automatically while a component that needs it is enabled."
+ko = "다른 구성 요소에 아이템 미리보기 이미지를 제공합니다. 이 구성 요소 자체는 게임을 바꾸지 않으며, 필요로 하는 구성 요소가 켜져 있을 때 자동으로 사용됩니다."
+id = "Menyediakan gambar pratinjau item untuk komponen lain. Komponen ini tidak mengubah game sendiri dan dipakai otomatis selama komponen yang membutuhkannya aktif."
+vi = "Cung cấp ảnh xem trước vật phẩm cho các thành phần khác. Thành phần này tự nó không thay đổi trò chơi và được dùng tự động khi một thành phần cần đến nó được bật."
+
+[compatibility]
+builds = ["*"]
+
+[assets]
+root = "data"

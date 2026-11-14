@@ -4,16 +4,18 @@ namespace FantasyTale.Launcher.Core.Tests;
 
 public sealed partial class LauncherUpdateTests
 {
-    private static string DeprecatedManifest(string boundary = "0.1.37") => Manifest()
-        .Replace("version = \"Next\"", $"version = \"0.1.38\"\ndeprecated_max_version = \"{boundary}\"", StringComparison.Ordinal);
+    private static string DeprecatedManifest(string boundary = "0.1.38") => Manifest()
+        .Replace("version = \"Next\"", $"version = \"0.1.38\"\ndeprecated_before_version = \"{boundary}\"", StringComparison.Ordinal);
 
+    // Every version below the boundary must update, however close it is; the boundary itself and later ones need not.
     [Theory]
     [InlineData("0.1.36", true)]
     [InlineData("0.1.37", true)]
     [InlineData("0.1.37+test", true)]
+    [InlineData("0.1.38-rc.1", true)]
     [InlineData("0.1.38", false)]
     [InlineData("0.1.39", false)]
-    public async Task DeprecatedBoundaryIsInclusiveAndUsesSemanticVersions(string current, bool mandatory)
+    public async Task DeprecatedBoundaryIsExclusiveAndUsesSemanticVersions(string current, bool mandatory)
     {
         Policy(); using var handler = new FeedHandler(IndexBytes(DeprecatedManifest())); using var http = new HttpClient(handler);
         await using var service = new LauncherUpdateService(Installation, Data, http, current);
@@ -22,13 +24,21 @@ public sealed partial class LauncherUpdateTests
     }
 
     [Theory]
-    [InlineData("0.1.38")]
     [InlineData("0.1.39")]
     [InlineData("not-a-version")]
     public void InvalidDeprecatedBoundaryCannotDisableTheCurrentRelease(string boundary)
     {
         var policy = Policy();
         Assert.ThrowsAny<Exception>(() => LauncherRelease.Parse(policy, IndexBytes(DeprecatedManifest(boundary))));
+    }
+
+    [Fact]
+    public void TheRetiredInclusiveKeyIsLeftToOlderLaunchers()
+    {
+        var policy = Policy();
+        var release = LauncherRelease.Parse(policy, IndexBytes(Manifest().Replace("version = \"Next\"", "version = \"0.1.38\"\ndeprecated_max_version = \"0.1.38-0\"", StringComparison.Ordinal)));
+        Assert.Null(release.DeprecatedBeforeVersion);
+        Assert.False(release.RequiresUpdate("0.1.0"));
     }
 
     [Fact]

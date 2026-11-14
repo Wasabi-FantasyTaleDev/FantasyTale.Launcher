@@ -74,7 +74,8 @@ export function createUiSoundPlayer({resourceRoot='./local/',enabled=true,volume
     const opening=root.dataset.bfOpenSound,hovered=new WeakSet();
     if(opening&&!UI_SOUND_EVENTS.includes(opening))throw Error(`Unknown opening sound: ${opening}`);
     const current=()=>active&&!disposed&&root.isConnected;
-    const control=event=>event.target instanceof Element?event.target.closest('button.sprite-button,button.bf-close'):null;
+    // Every button of a rendered surface sounds, including Vue-built controls teleported into it (item cards, tabs).
+    const control=event=>event.target instanceof Element?event.target.closest('button'):null;
     const eligible=button=>button&&root.contains(button)&&!button.disabled&&button.getAttribute('aria-disabled')!=='true';
     const claim=event=>{if(handled.has(event))return false;handled.add(event);return true;};
     const request=(event,gesture=false)=>{

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mode availability policy",
+  "type": "object",
+  "required": ["format", "rules"],
+  "properties": {
+    "format": {"const": 1},
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["builds"],
+        "properties": {
+          "builds": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[A-Za-z0-9*_.-]+$"}},
+          "allow": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+          "hidden": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0}}
+        },
+        "anyOf": [{"required": ["allow"]}, {"required": ["hidden"]}]
+      }
+    }
+  }
+}

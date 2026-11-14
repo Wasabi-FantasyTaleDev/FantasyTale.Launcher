@@ -154,7 +154,12 @@ public sealed class CompanionSession : IAsyncDisposable
         finally { if (_stop.IsCancellationRequested) SetState(CompanionChannelState.Closed); }
     }
 
-    private void SetState(CompanionChannelState state) { lock (_gate) _state = state; }
+    private void SetState(CompanionChannelState state)
+    {
+        SessionChannel[] owners;
+        lock (_gate) { _state = state; owners = _owners.Values.ToArray(); }
+        foreach (var owner in owners) owner.RefreshSessionState(state);
+    }
 
     private void RemoveOwner(string owner)
     {
@@ -199,28 +204,28 @@ public sealed class CompanionSession : IAsyncDisposable
     {
         private readonly object _gate = new();
         private readonly Dictionary<string, Registration> _handlers = new(StringComparer.Ordinal);
+        private readonly CompanionStateObservers _states = new(new(null, session.State, FrozenSet<string>.Empty), session._limits.Routes);
         private CompanionChannel? _channel;
+        private IDisposable? _stateSubscription;
+        private long _stateRevision;
         private bool _disposed;
         internal IReadOnlyDictionary<string, int> Types { get; } = types;
-        public CompanionChannelState State
-        {
-            get
-            {
-                CompanionChannel? channel;
-                lock (_gate) { if (_disposed) return CompanionChannelState.Closed; channel = _channel; }
-                if (channel is not null) return channel.State;
-                var state = session.State;
-                return state == CompanionChannelState.Connected ? CompanionChannelState.Unavailable : state;
-            }
-        }
-        public IReadOnlySet<string> Capabilities { get { lock (_gate) return _channel?.Capabilities ?? FrozenSet<string>.Empty; } }
+        public CompanionChannelState State => _states.Current.State;
+        public IReadOnlySet<string> Capabilities => _states.Current.Capabilities;
+        public CompanionConnectionSnapshot ConnectionSnapshot => _states.Current;
+        public IDisposable SubscribeState(Action<CompanionConnectionSnapshot> handler) => _states.Subscribe(handler);
 
         internal void Bind(CompanionConnection? connection)
         {
             CompanionChannel? previous;
+            CompanionChannel? current;
+            IDisposable? previousSubscription;
+            CompanionChannelState state;
+            long revision;
             lock (_gate)
             {
                 previous = _channel; _channel = null;
+                previousSubscription = _stateSubscription; _stateSubscription = null;
                 if (connection is not null && !_disposed)
                 {
                     try
@@ -231,8 +236,49 @@ public sealed class CompanionSession : IAsyncDisposable
                     catch (ArgumentException) { _channel = null; }
                     catch (InvalidOperationException) when (connection.State == CompanionChannelState.Closed) { _channel = null; }
                 }
+                current = _channel;
+                state = _disposed ? CompanionChannelState.Closed : session.State;
+                if (current is null && state == CompanionChannelState.Connected) state = CompanionChannelState.Unavailable;
+                revision = ++_stateRevision;
             }
+            previousSubscription?.Dispose();
             previous?.Dispose();
+            var snapshot = current?.ConnectionSnapshot;
+            _states.Update(snapshot?.Epoch ?? _states.Current.Epoch, snapshot?.State ?? state,
+                snapshot?.Capabilities ?? FrozenSet<string>.Empty, revision);
+            if (current is not null)
+            {
+                var subscription = current.SubscribeState(snapshot => RefreshConnectionState(current, snapshot));
+                var retain = false;
+                lock (_gate)
+                {
+                    if (!_disposed && ReferenceEquals(_channel, current)) { _stateSubscription = subscription; retain = true; }
+                }
+                if (!retain) subscription.Dispose();
+            }
+        }
+
+        internal void RefreshSessionState(CompanionChannelState state)
+        {
+            long revision;
+            lock (_gate)
+            {
+                if (_disposed || _channel is not null) return;
+                revision = ++_stateRevision;
+            }
+            _states.Update(_states.Current.Epoch, state == CompanionChannelState.Connected ? CompanionChannelState.Unavailable : state,
+                FrozenSet<string>.Empty, revision);
+        }
+
+        private void RefreshConnectionState(CompanionChannel expected, CompanionConnectionSnapshot snapshot)
+        {
+            long revision;
+            lock (_gate)
+            {
+                if (_disposed || !ReferenceEquals(_channel, expected)) return;
+                revision = ++_stateRevision;
+            }
+            _states.Update(snapshot.Epoch, snapshot.State, snapshot.Capabilities, revision);
         }
 
         public ValueTask<CompanionOperationResult> SendAsync(string type, int version, object? payload = null, CancellationToken cancellationToken = default)
@@ -275,13 +321,17 @@ public sealed class CompanionSession : IAsyncDisposable
         public void Dispose()
         {
             CompanionChannel? channel;
+            IDisposable? stateSubscription;
             lock (_gate)
             {
                 if (_disposed) return;
                 _disposed = true; channel = _channel; _channel = null;
+                stateSubscription = _stateSubscription; _stateSubscription = null;
                 foreach (var registration in _handlers.Values) registration.Unbind();
                 _handlers.Clear();
             }
+            stateSubscription?.Dispose();
+            _states.Update(_states.Current.Epoch, CompanionChannelState.Closed, FrozenSet<string>.Empty, long.MaxValue);
             session.RemoveOwner(owner);
             channel?.Dispose();
         }

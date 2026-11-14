@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { call, inHost, type Server, type ServerCatalog, type DirectoryEntry, type ServerPreset } from '../bridge'
+import { call, demoMode, inHost, type Server, type ServerCatalog, type DirectoryEntry, type ServerPreset } from '../bridge'
 import { policyPlugins, policySources } from '../clientPolicy'
 import { state } from '../state'
 import { localized } from '../i18n'
@@ -17,6 +17,8 @@ import WDialog from '../controls/WDialog.vue'
 import WButton from '../controls/WButton.vue'
 import WComboBox from '../controls/WComboBox.vue'
 import FluentIcon from '../controls/FluentIcon.vue'
+import { useScrollEdges } from '../scrollEdges'
+import MarkdownText from './MarkdownText.vue'
 const props = defineProps<{ open: boolean; server?: Server; entry?: DirectoryEntry; catalog?: ServerCatalog; sourceId?: string; sourceName?: string; busy: boolean }>()
 const emit = defineEmits<{ close: []; choose: [build: string]; edit: []; remove: []; preset: [value: ServerPreset] }>()
 const { t, locale } = useI18n()
@@ -25,9 +27,8 @@ const imageIndex = ref(0), failedImages = ref<string[]>([]), imageOpen = ref(fal
 const rosterUnavailable = ref(false)
 const navigation = ref<HTMLElement>(), navigationPill = ref({ top: 0, ready: false })
 const introductionCopy = ref<HTMLElement>()
-const introductionEdges = ref({ top: 1, bottom: 1 })
+const { style: introductionEdges, measure: measureIntroductionEdges } = useScrollEdges(introductionCopy)
 let navigationResize: ResizeObserver | undefined
-let introductionResize: ResizeObserver | undefined
 let revision = 0
 const name = computed(() => props.server?.name ?? props.entry?.details.name ?? '')
 const game = computed(() => props.server?.game ?? props.entry?.details.game ?? '')
@@ -80,23 +81,6 @@ function measureNavigation() {
     ? { top: selected.offsetTop + (selected.offsetHeight - 16) / 2, ready: true }
     : { top: navigationPill.value.top, ready: false }
 }
-function measureIntroductionEdges() {
-  const element = introductionCopy.value
-  if (!element) { introductionEdges.value = { top: 1, bottom: 1 }; return }
-  const remaining = Math.max(0, element.scrollHeight - element.clientHeight - element.scrollTop)
-  introductionEdges.value = {
-    top: 1 - Math.min(1, Math.max(0, element.scrollTop) / 24),
-    bottom: 1 - Math.min(1, remaining / 24),
-  }
-}
-watch(introductionCopy, element => {
-  introductionResize?.disconnect()
-  measureIntroductionEdges()
-  if (element && typeof ResizeObserver !== 'undefined') {
-    introductionResize = new ResizeObserver(measureIntroductionEdges)
-    introductionResize.observe(element)
-  }
-}, { flush: 'post' })
 watch([motd, loading, tab, hasPlugins, rosterEnabled], measureIntroductionEdges, { flush: 'post' })
 watch(navigation, element => {
   navigationResize?.disconnect()
@@ -121,7 +105,7 @@ watch([() => props.open, () => props.server?.id, () => props.entry?.id, () => pr
   catch (e) { if (expected === revision && props.open) failure.value = e as Error }
   finally { if (expected === revision) loading.value = false }
 }, { immediate: true })
-onBeforeUnmount(() => { ++revision; navigationResize?.disconnect(); introductionResize?.disconnect() })
+onBeforeUnmount(() => { ++revision; navigationResize?.disconnect() })
 </script>
 <template>
   <WDialog :open="open" :title="name" navigation show-dismiss-button dismiss-on-backdrop :dismiss-label="t('titlebar.close')" :close-disabled="busy" @close="emit('close')">
@@ -158,7 +142,7 @@ onBeforeUnmount(() => { ++revision; navigationResize?.disconnect(); introduction
             <div v-if="presentation?.peakOnlinePlayers != null && presentation.peakOnlinePlayers >= 0"><dt>{{ t('serverInfo.peakOnlinePlayers') }}</dt><dd><TrendIcon :size="18" />{{ presentation.peakOnlinePlayers }}</dd></div>
             <div v-if="presentation?.playerLimit != null"><dt>{{ t('serverInfo.playerLimit') }}</dt><dd>{{ presentation.playerLimit }}</dd></div>
           </dl>
-          <section class="introduction"><h3>{{ t('serverInfo.introduction') }}</h3><div ref="introductionCopy" class="introduction-copy" :style="{ '--introduction-top-opacity': introductionEdges.top, '--introduction-bottom-opacity': introductionEdges.bottom }" @scroll.passive="measureIntroductionEdges" tabindex="0" role="region" :aria-label="t('serverInfo.introduction')"><p v-if="motd" class="server-description">{{ motd }}</p><p v-else-if="!loading" class="muted">{{ t('serverInfo.noIntroduction') }}</p></div></section>
+          <section class="introduction"><h3>{{ t('serverInfo.introduction') }}</h3><div ref="introductionCopy" class="introduction-copy scroll-edges" :style="introductionEdges" @scroll.passive="measureIntroductionEdges" tabindex="0" role="region" :aria-label="t('serverInfo.introduction')"><MarkdownText v-if="motd" class="server-description" :source="motd" /><p v-else-if="!loading" class="muted">{{ t('serverInfo.noIntroduction') }}</p></div></section>
           <div class="overview-shortcuts">
             <button type="button" class="overview-shortcut" @click="tab = 'versions'"><span class="shortcut-icon"><FluentIcon glyph="gamepad" :size="20" /></span><span class="shortcut-text"><strong>{{ t('serverInfo.builds') }}</strong></span><span class="shortcut-count">{{ versions.length }}</span><FluentIcon glyph="chevronRight" :size="12" /></button>
             <button v-if="hasPlugins" type="button" class="overview-shortcut" @click="tab = 'plugins'"><span class="shortcut-icon"><FluentIcon glyph="puzzle" :size="20" /></span><span class="shortcut-text"><strong>{{ t('serverInfo.plugins') }}</strong></span><span class="shortcut-count">{{ pluginCounts.total }}</span><FluentIcon glyph="chevronRight" :size="12" /></button>
@@ -170,13 +154,13 @@ onBeforeUnmount(() => { ++revision; navigationResize?.disconnect(); introduction
         <section v-else-if="tab === 'versions'" class="supported-versions" :aria-label="t('serverInfo.builds')">
           <article v-for="version in versions" :key="version.id" class="supported-version" :class="{ selected: buildId === version.id }">
             <button type="button" class="version-selector" :aria-pressed="buildId === version.id" :disabled="busy || !version.available" @click="buildId = version.id"><span class="version-icon"><FluentIcon glyph="gamepad" :size="22" /></span><span class="version-label">{{ version.label }}</span><span class="version-selected" :aria-hidden="buildId !== version.id"><FluentIcon glyph="checkMark" :size="14" />{{ t('live.selected') }}</span></button>
-            <div v-if="server && !version.installed && version.presets.length" class="version-actions"><div v-for="preset in version.presets" :key="preset.id"><span v-if="version.presets.length > 1" class="preset-name">{{ localized(preset.name, { dates: true }) }}</span><WButton variant="subtle" :disabled="busy || !inHost || !version.available" @click="emit('preset', preset)"><FluentIcon glyph="add" :size="12" />{{ t('service.importPreset') }}</WButton></div></div>
+            <div v-if="server && !version.installed && version.presets.length" class="version-actions"><div v-for="preset in version.presets" :key="preset.id"><span v-if="version.presets.length > 1" class="preset-name">{{ localized(preset.name, { dates: true }) }}</span><WButton variant="subtle" :disabled="busy || !(inHost || !!demoMode?.enabled) || !version.available" @click="emit('preset', preset)"><FluentIcon glyph="add" :size="12" />{{ t('service.importPreset') }}</WButton></div></div>
           </article>
           <div v-if="!versions.length" class="versions-empty"><FluentIcon glyph="gamepad" :size="36" /><p>{{ t(loading ? 'live.working' : 'serverInfo.unknownBuilds') }}</p></div>
         </section>
         <ServerPluginListPanel v-else-if="tab === 'plugins' && hasPlugins" :active="open" :game="game" :builds="builds" :recommendations="recommendations" :sources="pluginSources" :server-id="server?.id" />
         <OnlinePlayersPanel v-else-if="tab === 'players' && rosterEnabled" :active="open" :game="game" :server-id="server?.id" :source-id="sourceId" :entry-id="entry?.id" @availability="rosterUnavailable = !$event" />
-      </div></Transition></div><footer class="details-footer"><div v-if="buildOptions.length" class="client-choice"><span class="client-choice-label">{{ t('hosting.version') }}</span><WComboBox v-model="buildId" :options="buildOptions" :aria-label="t('hosting.version')" :disabled="busy" /></div><WButton variant="accent" :disabled="busy || !inHost || !server && !buildId" @click="emit('choose', buildId)">{{ t(entry?.kind === 'room' || server?.kind === 'room' ? 'multiplayer.join' : 'multiplayer.connect') }}</WButton></footer></div>
+      </div></Transition></div><footer class="details-footer"><div v-if="buildOptions.length" class="client-choice"><span class="client-choice-label">{{ t('hosting.version') }}</span><WComboBox v-model="buildId" :options="buildOptions" :aria-label="t('hosting.version')" :disabled="busy" /></div><WButton variant="accent" :disabled="busy || !(inHost || !!demoMode?.enabled) || !server && !buildId" @click="emit('choose', buildId)">{{ t(entry?.kind === 'room' || server?.kind === 'room' ? 'multiplayer.join' : 'multiplayer.connect') }}</WButton></footer></div>
     </div>
     <ImageViewer :open="open && imageOpen" v-model:index="imageIndex" :images="images" :title="name" @close="imageOpen = false" @failed="excludeImage" />
   </WDialog>
@@ -201,7 +185,7 @@ onBeforeUnmount(() => { ++revision; navigationResize?.disconnect(); introduction
 .details-scroll.information { display: flex; flex-direction: column; overflow: hidden; scrollbar-gutter: auto; }
 .details-scroll.players { overflow: hidden; }
 .server-overview { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1fr); grid-template-areas: 'gallery story'; grid-template-rows: minmax(0,1fr); column-gap: 28px; flex: 1; min-height: 0; }
-.overview-story { grid-area: story; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }.introduction { display: flex; flex-direction: column; flex: 1; min-height: 0; }.introduction h3 { flex: none; margin: 0 0 12px; font-size: 14px; font-weight: 600; }.introduction-copy { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px; }.server-description { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; font-size: 14px; margin: 0; color: var(--text-secondary); }
+.overview-story { grid-area: story; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }.introduction { display: flex; flex-direction: column; flex: 1; min-height: 0; }.introduction h3 { flex: none; margin: 0 0 12px; font-size: 14px; font-weight: 600; }.introduction-copy { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px; }.server-description { overflow-wrap: anywhere; line-height: 1.85; font-size: 14px; margin: 0; color: var(--text-secondary); }
 .server-status { display: flex; flex-wrap: wrap; gap: 8px; }
 .server-status > span { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 4px; font-size: 12px; line-height: 18px; color: var(--text-secondary); background: var(--subtle-secondary); }
 .server-status .online { color: var(--fill-success); background: color-mix(in srgb,var(--fill-success) 8%,transparent); }
@@ -245,9 +229,4 @@ onBeforeUnmount(() => { ++revision; navigationResize?.disconnect(); introduction
 }
 @media(max-height:720px) and (min-width:901px) { .identity-emblem { width: 80px; height: 80px; border-radius: 18px; }.identity-center { gap: 12px; padding-block: 16px; }.identity-title > strong { font-size: 19px; }.identity-facts { padding-top: 14px; } }
 @media(prefers-reduced-motion:reduce) { .server-details-layout, .details-navigation-pill, .supported-version, .version-selector, .version-selected, .detail-panel-enter-active, .detail-panel-leave-active, .gallery-image-enter-active, .gallery-image-leave-active { transition: none; }.detail-panel-enter-from { transform: none; } }
-.introduction-copy {
-  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / var(--introduction-top-opacity,1)) 0, #000 min(24px,25%), #000 calc(100% - min(24px,25%)), rgb(0 0 0 / var(--introduction-bottom-opacity,1)) 100%);
-  mask-image: linear-gradient(to bottom, rgb(0 0 0 / var(--introduction-top-opacity,1)) 0, #000 min(24px,25%), #000 calc(100% - min(24px,25%)), rgb(0 0 0 / var(--introduction-bottom-opacity,1)) 100%);
-}
-@media (prefers-reduced-transparency: reduce), (forced-colors: active) { .introduction-copy { -webkit-mask-image: none; mask-image: none; } }
 </style>

@@ -5,6 +5,7 @@ import previewBuilds from "./preview-builds.json"
 import installationPreview from './store/installation-preview.json'
 import { i18n } from './i18n'
 import { resourceConflictError, type ResourceConflictReport } from './plugins/resourceConflicts'
+import { pluginPolicyError } from './pluginPolicyErrors'
 import { serverFailure, type ServerFailureDetails } from './serverFailures'
 import { instanceFailure, type InstanceFailureDetails } from './instanceFailures'
 import previewLevels from "./preview-levels.json"
@@ -12,6 +13,7 @@ import type { StoreCatalog, StoreSource, StorePackage } from './store/types'
 import type { DownloadTask } from './downloads/model'
 import { previewSources, savePreviewSource, removePreviewSource } from './store/preview'
 import { multiplayerPreview, previewDirectory, previewInstances, previewRoster, previewServerCatalog } from './multiplayerPreview'
+import { checkPreviewPolicy, configurePreviewPolicyPlugin, installPreviewPolicyPackage, isPolicyPreview, previewPolicyCatalog, previewPolicyInstances, previewPolicyPlugins } from './plugins/policyPreview'
 import { hostingPreview, previewHosting, previewHostingLog, savePreviewHosting, changePreviewHosting, deletePreviewHosting } from './hostingPreview'
 export { hostingPreview } from './hostingPreview'
 // Typed client for the host bridge (src/FantasyTale.Launcher.Host/Bridge/BridgeRouter.cs).
@@ -75,11 +77,15 @@ export interface PluginOption {
 }
 export interface PluginSummary {
   aliases?: string[]
+  /** Packages this one needs, as `id` or `id@constraint`; shared data packages are used without being enabled. */
+  requires?: string[]
+  /** Plugin policy rules that apply to the selected client and launcher language. */
+  policy?: { plugin: string; type: 'require' | 'recommend' | 'conflict'; range: string; builds: string[]; languages: string[]; defaultSelected: boolean; satisfied?: boolean | null }[]
   builtIn?: boolean
   languagePackCompatible?: boolean
   authors?: string[]
   minimumLauncherVersion?: string | null; launcherCompatible?: boolean
-  id: string; game: string; version: string; kind: 'patch' | 'native' | 'files' | 'overlay' | 'service' | 'resources'; name: LocalizedText; description: LocalizedText | null
+  id: string; game: string; version: string; kind: 'patch' | 'native' | 'files' | 'overlay' | 'service' | 'resources' | 'assets'; name: LocalizedText; description: LocalizedText | null
   canUninstall?: boolean
   warningRequired?: boolean
   resourceSettings?: boolean; configurationPage?: boolean; configurationPages?: PluginSettingsPage[] | null; available: boolean; required: boolean; selection: InstancePlugin | null; options: PluginOption[]
@@ -98,7 +104,7 @@ export interface PluginLoadIssue { folder: string; game: string | null; id: stri
 export interface PluginRecoveryNotice { instanceId: string; game: string; pluginId: string; version: string; reason: 'missing' | 'corrupt' | 'unavailable' }
 export interface PluginDeprecationNotice { game: string; pluginId: string; versions: string[]; name: LocalizedText; reason: LocalizedText }
 export interface PluginImportPreview {
-  token: string; id: string; version: string; kind: 'patch' | 'native' | 'files' | 'overlay' | 'service' | 'resources'; name: LocalizedText
+  token: string; id: string; version: string; kind: 'patch' | 'native' | 'files' | 'overlay' | 'service' | 'resources' | 'assets'; name: LocalizedText
   description: LocalizedText | null; fileCount: number; size: number
 }
 export interface PluginUpdateState {
@@ -121,7 +127,7 @@ export interface Server {
   presentation?: ServerPresentation | null; iconAsset?: string | null; kind?: 'server' | 'room'; localOnly?: boolean; transient?: boolean; preferIp?: boolean | null; useHttps?: boolean; id: string; game: string; name: string; apiUrl: string | null; endpoint: Endpoint | null; bundledInstances: boolean; builtIn: boolean }
 export interface ServerClientSource { kind: 'http' | 'alist' | 'github'; baseUrl: string; catalogPath: string; packageId: string }
 export interface ServerClientRelease { source: StoreSource; package: StorePackage }
-export interface ServerPreset { downloadSource?: ServerClientSource | null; id: string; build: string; name: LocalizedText; endpoint: Endpoint | null; launcherLogin?: string | null; clientLanguages?: string[] | null; releaseVersion?: string; protocolVersion?: number | null; patchVersion?: string | null }
+export interface ServerPreset { downloadSource?: ServerClientSource | null; id: string; build: string; name: LocalizedText; endpoint: Endpoint | null; launcherLogin?: string | null; clientLanguages?: string[] | null; releaseVersion?: string; protocolVersion?: number | null; patchVersion?: string | null; clusterServed?: boolean | null }
 export interface RegistrationField { key: string; label: LocalizedText; type: 'text' | 'password' | 'email' | 'number' | 'select' | 'checkbox'; required: boolean; maxLength: number; choices: string[] }
 export interface ServerPresentation { images?: string[]; imagesTranslations?: Record<string, string[]>; motd?: string; motdTranslations?: Record<string, string>; summary?: string; summaryTranslations?: Record<string, string>; iconUrl?: string | null; iconUrlTranslations?: Record<string, string>; onlinePlayers?: number | null; presenceGroup?: string | null; presenceComplete?: boolean | null; peakOnlinePlayers?: number | null; playerLimit?: number | null; state?: 'online' | 'offline' | 'maintenance' | null; whitelist?: boolean; rosterEnabled?: boolean }
 export interface OnlinePlayerList { schema: number; enabled: boolean; complete?: boolean | null; truncated?: boolean; players: { name: string; level?: number | null; buildId?: string | null }[] }
@@ -132,8 +138,17 @@ export interface ClientPolicy { version: number; sources: ServerStoreSource[]; p
 /** One line of a server's plugin list: a plugin it requires, recommends or disables on the listed builds. */
 export interface PolicyPluginEntry { id: string; builds: string[]; required: boolean; disabled?: boolean }
 export interface ServerStoreSource { name: string; kind: 'http' | 'alist' | 'github'; baseUrl: string; catalogPath: string }
-export interface ServerCatalog { schema: number; game: string; name: string; registrationEnabled: boolean; registrationFields: RegistrationField[]; instances: ServerPreset[]; hostPolicy?: 'auto' | 'ip' | 'domain' | null; region?: string | null; launcherLogin?: string | null; supportsInstances?: boolean | null; supportsPlugins?: boolean | null; clientLanguages?: string[] | null; profileFields?: string[] | null; levelIcon?: boolean | null; presentation?: ServerPresentation | null; clientPolicy?: ClientPolicy }
-export interface AccountProfile { username: string; displayName: string; stats: Record<string, number | null>; levelIconUrl: string | null; rankBadge?: string | null; levelIconId?: number | null; rankVariant?: string | null; hasCharacter?: boolean | null }
+export interface ServerCatalog { schema: number; game: string; name: string; registrationEnabled: boolean; registrationFields: RegistrationField[]; instances: ServerPreset[]; hostPolicy?: 'auto' | 'ip' | 'domain' | null; region?: string | null; launcherLogin?: string | null; supportsInstances?: boolean | null; supportsPlugins?: boolean | null; clientLanguages?: string[] | null; profileFields?: string[] | null; levelIcon?: boolean | null; presentation?: ServerPresentation | null; clientPolicy?: ClientPolicy; clusterBuilds?: string[] | null }
+/** A server section: servers that share one account and character data. A cluster whose servers all share data has one. */
+/** A group of servers. A separate section signs players in through its own API and keeps its own accounts; others share the default's sign-in. */
+export interface ServerSection { id: string; name: string; default?: boolean; separate?: boolean }
+export interface ServerMaintenance { start?: string | null; end?: string | null; description?: string | null }
+/** One selectable server of the selected server profile, with its section and live state. */
+export interface ServerStatusEntry { id: number; name: string; section: string; automatic?: boolean; state: 'online' | 'maintenance' | 'offline'; maintenance?: ServerMaintenance | null; players?: number | null; capacity?: number | null }
+export interface ServerStatus { sections: ServerSection[]; servers: ServerStatusEntry[] }
+/** An operator notice shown once when the player starts the game on this server. */
+export interface ServerNotice { id: string; title: string; body: string; level: 'info' | 'warning' | 'important'; publishedAt?: string | null }
+export interface AccountProfile { section?: string | null; username: string; displayName: string; stats: Record<string, number | null>; levelIconUrl: string | null; rankBadge?: string | null; levelIconId?: number | null; rankVariant?: string | null; hasCharacter?: boolean | null }
 export interface AccountSessionInfo { account: AccountProfile; expiresAt: string; refreshExpiresAt?: string | null }
 export interface AccountSessionList { current: AccountProfile | null; accounts: AccountSessionInfo[] }
 export interface LevelIcon { path: string; x: number; y: number; width: number; height: number; sheetWidth: number; sheetHeight: number }
@@ -174,7 +189,7 @@ export interface AppInfo {
   os: string
 }
 
-export interface LauncherUpdateState { mandatory?: boolean; deprecatedMaxVersion?: string | null; status: 'unconfigured' | 'current' | 'checking' | 'available' | 'downloading' | 'ready' | 'failed'; version: string | null; revision: number | null; manifestSha256: string | null; failure: 'integrity' | 'network' | 'disk' | 'startup' | null; failureReason?: string | null; httpStatus?: number | null }
+export interface LauncherUpdateState { mandatory?: boolean; deprecatedBeforeVersion?: string | null; status: 'unconfigured' | 'current' | 'checking' | 'available' | 'downloading' | 'ready' | 'failed'; version: string | null; revision: number | null; manifestSha256: string | null; failure: 'integrity' | 'network' | 'disk' | 'startup' | null; failureReason?: string | null; httpStatus?: number | null }
 export interface LauncherUpdateAttempt { status: 'failed' | 'rolled-back' | 'recovery-required'; failure: 'integrity' | 'network' | 'disk' | 'startup' | null; phase: string | null; errorCode: number | null }
 export interface LauncherUpdatePreferences { autoCheck: boolean; autoDownload: boolean }
 
@@ -192,6 +207,9 @@ export interface LauncherUpdateSourceSettings { name: string; kind: string; base
 
 export interface BridgeMethods {
   'servers.onlinePlayers': OnlinePlayerList
+  'servers.status': ServerStatus
+  'servers.notices': ServerNotice[]
+  'servers.markNoticesSeen': null
   'directory.onlinePlayers': OnlinePlayerList
   'hosting.availablePorts': number[]
   'hosting.localAddresses': string[]
@@ -311,7 +329,11 @@ export interface BridgeMethods {
   'plugins.uninstall': null
   'plugins.uninstallRejected': null
   'plugins.prepareImport': PluginImportPreview
-  'plugins.installImport': { id: string; version: string }
+  'plugins.installImport': { id: string; version: string; skipped: string[] }
+  'pluginPolicy.check': unknown[]
+  'settings.launcherLanguage': null
+  'pluginPolicy.supportOffers': unknown[]
+  'pluginPolicy.answerSupportOffer': { skipped: string[] }
   'plugins.discardImport': null
   'plugins.checkUpdates': PluginUpdateState[]
   'plugins.updateSnapshot': PluginUpdateSnapshot
@@ -370,7 +392,7 @@ if (inHost) {
       const removalErrors: Record<string, string> = { client_remove_unsafe: 'unsafe', client_remove_inventory: 'inventory', client_remove_pending: 'pending', client_remove_running: 'running' }
       if (removalErrors[message.error]) { entry.reject(new Error(i18n.global.t(`clientRemoval.${removalErrors[message.error]}`))); return }
       const clientErrors: Record<string, string> = { client_search_limit: 'searchLimit', client_search_multiple: 'multipleClients', client_executable_missing: 'executableMissing', client_installation_overlap: 'overlap' }
-      entry.reject(serverFailure({ ...message, error: message.error }, key => i18n.global.t(key)) ?? new Error(message.error === 'plugin_updates_changed' ? i18n.global.t('pluginUpdates.pendingChanged') : clientErrors[message.error] ? i18n.global.t(`clientLibrary.${clientErrors[message.error]}`) : message.error === 'instance_in_use' ? i18n.global.t('updates.fileBusyError') : message.error === 'instance_lock_unavailable' ? i18n.global.t('updates.diskError') : message.error === 'build_disabled' ? i18n.global.t('buildAvailability.disabled') : message.error === 'feature_in_development' ? i18n.global.t('featureAvailability.development') : message.error))
+      entry.reject(serverFailure({ ...message, error: message.error }, key => i18n.global.t(key)) ?? new Error(message.error === 'plugin_updates_changed' ? i18n.global.t('pluginUpdates.pendingChanged') : clientErrors[message.error] ? i18n.global.t(`clientLibrary.${clientErrors[message.error]}`) : message.error === 'instance_in_use' ? i18n.global.t('updates.fileBusyError') : message.error === 'instance_lock_unavailable' ? i18n.global.t('updates.diskError') : message.error === 'build_disabled' ? i18n.global.t('buildAvailability.disabled') : message.error === 'feature_in_development' ? i18n.global.t('featureAvailability.development') : pluginPolicyError(message.error, (key, values) => i18n.global.t(key, values)) ?? message.error))
     }
     else entry.resolve(message.result)
   })
@@ -410,10 +432,16 @@ const fallback: { [K in keyof BridgeMethods]?: (params?: unknown) => BridgeMetho
   'settings.setUpdates': p => { localStorage.setItem('clientUpdatePreferences', JSON.stringify(p)); return p as ClientUpdatePreferences },
   'store.sync': () => [],
   'store.sources': () => previewSources(),
+  'store.catalog': p => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return previewPolicyCatalog((p as { id?: string } | undefined)?.id) },
+  'store.installPluginTargets': p => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return installPreviewPolicyPackage(p) },
   'store.saveSource': p => savePreviewSource(p as StoreSource),
   'store.removeSource': p => removePreviewSource((p as { id: string }).id),
   'app.info': () => ({ version: 'dev', language: navigator.language, os: 'browser' }),
-  'instances.list': () => multiplayerPreview ? previewInstances() : [],
+  'instances.list': () => isPolicyPreview() ? previewPolicyInstances() : multiplayerPreview ? previewInstances() : [],
+  'pluginPolicy.check': p => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return checkPreviewPolicy(p) },
+  'plugins.configure': p => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return configurePreviewPolicyPlugin(p) },
+  'plugins.applyScheme': () => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return previewPolicyInstances()[0]! },
+  'plugins.pendingUpgrades': () => { if (!isPolicyPreview()) throw new Error('This operation requires the desktop launcher.'); return { count: 0, waitingForExit: 0, failure: null } },
   'instances.recoverStopped': () => null,
   'servers.list': () => previewServers,
   'servers.catalog': (p) => {
@@ -421,6 +449,9 @@ const fallback: { [K in keyof BridgeMethods]?: (params?: unknown) => BridgeMetho
     const catalog: ServerCatalog = { schema: 1, game: server.game, name: server.name, registrationEnabled: false, registrationFields: [], instances: server.game === 'bubblefighter' ? previewBuilds.filter(b => b.enabled !== false && !b.hidden).map(b => ({ id: b.id, build: b.id, name: b.name, endpoint: null, launcherLogin: b.launcherLogin ?? 'required', releaseVersion: b.releaseVersion })) : [] }
     return multiplayerPreview ? previewServerCatalog(catalog) : catalog
   },
+  'servers.status': () => ({ sections: [], servers: [] }),
+  'servers.notices': () => [],
+  'servers.markNoticesSeen': () => null,
   'accounts.list': () => ({ current: null, accounts: [] }),
   'accounts.current': () => null,
   'accounts.rememberedLogin': () => null,
@@ -460,7 +491,7 @@ const fallback: { [K in keyof BridgeMethods]?: (params?: unknown) => BridgeMetho
   'nativeUi.invoke': (p) => ({ operationId: String((p as { request?: { operationId?: string } } | undefined)?.request?.operationId ?? ''), status: 'unsupported', reason: 'providerUnavailable' }),
   'nativeUi.result': (p) => ({ operationId: String((p as { operationId?: string } | undefined)?.operationId ?? ''), status: 'unsupported', reason: 'providerUnavailable' }),
   'instances.services': () => ({}),
-  'plugins.list': () => __DEV_PLUGINS__,
+  'plugins.list': () => isPolicyPreview() ? previewPolicyPlugins(__DEV_PLUGINS__) : __DEV_PLUGINS__,
   'plugins.loadIssues': () => [],
   'plugins.recoveryNotices': () => [],
   'plugins.dismissRecoveryNotice': () => null,
@@ -503,8 +534,25 @@ const fallback: { [K in keyof BridgeMethods]?: (params?: unknown) => BridgeMetho
   ] as Omit<GameSummary, 'navigationEntries'>[]).map(game => { const data = (previewLevels as Record<string, { folder: string; catalog: LevelCatalog }>)[game.id]; return { ...game, ...__DEV_GAME_AVAILABILITY__[game.id], navigationEntries: __DEV_GAME_NAVIGATION__[game.id] ?? ['home', 'downloads', 'accounts'], levels: data?.catalog, assetBase: data && import.meta.env.DEV ? `${__DEV_GAMES_URL__}/${data.folder}/` : undefined } }),
 }
 
+import { demoMode, setDemoMode, onDemoModeChange, triggerDemoReset } from './demo/mode'
+import { demoHostCall } from './demo/host'
+
+export { demoMode, setDemoMode, onDemoModeChange, triggerDemoReset }
+
+/** Dispatches synthetic host events into registered bridge listeners. */
+export function emitBridgeEvent(event: string, data?: unknown): void {
+  const handlers = listeners.get(event)
+  if (!handlers) return
+  for (const listener of [...handlers]) {
+    listener(data)
+  }
+}
+
 /** Calls a host method. Rejects with the host's error message. */
 export function call<K extends keyof BridgeMethods>(method: K, params?: unknown): Promise<BridgeMethods[K]> {
+  if (demoMode.enabled && !(inHost && String(method).startsWith('window.'))) {
+    return demoHostCall(method, params, emitBridgeEvent)
+  }
   if (!inHost) {
     const answer = fallback[method]
     return answer ? Promise.resolve(answer(params)) : Promise.reject(new Error('This operation requires the desktop launcher.'))

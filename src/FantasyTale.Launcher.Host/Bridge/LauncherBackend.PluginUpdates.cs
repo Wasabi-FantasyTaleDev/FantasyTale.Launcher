@@ -62,6 +62,7 @@ internal sealed partial class LauncherBackend
             }
             if (_downloads.List().Any(t => t.Target.Kind == "plugin" && t.Target.InstanceId == instanceId && t.Target.PackageId == rule.Id && t.Target.ToVersion == target && t.Stage is not ("canceled" or "completed")))
                 continue;
+            await EnsureRequirementsAsync(source!, package!, ct).ConfigureAwait(false);
             var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source!), package!.Manifest, ct).ConfigureAwait(false);
             _pluginUpgrades.Enqueue(source!, package, manifest, instanceId, explicitSelection: true, expectedSelection: stamp);
         }
@@ -127,8 +128,25 @@ internal sealed partial class LauncherBackend
         if (!(capabilities?.SupportsPlugins ?? game.SupportsPlugins)) throw new InvalidOperationException("This server does not support plugins.");
     }
 
+    /// <summary>
+    /// Queues the packages a store release requires, from the same source, before the release itself. Shared data that is
+    /// already installed is reused; a requirement the source cannot supply stops the installation with a message naming it.
+    /// The release's inline definition carries its requirements, so a source must publish it for them to be installed.
+    /// </summary>
+    private async Task EnsureRequirementsAsync(StoreSource source, StorePackage package, CancellationToken ct)
+    {
+        if (package.PluginDefinition is not { Requires.Count: > 0 }) return;
+        var catalog = await _catalogs.GetAsync(source, cancellationToken: ct).ConfigureAwait(false);
+        foreach (var required in PluginRequirements.PlanStoreInstall(catalog, package, Packages(Game(package.Game))))
+        {
+            var manifest = await SourceDocumentReader.ReadBytesAsync(_sourceHttp, OpenSource(source), required.Manifest, ct).ConfigureAwait(false);
+            _downloads.PreloadPlugin(source, required, manifest);
+        }
+    }
+
     private async Task<ClientDownloadTask> InstallPluginAsync(StoreSource source, StorePackage package, string instanceId, CancellationToken ct, IReadOnlyList<string>? activationTargets = null)
     {
+        await EnsureRequirementsAsync(source, package, ct).ConfigureAwait(false);
         var selections = new Dictionary<string, string>(StringComparer.Ordinal);
         if (activationTargets is not null)
             foreach (var targetId in activationTargets)
@@ -153,7 +171,11 @@ internal sealed partial class LauncherBackend
     {
         _store.Load(instanceId);
         var shared = _pluginUpgrades.TasksFor(instanceId).ToHashSet(StringComparer.Ordinal);
+        var instance = _store.Load(instanceId);
+        // Shared data the client's enabled packages require must finish before launch, though its transfer belongs to the library.
+        var required = PluginRequirements.RequiredIds(instance, Packages(Game(instance.Game)));
         return _downloads.List().Where(task => task.Target.Kind == "plugin" && task.Stage is not ("completed" or "canceled")
-            && (task.Target.InstanceId == instanceId || shared.Contains(task.Id))).ToArray();
+            && (task.Target.InstanceId == instanceId || shared.Contains(task.Id)
+                || task.Target.PackageId is { } packageId && required.Contains(packageId))).ToArray();
     }
 }

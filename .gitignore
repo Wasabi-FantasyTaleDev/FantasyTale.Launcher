@@ -25,6 +25,8 @@ TestResults/
 /games/*/plugins/**/*.dll
 /store-plugins/**/*.dll
 /store-plugins/**/fonts/*.ttf
+# Generated game art for assets packages is packaged from a staging copy, never committed.
+/store-plugins/**/data/
 /experimental-plugins/**/*.dll
 *.obj
 *.ilk
