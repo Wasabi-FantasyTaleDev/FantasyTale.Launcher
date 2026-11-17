@@ -66,6 +66,8 @@ public sealed record LaunchContext(
     public CancellationToken PreparationCancellation { get; init; }
     /// <summary>Game connection endpoint, which may differ from the authentication server endpoint.</summary>
     public ServerEndpoint? GameEndpoint { get; init; }
+    /// <summary>The server's clan endpoint (IPv4 literal and port) when the selected server serves clans for this build.</summary>
+    public ServerEndpoint? ClanServer { get; init; }
     /// <summary>Real destinations offered by an in-game native server selector.</summary>
     public IReadOnlyList<GameServerTarget> GameTargets { get; init; } = [];
     /// <summary>Visible native selector choices, including unavailable entries without network destinations.</summary>

@@ -29,6 +29,7 @@ public sealed class ClientCorpusTests
     [InlineData("BFKorea/BubbleFighter", "kr-1256", "BubbleFighter.exe", "unpacked_BubbleFighter.exe")]
     [InlineData("BFLegacy_CN2019_0.2.98.3", "cn-774", "BubbleFighter.exe", "BubbleFighterU.exe")]
     [InlineData("BFLegacy_TW2019/BubbleFighter", "tw-454", "BubbleFighter.exe", "BubbleFighterU.exe")]
+    [InlineData("BFLegacy_TW2013/BubbleFighter", "tw-410", "BubbleFighter.exe", "BubbleFighterU.exe")]
     public async Task InstalledRetailAndUnpackedCandidatesResolveThroughTheHostBridge(string relative, string expected, string retail, string unpacked)
     {
         var folder = Path.GetFullPath(Path.Combine(Environment.GetEnvironmentVariable("FT_TEST_CLIENT_CORPUS")!, relative));

@@ -19,6 +19,8 @@ const tab = ref('options')
 const overlayTest = ref(false)
 const passThroughOutside = ref(true)
 const overlayBusy = ref(true)
+const developerStages = ref(false)
+const developerStagesBusy = ref(true)
 onMounted(async () => {
   try {
     const settings = await call('settings.overlayTest')
@@ -27,7 +29,16 @@ onMounted(async () => {
   }
   catch (error) { state.error = (error as Error).message }
   finally { overlayBusy.value = false }
+  try { developerStages.value = (await call('settings.developerStages')).enabled }
+  catch (error) { state.error = (error as Error).message }
+  finally { developerStagesBusy.value = false }
 })
+async function setDeveloperStages(enabled: boolean) {
+  developerStagesBusy.value = true
+  try { developerStages.value = (await call('settings.setDeveloperStages', { enabled })).enabled }
+  catch (error) { state.error = (error as Error).message }
+  finally { developerStagesBusy.value = false }
+}
 async function setOverlayTest(enabled: boolean, outside = passThroughOutside.value) {
   overlayBusy.value = true
   try {
@@ -65,6 +76,9 @@ const tabs = computed(() => [
           <WToggleSwitch :model-value="passThroughOutside" :disabled="overlayBusy" :aria-label="t('developerMode.overlayTest.passThrough')" @update:model-value="setOverlayTest(overlayTest, $event)" />
         </WSettingsCard>
         </WExpander>
+        <WSettingsCard icon="developerTools" :header="t('developerMode.developerStages.title')" :description="t('developerMode.developerStages.description')">
+          <WToggleSwitch :model-value="developerStages" :disabled="developerStagesBusy" :aria-label="t('developerMode.developerStages.title')" @update:model-value="setDeveloperStages" />
+        </WSettingsCard>
         </div>
         <NativeGameUiTests v-else-if="tab === 'nativeUi'" />
         <ResourceOverrideTests v-else-if="tab === 'resources'" />

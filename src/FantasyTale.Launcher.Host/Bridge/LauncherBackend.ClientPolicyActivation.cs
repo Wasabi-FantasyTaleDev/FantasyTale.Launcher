@@ -30,7 +30,7 @@ internal sealed partial class LauncherBackend
             if (game.SupportsPlugins && remote.Count > 0)
             {
                 var build = game.Builds.Single(b => b.Id == instance.Build);
-                var absent = remote.Where(item => !ServerPluginPolicy.Enabled(instance, build, packages, item.Id) && (supported || packages.Any(plugin => plugin.Id == item.Id && plugin.Kind == "files" && ClientPolicyActivation.IsMandatory(plugin, build)))).ToArray();
+                var absent = remote.Where(item => PackagedForBuild(game, build, packages, item.Id) && !ServerPluginPolicy.Enabled(instance, build, packages, item.Id) && (supported || packages.Any(plugin => plugin.Id == item.Id && plugin.Kind == "files" && ClientPolicyActivation.IsMandatory(plugin, build)))).ToArray();
                 var unseen = ClientPolicyActivation.ClaimServer(_store, instance.Id,
                     absent.Where(item => !item.Required).Select(item => item.Id + "@" + item.Recommendation).ToArray());
                 claimed = claimed.Concat(absent.Where(item => item.Required || unseen.Contains(item.Id + "@" + item.Recommendation)).Select(item => item.Id));

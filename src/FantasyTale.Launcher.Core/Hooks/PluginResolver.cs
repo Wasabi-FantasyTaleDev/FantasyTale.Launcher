@@ -23,7 +23,8 @@ public static class PluginResolver
             var package = candidates.Where(p => p.Id == id && PluginCatalog.IsAvailable(p, build))
                 .OrderByDescending(p => PluginVersion.Parse(p.Version)).FirstOrDefault()
                 ?? throw new DefinitionException("instance.toml", "plugins", $"default or required plugin '{id}' is unavailable");
-            return new InstancePlugin(id, package.Version, true, rules.Any(rule => rule.Id == id && rule.Required) || PluginCatalog.IsRequired(package, build), new Dictionary<string, object>());
+            return new InstancePlugin(id, package.Version, true, rules.Any(rule => rule.Id == id && rule.Required) || PluginCatalog.IsRequired(package, build),
+                new Dictionary<string, object>(), PluginGrants.Fingerprint(package));
         }).ToArray();
     }
 

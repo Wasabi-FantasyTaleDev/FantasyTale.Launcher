@@ -11,6 +11,19 @@ namespace FantasyTale.Launcher.Core.Plugins;
 /// <summary>Applies typed client-policy offers and selection-safe plugin activation.</summary>
 public static class ClientPolicyActivation
 {
+    /// <summary>
+    /// Whether a plugin has a release for this build: installed, or listed in a cached store catalog for the build or
+    /// for every build. A server rule that names no builds covers every build, yet only a build the plugin was made for
+    /// is offered it. With no store catalog cached yet the answer is unknown, so the plugin counts as available.
+    /// </summary>
+    public static bool HasReleaseFor(string gameId, BuildDefinition build, string pluginId, IEnumerable<PluginDefinition> installed,
+        IReadOnlyList<IReadOnlyList<StorePackage>> cachedCatalogs) =>
+        installed.Any(package => package.Id == pluginId && PluginCatalog.IsAvailable(package, build))
+        || cachedCatalogs.Count == 0
+        || cachedCatalogs.Any(catalog => catalog.Any(package => package.Kind == "plugin" && package.Game == gameId
+            && PluginCatalog.MatchesIdentity(package, pluginId)
+            && (package.Builds.Count == 0 || package.Builds.Contains(build.Id, StringComparer.Ordinal))));
+
     /// <summary>Whether the installation prompt must retain this build's checked component.</summary>
     public static bool IsMandatory(PluginDefinition plugin, BuildDefinition build) => PluginCatalog.IsRequired(plugin, build) || PluginCatalog.NeedsWarning(plugin, build);
 
@@ -69,7 +82,7 @@ public static class ClientPolicyActivation
     {
         PluginCatalog.ValidateId("recommendation", "id", pluginId);
         var selection = new InstanceDefinition("selection", "Selection", instance.Game, instance.Build, null,
-            instance.Plugins.Where(p => p.Id == pluginId).Select(p => p with { Required = false }).ToArray());
+            instance.Plugins.Where(p => p.Id == pluginId).Select(p => p with { Required = false, Grants = null }).ToArray());
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(InstanceFile.Render(selection)))).ToLowerInvariant();
     }
 
@@ -80,7 +93,7 @@ public static class ClientPolicyActivation
         var selected = instance.Plugins.SingleOrDefault(p => p.Id == pluginId);
         if (selected is not { Enabled: true }) return false;
         var legacy = new InstanceDefinition("selection", "Selection", instance.Game, instance.Build, null,
-            [selected with { Required = true }]);
+            [selected with { Required = true, Grants = null }]);
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(InstanceFile.Render(legacy)))).Equals(expected, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -139,7 +152,15 @@ public static class ClientPolicyActivation
         var retainEnabled = !forceEnable && (upgrade || explicitSelection && previous is not null
             && (selectionId != pluginId || PluginCatalog.CompareVersions(version, previous.Version) > 0));
         var required = previous?.Required == true || PluginCatalog.IsRequired(package, build) || ProfileClientPolicy.Has(build, package, "require");
-        var selected = new InstancePlugin(pluginId, version, required || (retainEnabled ? previous?.Enabled ?? true : true), required, options);
+        // An automatic upgrade keeps the enabled state only while the package's grants are the ones the user approved.
+        // Changed grants stay off until an explicit selection, which is the user's new consent.
+        var fingerprint = PluginGrants.Fingerprint(package);
+        var approved = previous is null ? null : previous.Grants ?? (packages.SingleOrDefault(item => item.Id == previous.Id && item.Version == previous.Version)
+            is { } recorded ? PluginGrants.Fingerprint(recorded) : null);
+        // A selection saved before grants were recorded, whose package can no longer be read, has no approval to compare with.
+        var grantsChanged = upgrade && !explicitSelection && approved is not null && approved != fingerprint;
+        var enabled = !grantsChanged && (required || (retainEnabled ? previous?.Enabled ?? true : true));
+        var selected = new InstancePlugin(pluginId, version, enabled, required && enabled, options, grantsChanged ? previous?.Grants : fingerprint);
         if (package.Resources is not null)
         {
             var module = GameModules.Load(game, AppContext.BaseDirectory) as IGameResourceModule

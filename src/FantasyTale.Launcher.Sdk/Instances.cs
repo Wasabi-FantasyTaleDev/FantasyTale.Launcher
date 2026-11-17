@@ -1,12 +1,13 @@
 namespace FantasyTale.Launcher.Sdk;
 
-/// <summary>A persisted, version-pinned plugin selection in instance load order.</summary>
+/// <summary>A persisted plugin selection, identified by its plugin id, in instance load order.</summary>
 /// <param name="Id">Plugin identifier resolved from the package catalog.</param>
-/// <param name="Version">Exact installed package version.</param>
+/// <param name="Version">The package version the selection points at. Launch and recovery move it to the installed package of the same id when it changes; the enabled state stays with the id.</param>
 /// <param name="Enabled">Whether the plugin is selected for launch.</param>
 /// <param name="Required">Whether this instance's distribution requires the plugin.</param>
 /// <param name="Options">Typed overrides; unspecified options use manifest defaults.</param>
-public sealed record InstancePlugin(string Id, string Version, bool Enabled, bool Required, IReadOnlyDictionary<string, object> Options);
+/// <param name="Grants">SHA-256 of the package grants the user approved for this selection; null until recorded. A package with other grants is not enabled without new consent.</param>
+public sealed record InstancePlugin(string Id, string Version, bool Enabled, bool Required, IReadOnlyDictionary<string, object> Options, string? Grants = null);
 
 /// <summary>One independent client copy. Credentials are never part of this persisted definition.</summary>
 /// <param name="Id">Stable identifier and directory name below the instance root.</param>

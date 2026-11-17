@@ -22,7 +22,7 @@ function setup({ packageInstalled = true, start } = {}) {
     if (id === 'vue') return { ...vue, onBeforeUnmount: callback => cleanup.push(callback) }
     if (id === 'vue-i18n') return { useI18n: () => ({ t: key => key }) }
     if (id === '../i18n') return { localized: value => value?.en ?? '', clientRegion: value => value }
-    if (id === '../clientVersion') return { clientVersionCaption: () => '' }
+    if (id === '../clientVersion') return { clientVersionCaption: () => '', buildListed: () => true }
     if (id === '../downloads/live') return { trackDownload: task => tracked.push(task) }
     if (id === '../state') return { state, selectedGame: vue.ref(game), selectedInstance: vue.ref(client), refreshServers: async options => { calls.push({ method: 'state.refreshServers', params: options }); state.servers = [{ id: 'local' }] } }
     if (id === '../bridge') return { inHost: true, call: async (method, params) => {

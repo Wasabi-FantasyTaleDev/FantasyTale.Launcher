@@ -89,7 +89,7 @@ public sealed partial class GameNativeUiTests
         await peer.ReplyAsync("service-unavailable", "");
         var result = await capabilities;
         Assert.Equal("fixture", result.Build);
-        Assert.Equal(12, result.Operations.Count);
+        Assert.Equal(13, result.Operations.Count);
         Assert.All(result.Operations, operation => { Assert.False(operation.Supported); Assert.False(operation.Ready); });
         var ping = peer.Channel.RequestAsync("ping");
         await peer.ReplyAsync("ok", "pong");

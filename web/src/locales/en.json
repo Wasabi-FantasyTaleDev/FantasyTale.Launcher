@@ -495,6 +495,10 @@
       "passThrough": "Pass clicks outside the dialog",
       "passThroughDescription": "Allow clicks on the game outside the message box. Applies to the next game launch."
     },
+    "developerStages": {
+      "title": "Developer tool stages",
+      "description": "Show a DEV button in the game window that opens the client's hidden developer tools (UI editor, character, effect and model tools and more). Tools open from the main menu. Only for builds whose tools are mapped (KR 2015). Applies to the next game launch."
+    },
     "demo": {
       "title": "UI Demo mode",
       "description": "Enabled automatically during browser development (npm run dev). Provides interactive mock data and animations without showing any indicator outside this tab.",

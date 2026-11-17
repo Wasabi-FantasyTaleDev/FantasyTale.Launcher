@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { call, demoMode, inHost, hostingPreview, type HostingProfile, type HostingSession, type InstalledServerPackage } from '../bridge'
 import { selectedGame, state, refreshServers, selectedInstance } from '../state'
 import { localized, clientRegion } from '../i18n'
-import { clientVersionCaption } from '../clientVersion'
+import { buildListed, clientVersionCaption } from '../clientVersion'
 import { trackDownload } from '../downloads/live'
 import type { DownloadTask } from '../downloads/model'
 import type { StorePackage, StoreSource } from '../store/types'
@@ -33,7 +33,7 @@ const advancedOpen = ref(false), detailsOpen = ref(false), restartOpen = ref(fal
 const nickname = ref(localStorage.getItem('localPlay.playerName') || '')
 const nicknameValid = computed(() => /^[A-Za-z0-9_.@-]{1,32}$/.test(nickname.value.trim()))
 let revision = 0, disposed = false, timer: ReturnType<typeof setTimeout> | undefined
-const builds = computed(() => (selectedGame.value?.builds ?? []).filter(b => b.supportsHosting).map(b => ({ value: b.id, label: localized(b.name, { dates: true }), group: clientRegion(b.branch), caption: clientVersionCaption(b) })))
+const builds = computed(() => (selectedGame.value?.builds ?? []).filter(b => b.supportsHosting && (b.id === draft.value?.build || buildListed(selectedGame.value!.id, b, state.instances))).map(b => ({ value: b.id, label: localized(b.name, { dates: true }), group: clientRegion(b.branch), caption: clientVersionCaption(b) })))
 const currentSession = computed(() => sessions.value.find(s => s.profileId === draft.value?.id))
 const running = computed(() => !!currentSession.value && ['starting', 'ready', 'stopping'].includes(currentSession.value.state))
 const locked = computed(() => loading.value || busy.value)

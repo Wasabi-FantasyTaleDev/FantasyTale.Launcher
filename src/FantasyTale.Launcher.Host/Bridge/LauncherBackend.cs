@@ -513,7 +513,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 var catalog = await _catalogs.GetAsync(source, force: p?["force"]?.GetValue<bool>() ?? false, cancellationToken: ct).ConfigureAwait(false);
                 _pluginDeprecations.Apply(source, catalog);
                 if (!ReferenceEquals(previous, catalog)) bridge.Emit("store.changed", null);
-                var hidden = Games().SelectMany(game => game.Builds.Where(build => !build.Enabled || build.Hidden)
+                var hidden = Games().SelectMany(game => game.Builds.Where(build => !Listed(game, build))
                     .Select(build => (game.Id, build.Id))).ToHashSet();
                 return catalog with { Packages = catalog.Packages.Where(package => package.Kind is not ("client" or "server") ||
                     !package.Builds.All(build => hidden.Contains((package.Game, build))))
@@ -523,6 +523,21 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
         });
         RegisterNetworkSettings(bridge);
         bridge.Add("settings.overlayTest", _ => new { enabled = _overlay.TestSettings.StartupMessage, _overlay.TestSettings.PassThroughOutside });
+        bridge.Add("settings.developerStages", _ => new { enabled = _overlay.TestSettings.DeveloperStages });
+        bridge.Add("settings.setDeveloperStages", async (p, ct) =>
+        {
+            Keys(p, "enabled");
+            var enabled = p?["enabled"]?.GetValue<bool>() ?? throw new ArgumentException("enabled is required.");
+            await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                var settings = _overlay.TestSettings with { DeveloperStages = enabled };
+                settings.Save(_dataRoot);
+                _overlay.SetTestSettings(settings);
+                return new { enabled };
+            }
+            finally { _lifecycle.Release(); }
+        });
         bridge.Add("settings.setOverlayTest", async (p, ct) =>
         {
             Keys(p, "enabled", "passThroughOutside");
@@ -771,11 +786,11 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             if (server.ApiUrl is not null)
             {
                 var catalog = await ReadCatalogAsync(server, ct).ConfigureAwait(false);
-                var hidden = game.Builds.Where(build => !build.Enabled || build.Hidden).Select(build => build.Id).ToHashSet(StringComparer.Ordinal);
+                var hidden = game.Builds.Where(build => !Listed(game, build)).Select(build => build.Id).ToHashSet(StringComparer.Ordinal);
                 return catalog with { Instances = catalog.Instances.Where(instance => !hidden.Contains(instance.Build)).ToArray() };
             }
             return new LauncherCatalog(1, game.Id, server.Name, false, [], server.BundledInstances
-                ? game.Builds.Where(b => b.Enabled && !b.Hidden).Select(b => new ServerInstance(b.Id, b.Id, b.Name.Values, null, b.LauncherLogin ?? game.LauncherLogin) { ReleaseVersion = b.ReleaseVersion }).ToArray() : []);
+                ? game.Builds.Where(b => Listed(game, b)).Select(b => new ServerInstance(b.Id, b.Id, b.Name.Values, null, b.LauncherLogin ?? game.LauncherLogin) { ReleaseVersion = b.ReleaseVersion }).ToArray() : []);
         });
         bridge.Add("servers.onlinePlayers", async (p, ct) =>
         {
@@ -946,6 +961,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             var required = launcherLogin == "required";
             string? hostPolicy = null, region = null;
             ServerCenterConfiguration? center = null;
+            int? clanPort = null;
             if (server.ApiUrl is not null)
             {
                 var catalog = await ReadCatalogAsync(server, ct, useCached: true).ConfigureAwait(false);
@@ -954,6 +970,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 if (preset is null) throw new InvalidOperationException("The server does not support this client build.");
                 if (preset.ClusterServed == false) throw new InvalidOperationException("No node of this server serves this client build.");
                 endpoint = preset.Endpoint ?? endpoint;
+                clanPort = preset.ClanPort;
                 launcherLogin = LauncherLoginPolicy.Resolve(build.LauncherLogin, game.LauncherLogin, preset.LauncherLogin ?? catalog.LauncherLogin, server.Kind == "room");
                 required = launcherLogin == "required";
                 hostPolicy = catalog.HostPolicy; region = catalog.Region;
@@ -992,6 +1009,12 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             if (launcherLogin is not ("none" or "game")) _api.RequireLaunchSelection(accountServer, launchSelection);
             if (endpoint is not null)
                 endpoint = endpoint with { Host = await _network.HostAsync(endpoint.Host, server, hostPolicy, region, ct).ConfigureAwait(false) };
+            // The clan server shares the preset's host; the clients take only a dotted IPv4 address for it.
+            ServerEndpoint? clanServer = null;
+            if (clanPort is { } clan && endpoint is not null
+                && System.Net.IPAddress.TryParse(await _network.HostAsync(endpoint.Host, server, "ip", region, ct).ConfigureAwait(false), out var clanAddress)
+                && clanAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                clanServer = new ServerEndpoint(clanAddress.ToString(), clan);
             if (server.ApiUrl is null && server.NativeDirectory is { Enabled: true, Mode: "gateway" } nativeDirectory && nativeDirectory.Builds.Contains(build.Id, StringComparer.Ordinal))
             {
                 var resolvedTargets = new List<GameServerTarget>(nativeDirectory.Targets.Count);
@@ -1072,7 +1095,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 resourceProgress: new InlineResourceProgress(progress => bridge.Emit("instances.resourceProgress", new { instanceId = instance.Id, progress })),
                 preparationCancellation: resourceCancellation.Token, gameTargets: gameTargets, gameChoices: gameChoices,
                 automaticSelection: automaticSelection, startupTimeout: deadline - DateTimeOffset.UtcNow, launcherLanguage: languageMetadata.LauncherLanguage,
-                resourceConflictChoices: resourceConflictChoices).ConfigureAwait(false);
+                resourceConflictChoices: resourceConflictChoices, clanServer: clanServer).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (resourceCancellation.IsCancellationRequested)
             {
@@ -1379,9 +1402,10 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 options = existing.Options.Where(pair => target.Options.Any(option => option.Key == pair.Key))
                     .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
             }
+            var selectedPackage = Packages(game).Single(x => x.Id == id && x.Version == Text(p, "version"));
+            // The explicit choice approves the grants of the exact package it selects.
             var selected = new InstancePlugin(id, Text(p, "version"), p?["enabled"]?.GetValue<bool>() ?? throw new ArgumentException("Missing enabled."),
-                instance.Plugins.Any(x => x.Id == id && x.Required), options);
-            var selectedPackage = Packages(game).Single(x => x.Id == selected.Id && x.Version == selected.Version);
+                instance.Plugins.Any(x => x.Id == id && x.Required), options, PluginGrants.Fingerprint(selectedPackage));
             if (selectedPackage.Resources is not null)
             {
                 var module = GameModules.Load(game, AppContext.BaseDirectory) as IGameResourceModule
@@ -1432,6 +1456,10 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
     }
 
     internal IReadOnlyList<GameDefinition> Games() => _catalogs.Apply(GameCatalog.Load(_gamesRoot), _sources.List());
+
+    // A hidden build stays out of presets and downloads until a client of that build is registered.
+    private bool Listed(GameDefinition game, BuildDefinition build) =>
+        build.Enabled && (!build.Hidden || _store.List().Any(instance => instance.Game == game.Id && instance.Build == build.Id));
 
     private GameDefinition Game(string id) => Games().SingleOrDefault(g => g.Id == id && g.Status == GameStatus.Enabled)
         ?? throw new ArgumentException("Unknown or unavailable game.");

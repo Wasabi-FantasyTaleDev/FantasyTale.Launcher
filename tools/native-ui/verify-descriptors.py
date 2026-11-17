@@ -99,7 +99,45 @@ def verify(descriptor_path, client_path):
             raise ValueError('Modal vtable slot does not point to the declared modal method')
     if 'control_abi' in values:
         verify_controls(image, addresses, values, checked, definition.get('selection_groups', []))
+    verify_stages(addresses, values, checked, definition.get('stages', {}))
     return len(definition['signatures'])
+
+
+def verify_stages(addresses, values, checked, stages):
+    """Verify the stage read layout and, where tool stages are named, that every stage function is signed.
+
+    A build opens a tool through its switch function (stage_switch, which marks the stage with the id -2), or, where it
+    has none, by storing the factory at stage_factory_offset and setting stage_custom, an id its setter has no case for.
+    """
+    tools = {name for name in addresses if name.startswith('stage_tool_')}
+    direct = 'stage_factory_offset' in values
+    if not stages and not tools and 'stage_switch' not in addresses and not direct:
+        return
+    if not stages:
+        raise ValueError('Tool stages need a [stages] table')
+    for name in ('stage_current_offset', 'stage_next_offset', 'stage_custom', 'stage_idle'):
+        if not isinstance(values.get(name), int):
+            raise ValueError(f'The stage read needs {name}')
+    offsets = [values['stage_current_offset'], values['stage_next_offset']] + ([values['stage_factory_offset']] if direct else [])
+    if any(offset % 4 for offset in offsets) or len(set(offsets)) != len(offsets):
+        raise ValueError('Stage offsets must be distinct and aligned')
+    if values['stage_idle'] != 0xFFFFFFFF or (not direct and values['stage_custom'] != 0xFFFFFFFE):
+        raise ValueError('stage_idle is -1 and, with stage_switch, stage_custom is -2')
+    names = list(stages.values())
+    if len(names) != len(set(names)) or any(name in ('tool', 'unknown') for name in names):
+        raise ValueError('Stage names must be distinct and not reserved')
+    if direct and str(values['stage_custom']) in stages:
+        raise ValueError('stage_custom must be an id [stages] does not name')
+    if not tools and 'stage_switch' not in addresses and not direct:
+        return
+    switch = set() if direct else {'stage_switch'}
+    if not tools or 'stage_set' not in addresses or direct == ('stage_switch' in addresses):
+        raise ValueError('Tool stages need stage_set, at least one stage_tool_ address and either stage_switch or stage_factory_offset')
+    if values.get('stage_set_slot', 1) % 4 or stages.get(str(values.get('stage_main_menu'))) != 'mainMenu':
+        raise ValueError('stage_main_menu must be the id [stages] names mainMenu, and stage_set_slot a vtable slot')
+    missing = (switch | {'stage_set'} | tools) - checked
+    if missing:
+        raise ValueError(f'Missing stage function signatures: {sorted(missing)}')
 
 
 def verify_controls(image, addresses, values, checked, groups):

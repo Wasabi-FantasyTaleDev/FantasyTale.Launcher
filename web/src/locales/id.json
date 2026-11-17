@@ -495,6 +495,10 @@
       "passThrough": "Teruskan klik di luar dialog",
       "passThroughDescription": "Izinkan klik pada game di luar kotak pesan. Berlaku pada peluncuran game berikutnya."
     },
+    "developerStages": {
+      "title": "Stage alat pengembang",
+      "description": "Tampilkan tombol DEV di jendela game untuk membuka alat pengembang tersembunyi milik klien (editor UI, alat karakter, efek, model, dan lainnya). Alat dibuka dari menu utama. Hanya untuk versi yang alatnya sudah dipetakan (KR 2015). Berlaku pada peluncuran game berikutnya."
+    },
     "demo": {
       "title": "Mode Demo UI",
       "description": "Diaktifkan secara otomatis selama pengembangan browser (npm run dev). Menyediakan data tiruan dan animasi interaktif tanpa menampilkan indikator apa pun di luar tab ini.",

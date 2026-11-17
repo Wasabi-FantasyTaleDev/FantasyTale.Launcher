@@ -74,13 +74,25 @@ public static class ServerPluginPolicy
         return disabled.Count == 0 ? instance : instance with { Plugins = instance.Plugins.Select(item => disabled.Contains(item.Id) ? item with { Enabled = false } : item).ToArray() };
     }
 
-    /// <summary>Checks the installed enabled selection, package ownership, build and Launcher compatibility before launch.</summary>
+    /// <summary>
+    /// Whether the plugin id is enabled for this client on this build. The enabled state belongs to the id: the selection's
+    /// version is only where it points, so the installed package of that id counts (the selected version, or else the newest
+    /// installed one that the launcher can run). A recorded approval of other grants does not count until the user renews it.
+    /// </summary>
     public static bool Enabled(InstanceDefinition instance, BuildDefinition build, IReadOnlyList<PluginDefinition> packages, string id)
     {
         id = PluginCatalog.CanonicalId(packages, id);
-        return instance.Plugins.Any(selection => selection.Id == id && selection.Enabled && packages.Any(package =>
-            package.Id == id && package.Version == selection.Version && package.Game == instance.Game &&
-            PluginCatalog.IsAvailable(package, build) && LauncherCompatibility.Supports(package.MinimumLauncherVersion)));
+        return instance.Plugins.Any(selection => selection.Id == id && selection.Enabled && CurrentPackage(selection, instance.Game, build, packages) is { } package
+            && (selection.Grants is null || selection.Grants == PluginGrants.Fingerprint(package)));
+    }
+
+    /// <summary>The package a selection runs: its selected version when installed, else the newest installed package of its id.</summary>
+    private static PluginDefinition? CurrentPackage(InstancePlugin selection, string game, BuildDefinition build, IReadOnlyList<PluginDefinition> packages)
+    {
+        var usable = packages.Where(package => package.Id == selection.Id && package.Game == game && PluginCatalog.IsAvailable(package, build)
+            && LauncherCompatibility.Supports(package.MinimumLauncherVersion)).ToArray();
+        return usable.FirstOrDefault(package => package.Version == selection.Version)
+            ?? usable.OrderByDescending(package => PluginVersion.Parse(package.Version)).FirstOrDefault();
     }
 
     /// <summary>

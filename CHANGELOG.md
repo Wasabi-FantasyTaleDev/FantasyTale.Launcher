@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.1 (2026-11-17)
+
+Developer tools
+- A DEV button opens the original clients' hidden developer tools. Turn on "Developer tool stages" on the Developer page; the game window then shows a small DEV button on the main menu that lists the tools the client contains: UI editor, UI scheme tester, character, effect and model tools, level event viewer, spot editor and costume test, plus a costume player on cn-774 (Ver.0.2.98.3) 2019-05-30, tw-454 (Patch V369) 2018-12-11 and kr-1256 (Patch V1304) 2026-05-08 and a shop item viewer on kr-1256. A tool opens from the main menu only, the way the client's own unused menu branches open it, and "Back to main menu" uses the client's own stage selector. The button shows only on the main menu and inside a tool, and comes back on every return to the main menu. With the switch off there is no button and nothing is called in the client.
+- Supported on every client build except kr-186 and tw-410: kr-812 (Patch V458) 2015-04-22, kr-1256, cn-279, cn-324, cn-404, cn-406, cn-408, cn-706, cn-717, cn-735, cn-774, id-400 (Patch V113) 2014-01-23, id-1809 (Patch V133) 2015-01-29 and tw-454 (game control support plugin 0.1.23). kr-812 is confirmed in the game; the other builds are checked against their clients.
+
+Plugins
+- Plugins can read the client's current stage through `IGameNativeUi.GetStageAsync` (stage id, a build-independent name such as `mainMenu`, `lobby`, `room` or `guild`, and whether a change is pending), and follow the player's scene through the SDK `GameSceneWatcher`, which reads the client's own stage first and falls back to the scene the server reports over Nirinsou. Each scene says which reading it comes from.
+- A plugin you enabled stays enabled when the launcher ships a newer version of it, and a plugin you turned off stays off. A newer version that asks for new grants stays off until you enable it again, so you can review the change. Earlier selections are carried over the same way.
+- A plugin a server recommends or requires for every build is offered only on builds the plugin has a release for.
+
+Client builds
+- New build definitions: tw-410 (Patch V227) 2013-01-22 and kr-186 2009-12-21 2nd Stage, retail and unpacked, launched against their server profiles on ports 7270 and 7280 with nmco login. kr-186 starts with the account as its only argument, because its client takes the whole command line as the login account.
+- kr-186 stays hidden from the version lists, server presets and local hosting until you import a kr-186 client in Add Client; from then on it is listed like any other build. The Home page no longer selects a hidden build by default.
+- tw-410 shows its patch version (TW Patch V227, from its version.dat). A client without version information is named with its build id, such as "Korea 2009-12-21 (kr-186)".
+- A build without an in-game server list adapter (tw-410 and kr-186) starts again when the server lists it on several nodes: the launcher connects it to the first available node instead of refusing.
+
+Clans
+- Clans reach the selected server: when the server's catalog gives a build a clan port, the launcher writes `clanServerAddr` and `clanServerPort` into the client's `login.ini`, adding the keys or creating the file when needed. cn-717 (Ver.0.2.61.001) 2015-06-18 ships without `login.ini`, so creating a clan did nothing before.
+
 ## 0.2.0 (2026-11-13)
 
 - Fantasy Tale Launcher 0.2.0. Every earlier launcher must update: the update index's new `deprecated_before_version` (0.2.0) makes every version below it mandatory to update, including 0.1.99 and 0.2.0 pre-releases, and servers refuse launchers below 0.2.0. Server sections: a server can group its servers into Main, Test Server, Oversea Server and so on; a section with its own sign-in keeps its own accounts, shown with a section badge, and sign-in offers a section choice only then. Starting a game shows servers under maintenance first, with Play here for another open section and Continue on your own, and leaves closed servers out of the in-game list. Operator notices appear once each when you start, and Show All lists every notice as cards. Notices, server and plugin descriptions, maintenance texts and server messages render Markdown. The 60-second start timeout now counts only the actual start, not the time spent in these dialogs. The launcher keeps the last server list, so separate sections stay playable while the main server is down.

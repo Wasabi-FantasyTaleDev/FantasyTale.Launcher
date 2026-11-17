@@ -23,7 +23,28 @@ public interface IGameNativeUi
     /// <exception cref="GameNativeUiBusyException">The read was not submitted because the channel was occupied.</exception>
     ValueTask<IReadOnlyList<GameNativeUiForm>> GetFormsAsync(string resource, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("This native UI provider does not track forms.");
+
+    /// <summary>
+    /// Reads which stage the game client is in, straight from its stage manager, for any plugin that needs the client's
+    /// own view (the server's scene feed knows only what the server saw). The read never queues behind game-thread UI
+    /// work, so it may be polled.
+    /// </summary>
+    /// <exception cref="NotSupportedException">This provider or client build has no stage map.</exception>
+    /// <exception cref="GameNativeUiBusyException">The read was not submitted because the channel was occupied.</exception>
+    ValueTask<GameNativeUiStage> GetStageAsync(CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This native UI provider does not read stages.");
 }
+
+/// <summary>The stage the game client is in.</summary>
+/// <param name="Id">The build's own stage id; it means different stages in different builds.</param>
+/// <param name="Name">
+/// The build-independent stage name from the build's stage table: <c>login</c>, <c>createUser</c>, <c>mainMenu</c>,
+/// <c>lobby</c>, <c>room</c>, <c>game</c>, <c>tutorial</c>, <c>quest</c>, <c>tutorialRoom</c>, <c>logo</c>,
+/// <c>credit</c>, <c>quickStart</c>, <c>seasonLadder</c>, <c>clan</c>, <c>guild</c>; <c>tool</c> for a developer tool stage and
+/// <c>unknown</c> for an id the table does not name.
+/// </param>
+/// <param name="Switching">True while a change to another stage is pending; the stage is about to be replaced.</param>
+public sealed record GameNativeUiStage(int Id, string Name, bool Switching);
 
 /// <summary>One live native form loaded from a <c>.ui</c> resource.</summary>
 /// <param name="Resource">The resource the game loaded the form from.</param>
@@ -96,6 +117,12 @@ public sealed record GameNativeUiRequest(string OperationId, string Kind, string
     /// </summary>
     public bool? Enabled { get; init; }
 
+    /// <summary>
+    /// Gets the stage stage.open switches to: a developer tool the provider lists as <c>tool:&lt;stage&gt;</c> in its stage.open
+    /// features, or <c>mainMenu</c> to return from one. Only stage.open accepts a stage.
+    /// </summary>
+    public string? Stage { get; init; }
+
     /// <summary>Rejects ambiguous identities, malformed colors and fields that do not belong to the selected operation.</summary>
     public void Validate()
     {
@@ -104,6 +131,16 @@ public sealed record GameNativeUiRequest(string OperationId, string Kind, string
         ArgumentNullException.ThrowIfNull(Title);
         ArgumentNullException.ThrowIfNull(Buttons);
         ArgumentNullException.ThrowIfNull(Runs);
+        if (Kind == "stage.open")
+        {
+            ValidateIdentity(Stage);
+            if (Text.Length != 0 || Title.Length != 0 || Buttons.Count != 0 || Runs.Count != 0 || AnnouncementId is not null
+                || ChatCaption is not null || Icon != "notice" || ChatStyle != "system" || Target is not null || Definition is not null
+                || AfterSequence is not null || MaximumLength is not null || Enabled is not null)
+                throw new ArgumentException("stage.open accepts only a stage.");
+            return;
+        }
+        if (Stage is not null) throw new ArgumentException("Only stage.open accepts a stage.");
         if (IsControlOperation(Kind))
         {
             if (Title.Length != 0 || Buttons.Count != 0 || Runs.Count != 0 || AnnouncementId is not null

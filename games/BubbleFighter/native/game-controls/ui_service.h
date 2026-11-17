@@ -39,6 +39,8 @@ struct Request {
     std::optional<uint32_t> maximum_length;
     int64_t after_sequence = 0;
     std::optional<bool> enabled;
+    /// The developer tool stage a stage.open request switches to, or mainMenu to return from one.
+    std::string stage;
     bool operator==(const Request&) const = default;
 };
 struct Result {
@@ -60,6 +62,9 @@ struct FormState {
     uint64_t clicks = 0;
 };
 struct Limits { size_t pending, results; };
+/// Where the game's stage manager is: its stage id, the build-independent name of that stage, and whether a change
+/// to another stage is pending.
+struct StageState { int32_t id = 0; std::string name; bool switching = false; };
 
 /// The adapter schedules UI work and completes operations without holding a service lock.
 class Adapter {
@@ -70,6 +75,8 @@ public:
     virtual void submit(const std::string& caller, Request request, Completion complete) = 0;
     /// Reads the loaded forms of one resource without queuing UI work; nullopt when form tracking is unavailable.
     virtual std::optional<std::vector<FormState>> forms(const std::string& resource) { (void)resource; return std::nullopt; }
+    /// Reads the stage manager without queuing UI work; nullopt when the build has no stage descriptor.
+    virtual std::optional<StageState> stage() { return std::nullopt; }
 };
 
 /// Owns caller-scoped operations, bounded results and duplicate suppression for one launch.

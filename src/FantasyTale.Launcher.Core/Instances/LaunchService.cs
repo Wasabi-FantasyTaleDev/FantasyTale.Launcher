@@ -95,8 +95,9 @@ public sealed class LaunchService
         IReadOnlyList<GameServerTarget>? gameTargets = null, IProgress<GameResourceProgress>? resourceProgress = null,
         IReadOnlyList<GameServerChoice>? gameChoices = null, IAutomaticServerSelection? automaticSelection = null,
         IReadOnlyList<GameResourceConflictChoice>? resourceConflictChoices = null,
-        TimeSpan? startupTimeout = null, string? launcherLanguage = null, CancellationToken preparationCancellation = default) =>
-        Task.Run(() => Start(id, game, module, packages, account, ticket, server, useServerOverride, confirmedWarnings, requiredPlugins, enableOverlayBroker, enableCompanionBroker, disabledPlugins, messenger, nameLogin, gameLogin, gameEndpoint, gameTargets, resourceProgress, gameChoices, automaticSelection, resourceConflictChoices, startupTimeout, launcherLanguage, preparationCancellation));
+        TimeSpan? startupTimeout = null, string? launcherLanguage = null, ServerEndpoint? clanServer = null,
+        CancellationToken preparationCancellation = default) =>
+        Task.Run(() => Start(id, game, module, packages, account, ticket, server, useServerOverride, confirmedWarnings, requiredPlugins, enableOverlayBroker, enableCompanionBroker, disabledPlugins, messenger, nameLogin, gameLogin, gameEndpoint, gameTargets, resourceProgress, gameChoices, automaticSelection, resourceConflictChoices, startupTimeout, launcherLanguage, clanServer, preparationCancellation));
 
     /// <summary>
     /// Validates and starts one instance. Credentials remain local to the session-writing call. When resource plugins
@@ -110,7 +111,8 @@ public sealed class LaunchService
         IReadOnlyList<GameServerTarget>? gameTargets = null, IProgress<GameResourceProgress>? resourceProgress = null,
         IReadOnlyList<GameServerChoice>? gameChoices = null, IAutomaticServerSelection? automaticSelection = null,
         IReadOnlyList<GameResourceConflictChoice>? resourceConflictChoices = null,
-        TimeSpan? startupTimeout = null, string? launcherLanguage = null, CancellationToken preparationCancellation = default)
+        TimeSpan? startupTimeout = null, string? launcherLanguage = null, ServerEndpoint? clanServer = null,
+        CancellationToken preparationCancellation = default)
     {
         var startupClock = Stopwatch.StartNew();
         var startupBudget = startupTimeout ?? _startupTimeout;
@@ -204,7 +206,7 @@ public sealed class LaunchService
                 var context = new LaunchContext(game, build, client, endpoint, account) { ResourceCacheFolder = _store.ResourceCacheFolder(id),
                     ResourceProgress = resourceProgress, PreparationCancellation = preparationCancellation, NameLogin = nameLogin, ClientLanguage = instance.Language,
                     ResourceConflictChoices = resourceConflictChoices ?? [],
-                    Diagnostics = _diagnosticSink, LaunchId = preparationId,
+                    Diagnostics = _diagnosticSink, LaunchId = preparationId, ClanServer = clanServer,
                     GameEndpoint = gameEndpoint, GameTargets = gameTargets ?? [], GameChoices = gameChoices ?? [], AutomaticSelection = automaticSelection,
                     FilePluginTargets = packages.Where(p => p.Kind == "files" && p.Game == game.Id && PluginCatalog.IsAvailable(p, build) &&
                         instance.Plugins.Any(s => s.Id == p.Id && s.Version == p.Version && (s.Enabled || PluginCatalog.NeedsWarning(p, build))))

@@ -10,7 +10,8 @@ public sealed class GameNativeUiClient(HookChannel channel, string build, string
     private const string Service = "game.native-ui";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly string[] Kinds = ["messageBox", "notification", "announcement.show", "announcement.close", "chat",
-        "control.inspect", "control.setText", "control.addButton", "control.remove", "control.events", "control.activate", "control.setEnabled"];
+        "control.inspect", "control.setText", "control.addButton", "control.remove", "control.events", "control.activate", "control.setEnabled",
+        "stage.open"];
     private readonly string? _ownerScope = ValidateScope(ownerScope);
     private int _scopesSupported = -1;
 
@@ -60,9 +61,12 @@ public sealed class GameNativeUiClient(HookChannel channel, string build, string
         var text = new StringBuilder("action = \"invoke\"\n");
         void Line(string key, string value) => text.Append(key).Append(" = ").Append(SessionWriter.Quote(value)).Append('\n');
         Line("operation_id", request.OperationId); Line("kind", request.Kind);
-        if (!GameNativeUiRequest.IsControlOperation(request.Kind) || request.Kind is "control.setText" or "control.addButton")
+        // The provider accepts nothing but the stage beside a stage.open identity.
+        var presentation = !GameNativeUiRequest.IsControlOperation(request.Kind) && request.Kind != "stage.open";
+        if (request.Stage is not null) Line("stage", request.Stage);
+        if (presentation || request.Kind is "control.setText" or "control.addButton")
             Line("text", request.Text);
-        if (!GameNativeUiRequest.IsControlOperation(request.Kind))
+        if (presentation)
         {
             Line("title", request.Title); Line("icon", request.Icon); Line("chat_style", request.ChatStyle);
         }
@@ -143,9 +147,24 @@ public sealed class GameNativeUiClient(HookChannel channel, string build, string
 
     private sealed record FormsReply(string Status, GameNativeUiForm[]? Forms);
 
+    /// <inheritdoc />
+    public async ValueTask<GameNativeUiStage> GetStageAsync(CancellationToken cancellationToken = default)
+    {
+        StageReply reply;
+        try { reply = await ExchangeAsync<StageReply>("action = \"stage\"\n", cancellationToken, scoped: false).ConfigureAwait(false); }
+        catch (HookChannelBusyException) { throw new GameNativeUiBusyException(); }
+        if (reply.Status == "unsupported") throw new NotSupportedException("The native UI provider has no stage map for this build.");
+        if (reply.Status != "completed" || reply.Id is not { } id || reply.Switching is not { } switching
+            || reply.Name is not { Length: > 0 and <= 32 } name || !name.All(char.IsAsciiLetter))
+            throw new InvalidDataException("The native UI provider returned an invalid stage read.");
+        return new(id, name, switching);
+    }
+
+    private sealed record StageReply(string Status, int? Id, string? Name, bool? Switching);
+
     private static void ValidateResult(GameNativeUiResult result)
     {
-        if (result.Status is not ("queued" or "shown" or "selected" or "dismissed" or "closed" or "inserted"
+        if (result.Status is not ("queued" or "shown" or "selected" or "dismissed" or "closed" or "inserted" or "opened"
             or "unsupported" or "notReady" or "busy" or "failed" or "outcomeUnknown" or "completed" or "ambiguous"))
             throw new InvalidDataException("The native UI provider returned an unknown result status.");
         if (result.Status == "selected" ? string.IsNullOrWhiteSpace(result.ButtonId) : result.ButtonId is not null)

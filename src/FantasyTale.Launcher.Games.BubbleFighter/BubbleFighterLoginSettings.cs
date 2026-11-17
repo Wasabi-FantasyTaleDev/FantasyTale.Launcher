@@ -7,19 +7,36 @@ namespace FantasyTale.Launcher.Games.BubbleFighter;
 
 public sealed partial class BubbleFighterModule
 {
-    /// <summary>Updates only an existing login.ini's serverAddr and serverPort when they differ from the selected endpoint, preserving other bytes and settings.</summary>
+    /// <summary>
+    /// Points login.ini at the selected server, preserving other bytes and settings: serverAddr and serverPort in an
+    /// existing file, and clanServerAddr and clanServerPort whenever the server serves clans for this build. Every clan
+    /// client reads those two keys from login.ini (kr-812 sub_8EA9F0, default port 7400); a client shipped without the
+    /// file (cn-717) gets one holding only the clan keys.
+    /// </summary>
     public void PrepareLaunch(LaunchContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if ((context.GameEndpoint ?? context.Server) is not { } endpoint) return;
         var path = Path.Combine(context.InstanceFolder, "login.ini");
-        if (!File.Exists(path)) return;
+        var exists = File.Exists(path);
+        var wanted = new List<(string Key, string Value)>();
+        if (exists && (context.GameEndpoint ?? context.Server) is { } endpoint)
+        {
+            wanted.Add(("serverAddr", endpoint.Host.All(char.IsAscii) ? endpoint.Host : new IdnMapping().GetAscii(endpoint.Host)));
+            wanted.Add(("serverPort", endpoint.Port.ToString(CultureInfo.InvariantCulture)));
+        }
+        if (context.ClanServer is { } clan)
+        {
+            wanted.Add(("clanServerAddr", clan.Host));
+            wanted.Add(("clanServerPort", clan.Port.ToString(CultureInfo.InvariantCulture)));
+        }
+        if (wanted.Count == 0) return;
         for (var parent = path; parent is not null; parent = Path.GetDirectoryName(parent))
             if (Path.Exists(parent) && (File.GetAttributes(parent) & FileAttributes.ReparsePoint) != 0)
                 throw new IOException("Linked login settings are not supported.");
-        byte[] original;
-        using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        var original = Array.Empty<byte>();
+        if (exists)
         {
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (file.Length > 65536) throw new IOException("login.ini exceeds the settings size limit.");
             original = new byte[checked((int)file.Length)]; file.ReadExactly(original);
         }
@@ -30,26 +47,28 @@ public sealed partial class BubbleFighterModule
         // Latin1 is reversible for ANSI and UTF-8 comments; endpoint fields use ASCII.
         var encoding = unicode ? Encoding.Unicode : bigEndian ? Encoding.BigEndianUnicode : Encoding.Latin1;
         var text = encoding.GetString(original, skip, original.Length - skip);
-        var host = endpoint.Host.All(char.IsAscii) ? endpoint.Host : new IdnMapping().GetAscii(endpoint.Host);
-        var port = endpoint.Port.ToString(CultureInfo.InvariantCulture);
-        var seenAddress = false; var seenPort = false;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var updated = LoginSettingLine().Replace(text, match =>
         {
-            var address = match.Groups["key"].Value.Equals("serverAddr", StringComparison.OrdinalIgnoreCase);
-            if (address) seenAddress = true; else seenPort = true;
-            var value = match.Groups["value"].Value;
-            var same = address ? value.Trim().Equals(host, StringComparison.OrdinalIgnoreCase)
-                : int.TryParse(value.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number == endpoint.Port;
-            return same ? match.Value : match.Groups["prefix"].Value + (address ? host : port);
+            var key = match.Groups["key"].Value;
+            var target = wanted.FindIndex(item => item.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            if (target < 0) return match.Value;
+            seen.Add(key);
+            var value = wanted[target].Value;
+            var current = match.Groups["value"].Value.Trim();
+            var same = key.EndsWith("Port", StringComparison.OrdinalIgnoreCase)
+                ? int.TryParse(current, NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number.ToString(CultureInfo.InvariantCulture) == value
+                : current.Equals(value, StringComparison.OrdinalIgnoreCase);
+            return same ? match.Value : match.Groups["prefix"].Value + value;
         });
-        var newline = text.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : text.Contains('\r') ? "\r" : "\n";
-        if (!seenAddress || !seenPort)
+        // The shipped files are ASCII with CRLF; a new file follows them.
+        var newline = !exists || text.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : text.Contains('\r') ? "\r" : "\n";
+        foreach (var (key, value) in wanted.Where(item => !seen.Contains(item.Key)))
         {
             if (updated.Length > 0 && updated[^1] is not ('\r' or '\n')) updated += newline;
-            if (!seenAddress) updated += "serverAddr=" + host + newline;
-            if (!seenPort) updated += "serverPort=" + port + newline;
+            updated += key + "=" + value + newline;
         }
-        if (updated == text) return;
+        if (exists && updated == text) return;
         var replacement = original.AsSpan(0, skip).ToArray().Concat(encoding.GetBytes(updated)).ToArray();
         var temporary = path + ".fantasytale-" + Guid.NewGuid().ToString("N") + ".tmp";
         try
@@ -61,6 +80,6 @@ public sealed partial class BubbleFighterModule
         finally { File.Delete(temporary); }
     }
 
-    [GeneratedRegex(@"(?:\A|(?<=[\r\n]))(?<prefix>[ \t]*(?<key>serverAddr|serverPort)[ \t]*=[ \t]*)(?<value>[^\r\n]*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?:\A|(?<=[\r\n]))(?<prefix>[ \t]*(?<key>serverAddr|serverPort|clanServerAddr|clanServerPort)[ \t]*=[ \t]*)(?<value>[^\r\n]*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LoginSettingLine();
 }

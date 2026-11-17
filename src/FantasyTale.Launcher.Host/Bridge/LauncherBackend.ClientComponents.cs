@@ -82,7 +82,7 @@ internal sealed partial class LauncherBackend
         var capabilities = await CatalogForAsync(game.Id, serverId, ct).ConfigureAwait(false);
         var remote = await ServerRecommendationsAsync(serverId, build, ct).ConfigureAwait(false);
         var packages = Packages(game);
-        var ids = ProfileClientPolicy.Offered(build).Concat(remote.Select(item => item.Id))
+        var ids = ProfileClientPolicy.Offered(build).Concat(remote.Where(item => PackagedForBuild(game, build, packages, item.Id)).Select(item => item.Id))
             .Concat(packages.Where(plugin => PluginCatalog.IsAvailable(plugin, build) && ClientPolicyActivation.IsMandatory(plugin, build)).Select(plugin => plugin.Id));
         return ids.Distinct(StringComparer.Ordinal).Select(id =>
         {
@@ -95,6 +95,16 @@ internal sealed partial class LauncherBackend
         }).Where(item => (capabilities?.SupportsPlugins ?? game.SupportsPlugins) || item.Plugin is { Kind: "files" } && item.Choice.Required)
             .Select(item => item.Choice).ToArray();
     }
+
+    /// <summary>
+    /// Whether the plugin has a release for this build, installed or in a cached store catalog. A server rule that names
+    /// no builds covers every build, but only a build the plugin was made for is offered it. Before any store catalog is
+    /// cached the answer is unknown, so the plugin stays offered.
+    /// </summary>
+    private bool PackagedForBuild(GameDefinition game, BuildDefinition build, IReadOnlyList<PluginDefinition> packages, string id) =>
+        ClientPolicyActivation.HasReleaseFor(game.Id, build, id, packages, _sources.List()
+            .Where(source => source.Enabled && source.BaseUrl is not null)
+            .Select(source => _catalogs.Cached(source)?.Packages).OfType<IReadOnlyList<StorePackage>>().ToArray());
 
     private StorePackage? CachedComponent(GameDefinition game, BuildDefinition build, string id) =>
         _sources.List().Where(source => source.Enabled && source.BaseUrl is not null)

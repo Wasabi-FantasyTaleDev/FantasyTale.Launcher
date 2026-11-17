@@ -79,6 +79,37 @@ public sealed class BuildAvailabilityTests
         finally { Directory.Delete(root, recursive: true); }
     }
 
+    [Fact]
+    public async Task HiddenBuildJoinsPresetsOnceAClientOfItIsRegistered()
+    {
+        var root = Directory.CreateTempSubdirectory("ft-build-hidden-").FullName;
+        try
+        {
+            var games = Path.Combine(root, "games");
+            var folder = Path.Combine(games, "Fixture");
+            Directory.CreateDirectory(Path.Combine(folder, "builds"));
+            await File.WriteAllTextAsync(Path.Combine(folder, "game.toml"), "schema=1\n[game]\nid='fixture'\nstatus='enabled'\nmodule='Fixture'\nhook_host='external'\nname={en='Fixture'}\n");
+            await File.WriteAllTextAsync(Path.Combine(folder, "builds", "test-1.toml"), "schema=1\n[build]\nid='test-1'\ngame='fixture'\nbranch='test'\nhidden=true\nbuild_date='2009-12-20 23:42:19'\nprotocol_version=1\nexecutable='client.exe'\nname={en='Fixture'}\n[launch]\nlogin='unverified'\narguments=[]\n");
+            var data = Path.Combine(root, "data");
+            var replies = new ConcurrentQueue<JsonNode>(); long sequence = 0;
+            var bridge = new BridgeRouter(raw => replies.Enqueue(JsonNode.Parse(raw)!));
+            await using var backend = new LauncherBackend(games, data);
+            backend.Register(bridge);
+            async Task<JsonNode> Call(string method, object args)
+            {
+                var id = ++sequence;
+                await bridge.HandleAsync(JsonSerializer.Serialize(new { id, method, @params = args }), default);
+                return replies.Single(row => row["id"]?.GetValue<long>() == id);
+            }
+            Assert.Null((await Call("servers.save", new { id = "one", game = "fixture", name = "One", bundledInstances = true }))["error"]);
+            Assert.Empty((await Call("servers.catalog", new { id = "one" }))["result"]!["instances"]!.AsArray());
+            // Hidden is not disabled: a client of the build can still be registered, and from then on the build is listed.
+            Assert.Null((await Call("instances.create", new { id = "imported", name = "Imported", game = "fixture", build = "test-1" }))["error"]);
+            Assert.Equal("test-1", Assert.Single((await Call("servers.catalog", new { id = "one" }))["result"]!["instances"]!.AsArray())!["build"]!.GetValue<string>());
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
     private sealed class UnreachableModule : IGameModule
     {
         public string GameId => "fixture";

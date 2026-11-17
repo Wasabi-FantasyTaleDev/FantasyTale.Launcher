@@ -69,12 +69,24 @@ public static class FilePluginResolver
         var rules = ProfileClientPolicy.CanonicalRules(ProfileClientPolicy.Rules(build), packages);
         var notices = new List<PluginRecoveryNotice>();
         var retained = new List<InstancePlugin>(instance.Plugins.Count);
+        // The enabled state belongs to the plugin id. A selection that moves to another package keeps its enabled state only
+        // when that package grants what the user approved; otherwise it stays off until the user approves the new grants.
+        (InstancePlugin Selection, bool Pending) Approve(InstancePlugin current, PluginDefinition package, bool moved)
+        {
+            var fingerprint = PluginGrants.Fingerprint(package);
+            if (current.Grants == fingerprint) return (current, false);
+            // A selection saved before grants were recorded has no approval to compare with. Its enabled state is carried
+            // over as it always was. Reads never write: the grants are recorded when the selection moves to a new package.
+            if (current.Grants is null) return (moved ? current with { Grants = fingerprint } : current, false);
+            return (current with { Enabled = false, Required = false }, true);
+        }
         foreach (var original in instance.Plugins)
         {
             var selection = PluginIdentityMigration.Resolve(original, build, packages);
             // A separately selected successor is the user's explicit choice; do not duplicate it.
             if (selection.Id != original.Id && (instance.Plugins.Any(item => item.Id == selection.Id)
                 || retained.Any(item => item.Id == selection.Id))) continue;
+            var moved = selection.Id != original.Id || selection.Version != original.Version;
             var selectedPackage = packages.SingleOrDefault(p => p.Id == selection.Id && p.Version == selection.Version);
             // Library cleanup or an interrupted activation can leave a selection
             // pointing at an absent predecessor while its installed successor is ready.
@@ -93,6 +105,7 @@ public static class FilePluginResolver
                     _ = PluginCatalog.ResolveOptionValues(replacement, options);
                     selection = selection with { Version = replacement.Version, Options = options };
                     selectedPackage = replacement;
+                    moved = true;
                 }
             }
             if (repairMissing && selectedPackage is null)
@@ -110,18 +123,22 @@ public static class FilePluginResolver
                 {
                     var options = selection.Options.Where(pair => fallback.Options.Any(option => option.Key == pair.Key))
                         .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-                    retained.Add(selection with { Version = fallback.Version, Options = options,
+                    var repointed = selection with { Version = fallback.Version, Options = options,
                         Required = rules.Any(rule => rule.Id == fallback.Id && rule.Required) || PluginCatalog.IsRequired(fallback, build),
-                        Enabled = selection.Enabled || rules.Any(rule => rule.Id == fallback.Id && rule.Required) || PluginCatalog.IsRequired(fallback, build) });
+                        Enabled = selection.Enabled || rules.Any(rule => rule.Id == fallback.Id && rule.Required) || PluginCatalog.IsRequired(fallback, build) };
+                    retained.Add(Approve(repointed, fallback, moved: true).Selection);
                 }
                 continue;
             }
 
+            var pending = false;
             if (selectedPackage is not null)
             {
+                (selection, pending) = Approve(selection, selectedPackage, moved);
+                // A package whose grants await consent is not enabled by policy either; the user's approval comes first.
                 var required = rules.Any(rule => rule.Id == selection.Id && rule.Required)
                     || PluginCatalog.IsRequired(selectedPackage, build);
-                if (required != selection.Required || required && !selection.Enabled)
+                if (!pending && (required != selection.Required || required && !selection.Enabled))
                     selection = selection with { Required = required, Enabled = required || selection.Enabled };
             }
             if (!game.StoreManagedPlugins.Contains(selection.Id, StringComparer.Ordinal))
@@ -135,7 +152,7 @@ public static class FilePluginResolver
             {
                 var options = selection.Options.Where(pair => successor.Options.Any(option => option.Key == pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
                 _ = PluginCatalog.ResolveOptionValues(successor, options);
-                selection = selection with { Version = successor.Version, Options = options };
+                (selection, _) = Approve(selection with { Version = successor.Version, Options = options }, successor, moved: true);
             }
             retained.Add(selection);
         }

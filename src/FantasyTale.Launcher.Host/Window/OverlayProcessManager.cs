@@ -84,7 +84,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             && instance.Plugins.Any(selection => selection.Id == package.Id && selection.Version == package.Version && selection.Enabled));
 
     internal bool IsEnabledForClient(InstanceDefinition instance, BuildDefinition build, IReadOnlyList<PluginDefinition> packages) =>
-        TestSettings.StartupMessage || IsEnabled(instance, build, packages);
+        TestSettings.StartupMessage || TestSettings.DeveloperStages || IsEnabled(instance, build, packages);
 
     internal IOverlayHost? GetHost(string instanceId)
     {
@@ -108,6 +108,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         Process? overlay = null;
         NamedPipeServerStream? pipe = null;
         IOverlayPanel? startupTest = null;
+        DeveloperStageMenu? developerStages = null;
         var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         using var stopRegistration = _stop.Token.Register(() => stopped.TrySetResult());
         try
@@ -227,9 +228,9 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             }
             if (test.StartupMessage)
             {
-                using var readinessTimeout = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
-                readinessTimeout.CancelAfter(TimeSpan.FromSeconds(45));
-                var rendererReady = session.WaitUntilReadyAsync(readinessTimeout.Token);
+                // The renderer initializes only once the game creates its render window, which waits on the player
+                // (login, server choice); a fixed deadline here cancelled the whole overlay on a slow login.
+                var rendererReady = session.WaitUntilReadyAsync(_stop.Token);
                 if (await Task.WhenAny(rendererReady, gameCompletion).ConfigureAwait(false) == gameCompletion) return;
                 await rendererReady.ConfigureAwait(false);
                 startupTest = session.CreateGameUiPanel("launcher.overlay-test", interactive: true, modal: true,
@@ -244,6 +245,10 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 });
                 WriteLog("overlay-test-requested");
             }
+            // The developer tool stages exist only while the Developer switch is on: no panel, query or call otherwise.
+            if (test.DeveloperStages && control is not null)
+                developerStages = await DeveloperStageMenu.StartAsync(session, new GameNativeUiClient(control, build.Id),
+                    gameCompletion, detail => WriteLog("developer-stages", detail), _stop.Token).ConfigureAwait(false);
             await Task.WhenAny(gameCompletion, overlay.WaitForExitAsync(), session.ConnectionCompletion, stopped.Task).ConfigureAwait(false);
         }
         catch (Exception error) when (error is InvalidOperationException or IOException or UnauthorizedAccessException
@@ -263,7 +268,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 if (session is not null) await session.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception error) { WriteLog("overlay-controller-stop-failed", error.GetType().Name); }
-            finally { startupTest?.Dispose(); }
+            finally { developerStages?.Dispose(); startupTest?.Dispose(); }
             if (session is null && overlay is not null)
             {
                 try { if (!overlay.HasExited) overlay.Kill(entireProcessTree: true); }

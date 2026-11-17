@@ -5,6 +5,7 @@
 #include "../../games/BubbleFighter/native/game-controls/control_registry.h"
 #include "../../games/BubbleFighter/native/game-controls/signature_readiness.h"
 #include "../../games/BubbleFighter/native/game-controls/selection_records.h"
+#include "../../games/BubbleFighter/native/game-controls/stage_switch.h"
 #include <array>
 #include <stdexcept>
 
@@ -513,8 +514,11 @@ struct Fixture final : Adapter {
     std::vector<std::string> callers;
     bool supported = true, ready = true, throws = false;
     std::function<void()> synchronous;
+    std::optional<StageState> state;
+    std::optional<StageState> stage() override { return state; }
     std::vector<Capability> capabilities() override { return {{"messageBox", supported, ready, {}, {}}, {"chat", supported, ready, {}, {}}, {"notification", supported, ready, {}, {}},
-        {"control.inspect", supported, ready, {}, {}}, {"control.setText", supported, ready, {}, {}}, {"control.addButton", supported, ready, {}, {}}, {"control.remove", supported, ready, {}, {}}, {"control.activate", supported, ready, {}, {}}, {"control.setEnabled", supported, ready, {}, {}}, {"control.events", supported, ready, {}, {}}}; }
+        {"control.inspect", supported, ready, {}, {}}, {"control.setText", supported, ready, {}, {}}, {"control.addButton", supported, ready, {}, {}}, {"control.remove", supported, ready, {}, {}}, {"control.activate", supported, ready, {}, {}}, {"control.setEnabled", supported, ready, {}, {}}, {"control.events", supported, ready, {}, {}},
+        {"stage.open", supported, ready, {}, {}}}; }
     void submit(const std::string& caller, Request request, Completion complete) override {
         if (throws) throw std::runtime_error("fixture");
         callers.push_back(caller);
@@ -626,6 +630,82 @@ void control_registry_tests() {
     try { events.reserve("c"); } catch (const std::length_error&) { owners_full = true; }
     CHECK(owners_full);
 }
+// kr-812 MainApp keeps the current stage id at +100 and the next one at +108 (-1 idle, -2 a factory-built tool stage).
+void stage_switch_tests() {
+    struct Application { uint8_t head[100]; int32_t current; int32_t factory; int32_t next; } application{};
+    static_assert(offsetof(Application, current) == 100 && offsetof(Application, next) == 108);
+    const StageLayout layout{100, 108, 2, 0xFFFFFFFEu, 0xFFFFFFFFu};
+    const auto read = [](uintptr_t location, void* output, uint32_t size) { std::memcpy(output, reinterpret_cast<const void*>(location), size); return true; };
+    const auto address = reinterpret_cast<uintptr_t>(&application);
+    application.current = 2; application.next = -1;
+    CHECK(stage_refusal(address, layout, false, read).empty());
+    CHECK(stage_refusal(address, layout, true, read) == "notInToolStage");
+    application.current = 3;  // the lobby
+    CHECK(stage_refusal(address, layout, false, read) == "notMainMenu");
+    application.current = -2;
+    CHECK(stage_refusal(address, layout, true, read).empty());
+    CHECK(stage_refusal(address, layout, false, read) == "notMainMenu");
+    application.next = 2;     // a switch the game has not applied yet
+    CHECK(stage_refusal(address, layout, true, read) == "stageSwitchPending");
+    application.current = 2; application.next = -2;
+    CHECK(stage_refusal(address, layout, false, read) == "stageSwitchPending");
+    CHECK(stage_refusal(0, layout, false, read) == "gameUiNotReady");
+    const auto unreadable = [](uintptr_t, void*, uint32_t) { return false; };
+    CHECK(stage_refusal(address, layout, false, unreadable) == "gameUiNotReady");
+    const std::map<int32_t, std::string> names{{2, "mainMenu"}, {3, "lobby"}};
+    application.current = 2; application.next = -1;
+    auto state = read_stage(address, layout, names, read);
+    CHECK(state && state->id == 2 && state->name == "mainMenu" && !state->switching);
+    application.current = -2;
+    CHECK(read_stage(address, layout, names, read)->name == "tool");
+    application.current = 3;
+    CHECK(read_stage(address, layout, names, read)->name == "lobby");
+    application.current = 9;  // no name in this build's table
+    CHECK(read_stage(address, layout, names, read)->name == "unknown");
+    application.next = 2;
+    CHECK(read_stage(address, layout, names, read)->switching);
+    CHECK(!read_stage(address, layout, names, unreadable));
+    // A build without a switch function (cn-774) marks a tool stage with its own id 16 instead of -2.
+    const StageLayout direct{100, 108, 2, 16, 0xFFFFFFFFu};
+    application.current = 2; application.next = -1;
+    CHECK(stage_refusal(address, direct, false, read).empty());
+    application.current = 16;
+    CHECK(read_stage(address, direct, names, read)->name == "tool");
+    CHECK(stage_refusal(address, direct, true, read).empty());
+    application.next = 16;
+    CHECK(stage_refusal(address, direct, true, read) == "stageSwitchPending");
+}
+void stage_service_tests() {
+    Fixture adapter;
+    Service service("kr-812", adapter, {4, 8});
+    const auto open = [](const char* id, const std::string& fields) {
+        return std::string("action='invoke'\noperation_id='") + id + "'\nkind='stage.open'\n" + fields;
+    };
+    CHECK(contains(service.handle("host", open("tool", "stage='character'\n")), "queued"));
+    CHECK(adapter.requests.back().stage == "character");
+    adapter.callbacks.back()({"tool", "opened", {}, {}});
+    CHECK(contains(service.handle("host", poll("tool")), "opened"));
+    CHECK(contains(service.handle("host", open("back", "stage='mainMenu'\n")), "queued"));
+    adapter.callbacks.back()({"back", "notReady", {}, "notInToolStage"});
+    CHECK(contains(service.handle("host", poll("back")), "notInToolStage"));
+    // Only stage.open reports a stage as opened.
+    CHECK(contains(service.handle("host", message("box")), "queued"));
+    adapter.callbacks.back()({"box", "opened", {}, {}});
+    CHECK(contains(service.handle("host", poll("box")), "invalidAdapterResult"));
+    rejects(service, open("bad", ""));
+    rejects(service, open("bad", "stage='../tools'\n"));
+    rejects(service, open("bad", "stage='character'\ntext='x'\n"));
+    rejects(service, open("bad", "stage='character'\n[target]\nname='x'\n"));
+    rejects(service, "action='invoke'\noperation_id='bad'\nkind='notification'\ntext='x'\nstage='character'\n");
+    adapter.supported = false;
+    CHECK(contains(service.handle("host", open("off", "stage='character'\n")), "unsupported"));
+    CHECK(contains(service.handle("host", "action='stage'"), "adapterUnavailable"));
+    adapter.state = StageState{3, "lobby", false};
+    auto stage = service.handle("host", "action='stage'");
+    stage.erase(std::remove_if(stage.begin(), stage.end(), [](unsigned char c) { return std::isspace(c); }), stage.end());
+    CHECK(contains(stage, "\"name\":\"lobby\"") && contains(stage, "\"id\":3") && contains(stage, "\"switching\":false"));
+    rejects(service, "action='stage'\nextra=1");
+}
 void control_service_tests() {
     Fixture adapter;
     Service service("fixture", adapter, {16, 32});
@@ -722,6 +802,8 @@ int main() {
     signature_readiness_tests();
     control_registry_tests();
     control_service_tests();
+    stage_switch_tests();
+    stage_service_tests();
     legacy_readiness_tests();
     native_calls::detach_legacy_message(reinterpret_cast<uintptr_t>(&detach_dialog), &arguments);
     CHECK(arguments.instance == 1);

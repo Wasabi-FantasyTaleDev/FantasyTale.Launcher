@@ -173,6 +173,7 @@ exit; this adapter does not support live unload while a modal call is active.
 | Text notification | Text | Presented or not presented |
 | Announcement | Text, optional caller-owned announcement ID where supported | Shown and automatically expired by the game |
 | Chat entry | Normal or system entry, ordered text runs with individual colors | Inserted locally or not inserted |
+| Developer tool stage (`stage.open`) | A tool key the capability lists as `tool:<key>`, or `mainMenu` | Opened, or not ready with the reason |
 
 Button labels may be empty or consist entirely of spaces: some native button
 textures already contain their labels. The caller's text is not trimmed or
@@ -201,6 +202,47 @@ and applies the record's 2,000 ms fade. The renderer owns removal and destructio
 Chat tests insert local entries; they do not send chat packets to other players.
 The current adapters support one color per entry. Different-colored runs in one
 entry remain unsupported and are rejected rather than flattened or split.
+
+## Developer tool stages
+
+kr-812 still contains the developer tool stages its developers opened from the main
+menu: a UI editor, a UI scheme tester, character, effect and model tools, a level
+event viewer, a spot editor and a costume test. MainMenuStage's click handler,
+kr-812 sub_688390, keeps one branch per tool, and each branch is
+kr-812 sub_A8A920(application, factory): the call stores the factory at +104 and the
+next stage id -2 at +108, and kr-812 sub_A8B050 builds the stage on the next frame,
+copying that id into the current id at +100. No shipped MainMenuStage layout binds
+the buttons, so the branches are unreachable in the retail client.
+
+`stage.open` makes the same call on the game thread. A tool opens only while the
+current stage is the main menu (id 2) and no switch is pending (next id -1);
+`mainMenu` returns only from a factory-built stage (id -2) and goes through the
+application's own stage setter at vtable +36, kr-812 sub_8E1240, which the adapter
+checks against its signed address before calling. Refusals are `notReady` with the
+reason `notMainMenu`, `notInToolStage` or `stageSwitchPending`. The capability's
+features list each tool as `tool:<key>` from the descriptor's `stage_tool_<key>`
+addresses; every factory wrapper and both stage methods carry a code signature.
+Whether each tool's assets are complete enough to run is checked in the client,
+not here: a tool that fails there is removed from the descriptor.
+
+Every build with a descriptor except kr-186 and tw-410 carries the same tools.
+The stage manager's offsets differ per build and are descriptor values
+(`stage_current_offset`, `stage_next_offset`), so the adapter has no per-build
+branch. cn-774, tw-454 and kr-1256 have no switch function: their MainMenuStage
+tool handler (cn-774 sub_C51250) stores the factory at +92 and calls the stage
+setter with the id 16, which the setter has no case for. Their descriptors name
+`stage_factory_offset` instead of `stage_switch`, and `stage_custom` is 16 rather
+than -2. The adapter stores the factory, calls the signed setter, and removes the
+factory again when the setter did not take the id: the setter ignores ids while its
+ready byte is clear. kr-1256 keeps that stage manager in a different global from
+its notification owner, so its descriptor names it as `stage_application`.
+Builds with a `[stages]` table report the current stage to `GetStageAsync` even
+without tool stages; class names behind each id come from the RTTI of the vtable
+its factory's constructor stores.
+
+The launcher uses the operation only while the Developer page switch "Developer tool
+stages" is on. It then shows a small DEV button in the game window that lists the
+tools; with the switch off there is no button, no capability query and no call.
 
 ## Live control discovery and text
 
@@ -435,6 +477,7 @@ must not be retried automatically.
 | kr-812 sub_8E23D0 | Draws translucent type-1 banners and removes expired records using the game's clock | Runtime fade and removal without replay |
 | kr-812 Ui/DlgMessageBox.ui | Maps notice, warning, question and error to icon array entries 0, 1, 2 and 3 | Runtime appearance for each icon |
 | kr-812 sub_7C9360 | Copies caption, body and one color into local chat without sending a packet | Runtime insertion and colors; different colors within one entry remain unsupported |
+| kr-812 sub_688390, sub_A8A920, sub_8E1240, sub_A8B050 | Opens each developer tool stage through its factory wrapper; the application keeps the current and next stage ids at +100 and +108 | Runtime entry into each tool and return to the main menu |
 
 The announcement adapter follows the native seven-entry limit without evicting
 game-owned announcements. It returns busy when the native vector is full.

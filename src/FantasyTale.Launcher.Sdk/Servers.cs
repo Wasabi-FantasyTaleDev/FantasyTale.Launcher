@@ -64,6 +64,11 @@ public sealed record ServerInstance(string Id, string Build, IReadOnlyDictionary
     /// False keeps the preset listed but not launchable; null means the server has no cluster.
     /// </summary>
     public bool? ClusterServed { get; init; }
+    /// <summary>
+    /// The server's clan TCP port for this build, on the preset's host; null when the build has no clan connection there.
+    /// The launcher writes it into the client's login.ini as clanServerAddr/clanServerPort.
+    /// </summary>
+    public int? ClanPort { get; init; }
 }
 
 /// <summary>A server's client distribution recommendation without credentials or launcher update authority.</summary>

@@ -47,6 +47,8 @@ export interface InstalledServerPackage { id: string; sourceId: string; package:
 
 export interface BuildSummary {
   supportsHosting?: boolean
+  /** Kept out of version lists until a client of this build is registered. */
+  hidden?: boolean
   id: string
   branch: string
   buildDate?: string | null
@@ -361,6 +363,8 @@ export interface BridgeMethods {
   'settings.testGitHubMirrors': MirrorResult[]
   'settings.overlayTest': { enabled: boolean; passThroughOutside: boolean }
   'settings.setOverlayTest': { enabled: boolean; passThroughOutside: boolean }
+  'settings.developerStages': { enabled: boolean }
+  'settings.setDeveloperStages': { enabled: boolean }
   'settings.setNetwork': NetworkPreferences
 }
 
@@ -477,6 +481,12 @@ const fallback: { [K in keyof BridgeMethods]?: (params?: unknown) => BridgeMetho
     localStorage.setItem('overlayTest', settings.enabled ? 'on' : 'off')
     localStorage.setItem('overlayPassThroughOutside', passThroughOutside ? 'on' : 'off')
     return { enabled: settings.enabled, passThroughOutside }
+  },
+  'settings.developerStages': () => ({ enabled: localStorage.getItem('developerStages') === 'on' }),
+  'settings.setDeveloperStages': (p) => {
+    const enabled = Boolean((p as { enabled: boolean }).enabled)
+    localStorage.setItem('developerStages', enabled ? 'on' : 'off')
+    return { enabled }
   },
   'settings.setNetwork': (p) => {
     const value = p as { ipPreference?: IpPreference; githubMirror?: boolean; githubMirrorSource?: string }

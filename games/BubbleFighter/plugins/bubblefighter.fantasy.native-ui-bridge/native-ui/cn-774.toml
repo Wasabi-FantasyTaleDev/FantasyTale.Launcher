@@ -29,6 +29,18 @@ button_vtable = 0x10DA070 # cn-774 RTTI Lambda::UiButton primary vtable (single 
 edit_vtable = 0x10D94F4 # cn-774 RTTI Lambda::UiEdit primary vtable.
 label_vtable = 0x10D9DBC # cn-774 RTTI Lambda::UiLabel primary vtable.
 create_room_vtable = 0x102E190 # cn-774 sub_6B5370 assigns DlgCreateRoom before loading its .ui resource.
+# Developer tool stages: cn-774 sub_C51250, behind MainMenuStage's tool buttons (no shipped layout binds them),
+# opens each tool by storing its factory at +92 and calling the stage setter with the id 16.
+stage_set = 0x61A9B0          # cn-774 sub_A1A9B0, MainApp vtable slot +40, stores the next id at +96 and its factory at +92 while +848 is set.
+stage_tool_ui_editor = 0x84DA80# cn-774 sub_C4DA80 builds UiEditorStage (ctor sub_C73110).
+stage_tool_ui_scheme_tester = 0x84DB30# cn-774 sub_C4DB30 builds UiSchemeTesterStage (ctor sub_C7D740).
+stage_tool_character = 0x84DBE0# cn-774 sub_C4DBE0 builds CharacterToolStage (ctor sub_563690).
+stage_tool_effect = 0x84DC90  # cn-774 sub_C4DC90 builds EffectToolStage (ctor sub_8190A0).
+stage_tool_model_viewer = 0x67A050# cn-774 sub_A7A050 builds ModelObjViewStage (ctor sub_A78DA0).
+stage_tool_level_event_viewer = 0x5D4EE0# cn-774 sub_9D4EE0 builds LevelEventViewStage (ctor sub_9D3800).
+stage_tool_spot_editor = 0x834FB0# cn-774 sub_C34FB0 builds SpotEditorStage (ctor sub_C346A0).
+stage_tool_costume_play = 0x1F7A00# cn-774 sub_5F7A00 builds CostumePlayStage (ctor sub_5F6E40).
+stage_tool_costume_test = 0x1FA900# cn-774 sub_5FA900 builds CostumeTestStage (ctor sub_5F8C50).
 
 [values]
 message_abi = 2 # cn-774 sub_C76760 passes four stack arguments to the thiscall constructor.
@@ -79,6 +91,13 @@ load_hook_bytes = 5 # cn-774 sub_F571F0: push ebp; mov ebp,esp; push -1.
 initialize_hook_bytes = 5 # cn-774 sub_F4F6C0: push ebp; mov ebp,esp; push -1.
 destroy_hook_bytes = 5 # cn-774 sub_F4F140: push ebp; mov ebp,esp; push -1.
 click_hook_bytes = 9 # cn-774 sub_F736C0: push ebp; mov ebp,esp; mov eax,fs:[0].
+stage_current_offset = 88     # cn-774 sub_F5DE60 copies the applied next id into the current id at +88.
+stage_next_offset = 96        # cn-774 sub_F5DE60 resets the next id at +96 to -1 once the stage is built.
+stage_factory_offset = 92     # cn-774 sub_F5F6C0 runs cn-774 sub_F5DE60 while a factory is stored at +92; that builds the stage and clears it.
+stage_set_slot = 40           # cn-774 sub_8DD8D0 calls the application's vtable +40 to change stage.
+stage_main_menu = 2           # cn-774 sub_A1A9B0 stores the MainMenuStage factory for id 2.
+stage_custom = 16             # cn-774 sub_C51250 sets this id for a tool stage; sub_A1A9B0 has no case for it and keeps the factory.
+stage_idle = 4294967295       # -1: no stage switch is pending; cn-774 sub_A1A9B0 case -1 clears the factory with it.
 
 [[selection_groups]]
 form = "Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui" # cn-774 sub_6B5370 loads this resource for DlgCreateRoom.
@@ -152,3 +171,57 @@ bytes = "55 8B EC 64 A1 00 00 00 00 6A FF 68 48 30 1F 01"
 [[signatures]]
 address = "control_focus"
 bytes = "55 8B EC 6A FF 68 98 7D 1C 01 64 A1 00 00 00 00"
+
+# Build-independent stage names for IGameNativeUi.GetStageAsync, from the stage setter cn-774 sub_A1A9B0 (MainApp
+# vtable +40); each id names the class its factory constructs (RTTI).
+[stages]
+0 = "login"
+1 = "createUser"
+2 = "mainMenu"
+3 = "lobby"
+4 = "room"
+5 = "game"
+7 = "quest"
+10 = "logo"
+12 = "credit"
+15 = "clan"
+
+[[signatures]]
+address = "stage_set"
+bytes = "80 B9 50 03 00 00 00 0F 84 38 01 00 00 56 8B 74 24 08 3B 71 60 0F 84 29 01 00 00 8D 46 01 83 F8 10 0F 87 1A 01 00 00 FF 24 85 F8 AA A1 00 89 71 60 C7 41 5C 00 00 00 00 5E C2 04 00 89 71 60 C7"
+
+[[signatures]]
+address = "stage_tool_ui_editor"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_ui_scheme_tester"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_character"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_effect"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_model_viewer"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_level_event_viewer"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_spot_editor"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_costume_play"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"
+
+[[signatures]]
+address = "stage_tool_costume_test"
+bytes = "55 8B EC 6A FF 68 67 EB 1E 01 64 A1 00 00 00 00 50 64 89 25 00 00 00 00 83 EC 18 C7 45 EC 00 00 00 00 8D 45 F0 89 45 E8 8D 55 DC A1 28 D1 77 01 52 C7 45 DC 00 00 00 00 C7 45 E0 00 00 00 00 8B"

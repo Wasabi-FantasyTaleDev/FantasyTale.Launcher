@@ -148,6 +148,7 @@ function setup(overrides = {}, savedInstance = '', saved = {}, scheduler = { set
     if (id === './launchFailure') return { clientFailureCode }
     if (id === './plugins/schemes') return schemes
     if (id === './i18n') return { i18n: { global: { t: key => key, locale } } }
+    if (id === './clientVersion') return { buildListed: (game, build, instances) => !build.hidden || instances.some(item => item.game === game && item.build === build.id) }
     throw new Error(`Unexpected dependency ${id}`)
   }
   const scope = vue.effectScope()

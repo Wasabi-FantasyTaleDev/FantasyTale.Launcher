@@ -165,7 +165,7 @@ Tab 保持在最上层模态内。可选全客户区半透明遮罩只取最高�
 
 ### 跟踪原生窗口与等待原生操作
 
-三个公开 SDK 辅助类型覆盖了每个原生对话框插件原本都要自己重写的逻辑。
+四个公开 SDK 辅助类型覆盖了每个原生对话框插件原本都要自己重写的逻辑。
 
 `GameNativeUiFormWatcher` 通过开销很小的 `GetFormsAsync` 读取，跟踪某个 `.ui` 资源加载出的窗口。
 `ObserveAsync(watch)` 返回状态（`Open`、`NotOpen`、`Dormant`、`Busy`、`ReadFailed`、`Unsupported`）、
@@ -174,6 +174,15 @@ Tab 保持在最上层模态内。可选全客户区半透明遮罩只取最高�
 传入 `watch: false` 时不读取并结束当前会话，用于只在该对话框有意义的场景中跟踪。通道繁忙或读取失败时保持
 原状态；不支持窗口跟踪的版本报告 `Unsupported`，之后不再读取。`RunAsync(interval, changed, shouldWatch)`
 执行同样的循环，仅在有变化时回调。
+
+`GameSceneWatcher` 从两种读数跟踪玩家所在的场景，每次变化发布一个 `GameScene`。版本的原生描述文件有
+`[stages]` 表时，`GetStageAsync` 给出客户端自己的场景（`mainMenu`、`lobby`、`room`、`clan`、`tool` 等），
+登录前和开发者工具中也能读到；它按间隔轮询，默认 500 毫秒。服务器通过 Nirinsou 发送的场景
+（`game.session.state` / `game.session.changed`：`main_menu`、`plaza`、`room_*`、`match`，附带房间模式和对局标志）
+作为后备。`Source` 说明场景依据哪种读数：已知客户端场景时为 `Native`，只知道服务器场景时为 `Companion`，
+否则为 `None`。两种读数已知时都保留在记录中，插件可以从服务器取房间模式，同时按客户端场景放置面板。
+两套名称不互相映射：服务器在公会场景等单人场景中也保持房间阶段，所以请分别用各自的名称比较。
+没有场景表的版本之后不再读取；读取失败时客户端场景为未知，改用服务器场景，直到读取恢复。
 
 `form.Region(x, y, width, height)` 把相对窗口左上角的矩形转换为客户区像素的 `OverlayAnchor`，
 插件可以按数据把面板固定在对话框内部，并随对话框移动。

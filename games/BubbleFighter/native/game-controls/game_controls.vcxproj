@@ -11,7 +11,7 @@
   <ItemGroup>
     <!-- The adapter catches client SEH faults after native calls; its locks and retained references must unwind. -->
     <ClCompile Include="game_controls.cpp"><ExceptionHandling>Async</ExceptionHandling></ClCompile>
-    <ClCompile Include="ui_service.cpp" /><ClInclude Include="ui_service.h" /><ClInclude Include="control_registry.h" /><ClInclude Include="native_controls.h" /><ClInclude Include="signature_readiness.h" /><None Include="game_controls.def" />
+    <ClCompile Include="ui_service.cpp" /><ClInclude Include="ui_service.h" /><ClInclude Include="control_registry.h" /><ClInclude Include="native_controls.h" /><ClInclude Include="signature_readiness.h" /><ClInclude Include="stage_switch.h" /><None Include="game_controls.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

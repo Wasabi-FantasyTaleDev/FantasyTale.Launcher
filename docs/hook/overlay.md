@@ -290,7 +290,7 @@ detach when dragged. Null removes the binding and restores its original layout.
 
 ### Following a native form and waiting for native operations
 
-Three public SDK helpers cover what every native-dialog plugin otherwise rewrites.
+Four public SDK helpers cover what every native-dialog plugin otherwise rewrites.
 
 `GameNativeUiFormWatcher` follows the forms one `.ui` resource loads, through the
 cheap `GetFormsAsync` read. `ObserveAsync(watch)` returns the status (`Open`,
@@ -303,6 +303,21 @@ the scenes where the dialog matters. A busy channel or a failed read keeps the
 previous state; a build without form tracking reports `Unsupported` and is not read
 again. `RunAsync(interval, changed, shouldWatch)` runs the same loop and calls back
 only when something changed.
+
+`GameSceneWatcher` follows the player's scene from two readings and publishes a
+`GameScene` on every change. Where the build's native descriptor has a `[stages]`
+table, `GetStageAsync` gives the client's own stage (`mainMenu`, `lobby`, `room`,
+`clan`, `tool`, ...), known before login and inside developer tools; it is polled,
+every 500 ms by default. The server's Nirinsou scene (`game.session.state` /
+`game.session.changed`: `main_menu`, `plaza`, `room_*`, `match`, with the room mode
+and match flags) is the fallback. `Source` says which reading the scene rests on:
+`Native` while the stage is known, `Companion` when only the server's scene is, and
+`None` otherwise. Both readings stay in the record when known, so a plugin can take
+the room mode from the server while it places panels by the client's stage. The two
+vocabularies are not mapped onto each other: the server keeps a room phase for
+one-seat scenes such as the clan stage, so compare each reading in its own words. A
+build without a stage map is not read again; a failing read leaves the stage
+unknown, falling back to the server's scene, until it succeeds.
 
 `form.Region(x, y, width, height)` turns a rectangle relative to the form's top
 left into an `OverlayAnchor` in client pixels, so a plugin can pin a panel inside a

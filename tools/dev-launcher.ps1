@@ -74,6 +74,12 @@ if ($LASTEXITCODE -ne 0) { throw 'The Launcher build failed.' }
 Step 'Copying every file the build did not produce from the reference package'
 $copied = 0
 $referenceRoot = (Resolve-Path -LiteralPath $Reference).Path.TrimEnd([char]92, [char]47) + [IO.Path]::DirectorySeparatorChar
+# Folders where this build produced its own framework-dependent program (overlay, updater): the package's self-contained
+# x64 runtime copied beside it would break that program on another architecture (on ARM64 the overlay then fails to
+# load hostfxr.dll and no overlay ever starts).
+$builtHosts = @(Get-ChildItem -LiteralPath $output -Directory | Where-Object {
+    Get-ChildItem -LiteralPath $_.FullName -Filter '*.runtimeconfig.json' -File -ErrorAction SilentlyContinue
+} | ForEach-Object { $_.Name })
 Get-ChildItem -LiteralPath $Reference -Recurse -File | ForEach-Object {
     $relative = $_.FullName.Substring($referenceRoot.Length)
     # Feeds and indexes describe the published release, not this build.
@@ -82,6 +88,7 @@ Get-ChildItem -LiteralPath $Reference -Recurse -File | ForEach-Object {
     # build's own host on another architecture (an ARM64 machine then fails to load hostfxr.dll). Only top-level text
     # files come from the package; everything in its folders (gateway, overlay, updater, media, ...) is copied.
     if ($relative -notmatch '[\\/]' -and $relative -match '\.(dll|exe|json|pdb)$') { return }
+    if ($builtHosts -contains ($relative -split '[\\/]')[0] -and $relative -match '\.(dll|exe|json|pdb)$') { return }
     $target = Join-Path $output $relative
     if (!(Test-Path -LiteralPath $target)) {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null

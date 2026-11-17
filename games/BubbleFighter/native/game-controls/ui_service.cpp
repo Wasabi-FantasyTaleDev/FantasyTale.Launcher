@@ -11,7 +11,8 @@
 namespace game_controls {
 namespace {
 constexpr std::array kinds{"messageBox", "notification", "announcement.show", "announcement.close", "chat",
-    "control.inspect", "control.setText", "control.addButton", "control.remove", "control.activate", "control.setEnabled", "control.events"};
+    "control.inspect", "control.setText", "control.addButton", "control.remove", "control.activate", "control.setEnabled", "control.events",
+    "stage.open"};
 bool identity(const std::string& value) {
     return !value.empty() && std::all_of(value.begin(), value.end(), [](unsigned char c) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-';
@@ -38,7 +39,7 @@ void keys(const toml::table& table, std::initializer_list<std::string_view> allo
     }
 }
 Request request(const toml::table& table) {
-    keys(table, {"action", "owner_scope", "operation_id", "kind", "text", "title", "icon", "announcement_id", "chat_style", "chat_caption", "buttons", "runs", "target", "definition", "maximum_length", "after_sequence", "enabled"});
+    keys(table, {"action", "owner_scope", "operation_id", "kind", "text", "title", "icon", "announcement_id", "chat_style", "chat_caption", "buttons", "runs", "target", "definition", "maximum_length", "after_sequence", "enabled", "stage"});
     Request result;
     result.operation_id = field(table, "operation_id"); result.kind = field(table, "kind");
     result.text = field(table, "text"); result.title = field(table, "title"); result.icon = field(table, "icon", "notice");
@@ -46,6 +47,13 @@ Request request(const toml::table& table) {
     result.chat_caption = field(table, "chat_caption", result.kind == "chat" && result.chat_style == "system" ? "Fantasy Tale" : "");
     if (table.contains("chat_caption") && result.kind != "chat") throw std::invalid_argument("Only chat accepts a caption");
     if (!identity(result.operation_id) || std::find(kinds.begin(), kinds.end(), result.kind) == kinds.end()) throw std::invalid_argument("Invalid native UI operation identity or kind");
+    if (table.contains("stage") && result.kind != "stage.open") throw std::invalid_argument("Only stage.open accepts a stage");
+    if (result.kind == "stage.open") {
+        keys(table, {"action", "owner_scope", "operation_id", "kind", "stage"});
+        result.stage = field(table, "stage");
+        if (!identity(result.stage)) throw std::invalid_argument("stage.open needs a stage identity");
+        return result;
+    }
     if (result.kind.starts_with("control.")) {
         for (const auto* key : {"title", "icon", "announcement_id", "chat_style", "chat_caption", "buttons", "runs"})
             if (table.contains(key)) throw std::invalid_argument("Control requests cannot contain presentation fields");
@@ -191,6 +199,7 @@ bool valid_result(const Result& result, const Request& value) {
     if (result.status == "dismissed") return value.kind == "messageBox";
     if (result.status == "closed") return value.kind == "announcement.close";
     if (result.status == "inserted") return value.kind == "chat";
+    if (result.status == "opened") return value.kind == "stage.open";
     return result.status == "queued" || result.status == "unsupported" || result.status == "notReady" || result.status == "busy" || result.status == "failed" || result.status == "outcomeUnknown";
 }
 }
@@ -241,6 +250,13 @@ std::string Service::handle(const std::string& caller, const std::string& payloa
             forms.push_back(std::move(form));
         }
         return json(toml::table{{"status", "completed"}, {"forms", std::move(forms)}});
+    }
+    if (action == "stage") {
+        // A read of the stage manager's ids: answered here, never queued behind game-thread UI work.
+        keys(table, {"action", "owner_scope"});
+        const auto state = adapter_.stage();
+        if (!state) return json(toml::table{{"status", "unsupported"}, {"reason", "adapterUnavailable"}});
+        return json(toml::table{{"status", "completed"}, {"id", state->id}, {"name", state->name}, {"switching", state->switching}});
     }
     const auto operation_id = field(table, "operation_id");
     if (!identity(operation_id)) throw std::invalid_argument("Invalid native UI operation identity");

@@ -18,6 +18,7 @@ import { supportedClientLanguages, clientLanguageInstalled } from './clientLangu
 import { accountExpiryDelay, liveAccountSessions } from './accounts/expiry'
 import { resolveLoginPolicy } from './accounts/login-policy'
 import { i18n } from './i18n'
+import { buildListed } from './clientVersion'
 import { clientFailureCode } from './launchFailure'
 import { captureSchemeInstallation, planStoreInstallation, rememberStoreInstallation, cancelStoreInstallation, cloneSelection, defaultScheme, emptyLibrary, readLibrary, removeRecoveredRelease, schemeContext, type PluginScheme, type SchemeLibrary } from './plugins/schemes'
 import type { StorePackage } from './store/types'
@@ -94,7 +95,9 @@ export const gameReady = computed(() => selectedGame.value?.status === 'enabled'
 export const gamePreparing = computed(() => selectedGame.value?.preparing ?? false)
 export const gameInstances = computed(() => gameReady.value ? state.instances.filter(i => i.game === state.selectedGameId) : [])
 export const selectedInstance = computed(() => gameInstances.value.find(i => i.id === state.selectedInstanceId))
-export const selectedBuild = computed(() => selectedGame.value?.builds.find(b => b.id === (selectedInstance.value?.build ?? state.selectedBuildId)))
+/** The selected game's builds that version lists show: a hidden build only once a client of it is registered. */
+export const listedBuilds = computed(() => selectedGame.value?.builds.filter(b => buildListed(selectedGame.value!.id, b, state.instances)) ?? [])
+export const selectedBuild = computed(() => listedBuilds.value.find(b => b.id === (selectedInstance.value?.build ?? state.selectedBuildId)))
 export const gameServers = computed(() => state.servers.filter(s => s.game === state.selectedGameId))
 export const selectedServer = computed(() => gameServers.value.find(s => s.id === state.selectedServerId))
 const schemeLibraries = reactive<Record<string, SchemeLibrary>>({})
@@ -384,7 +387,7 @@ async function readInstances(): Promise<void> {
           const matching = gameInstances.value.find(instance => instance.build === state.selectedBuildId)
           if (matching || state.selectedInstanceId || !state.selectedBuildId) state.selectedInstanceId = (matching ?? gameInstances.value[0])?.id ?? ''
         }
-        if (!state.selectedBuildId) state.selectedBuildId = selectedInstance.value?.build ?? selectedGame.value?.builds[0]?.id ?? ''
+        if (!state.selectedBuildId) state.selectedBuildId = selectedInstance.value?.build ?? listedBuilds.value[0]?.id ?? ''
         state.instancesLoaded = true
       }).finally(() => { state.instancesLoading = false }),
       refreshRunning(),
@@ -435,8 +438,8 @@ async function loadWorkspace(): Promise<void> {
       await refreshInstances(false)
       state.games = games
       if (!selectedBuild.value) {
-        state.selectedInstanceId = gameInstances.value.find(instance => selectedGame.value?.builds.some(build => build.id === instance.build))?.id ?? ''
-        state.selectedBuildId = selectedInstance.value?.build ?? selectedGame.value?.builds[0]?.id ?? ''
+        state.selectedInstanceId = gameInstances.value.find(instance => listedBuilds.value.some(build => build.id === instance.build))?.id ?? ''
+        state.selectedBuildId = selectedInstance.value?.build ?? listedBuilds.value[0]?.id ?? ''
       }
       await refreshServers()
     }).catch(error => { state.requestFailure = error as Error; state.error = (error as Error).message })
@@ -461,7 +464,7 @@ export function selectGame(id: string): void {
   const previous = readClientSelection(id)
   state.selectedInstanceId = gameInstances.value.find(instance => instance.id === previous.instanceId)?.id ??
     (previous.buildId && !previous.instanceId ? '' : gameInstances.value[0]?.id ?? '')
-  state.selectedBuildId = selectedInstance.value?.build ?? (selectedGame.value?.builds.some(build => build.id === previous.buildId) ? previous.buildId : selectedGame.value?.builds[0]?.id ?? '')
+  state.selectedBuildId = selectedInstance.value?.build ?? (listedBuilds.value.some(build => build.id === previous.buildId) ? previous.buildId : listedBuilds.value[0]?.id ?? '')
   state.selectedServerId = localStorage.getItem(`server.${id}`) ?? gameServers.value[0]?.id ?? ''
   if (!gameServers.value.some(s => s.id === state.selectedServerId)) state.selectedServerId = gameServers.value[0]?.id ?? ''
   state.clientLanguage = localStorage.getItem(`clientLanguage.${id}`) ?? selectedGame.value?.clientLanguages[0] ?? ''

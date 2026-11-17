@@ -34,13 +34,16 @@ public static class InstanceFile
         }
         var plugins = root.Tables("plugins", 64).Select(p =>
         {
-            p.OnlyKeys("id", "version", "enabled", "required", "options");
+            p.OnlyKeys("id", "version", "enabled", "required", "options", "grants");
             var pluginId = p.String("id", true); var version = p.String("version", true);
             PluginCatalog.ValidateId(root.File, p.Error("id", "").Key, pluginId);
             PluginCatalog.ValidateVersion(root.File, p.Error("version", "").Key, version);
             var enabled = p.Boolean("enabled", true); var required = p.Boolean("required");
             if (required && !enabled) throw p.Error("enabled", "a required plugin cannot be disabled");
-            return new InstancePlugin(pluginId, version, enabled, required, p.Table("options")?.Scalars() ?? new Dictionary<string, object>());
+            var grants = p.String("grants");
+            if (grants.Length != 0 && (grants.Length != 64 || !grants.All(char.IsAsciiHexDigit))) throw p.Error("grants", "must be a SHA-256 hex digest");
+            return new InstancePlugin(pluginId, version, enabled, required, p.Table("options")?.Scalars() ?? new Dictionary<string, object>(),
+                grants.Length == 0 ? null : grants.ToLowerInvariant());
         }).ToArray();
         if (plugins.GroupBy(p => p.Id).Any(g => g.Count() > 1)) throw root.Error("plugins", "duplicate plugin id");
         var language = t.String("language");
@@ -75,6 +78,7 @@ public static class InstanceFile
             text.Append("\n[[plugins]]\n"); Line(text, "id", p.Id); Line(text, "version", p.Version);
             text.Append("enabled = ").Append(p.Enabled ? "true" : "false").Append('\n');
             text.Append("required = ").Append(p.Required ? "true" : "false").Append('\n');
+            if (p.Grants is not null) Line(text, "grants", p.Grants);
             if (p.Options.Count == 0) continue;
             text.Append("[plugins.options]\n");
             foreach (var (key, value) in p.Options.OrderBy(x => x.Key, StringComparer.Ordinal))

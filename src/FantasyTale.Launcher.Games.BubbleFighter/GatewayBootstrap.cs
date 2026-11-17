@@ -30,8 +30,11 @@ public sealed partial class BubbleFighterModule
         var targets = GatewayBootstrap.ProjectOrdinaryTargets(context.GameTargets);
         if (targets.Length == 1 && targets[0].UnavailableCapacity is null)
             return new DirectBootstrapLease(targets[0].Endpoint);
+        // A build without an audited Gateway adapter cannot show the server's in-game list, so it connects straight
+        // to the directory's first available destination, as a single-destination directory would.
         if (!GatewayBuildCapabilities.SupportsBootstrap(context.Build.Id))
-            throw new InvalidDataException("This client build has no audited native Gateway adapter.");
+            return new DirectBootstrapLease((targets.FirstOrDefault(target => target.UnavailableCapacity is null)
+                ?? throw new InvalidOperationException("The in-game server directory has no available destination.")).Endpoint);
         var executable = GatewayBootstrap.ExecutablePath();
         return await GatewayBootstrap.StartAsync(executable, context.Build.Id, targets, cancellationToken, context.Diagnostics,
             metadata: NativeCenterNames.Create(context.Build.Id, context.GameTargets)).ConfigureAwait(false);

@@ -5,8 +5,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { call, demoMode, inHost, on, type HostingProfile } from '../bridge'
 import { localized, clientRegion } from '../i18n'
-import { clientVersionCaption } from '../clientVersion'
-import { gameInstances, gamePreparing, gameReady, homeGames, isRunning, perform, selectGame, selectedBuild, selectedGame, gameServers, selectedServer, buildNotServed, loginRequired, loginPolicy, navigationEntries, clientLanguages, isClientLanguageInstalled, languageNames, setClientLanguage, refreshServices, refreshServers, selectedInstance, state } from '../state'
+import { clientVersionCaption, clientWireId } from '../clientVersion'
+import { gameInstances, gamePreparing, gameReady, homeGames, isRunning, perform, selectGame, selectedBuild, listedBuilds, selectedGame, gameServers, selectedServer, buildNotServed, loginRequired, loginPolicy, navigationEntries, clientLanguages, isClientLanguageInstalled, languageNames, setClientLanguage, refreshServices, refreshServers, selectedInstance, state } from '../state'
 import PluginSchemePicker from '../components/PluginSchemePicker.vue'
 import { ensurePluginScheme, pluginSchemesBusy } from '../state'
 import AccountPicker from '../components/AccountPicker.vue'
@@ -208,9 +208,9 @@ watch(() => [downloadTasks.value, selectedInstance.value?.id, state.selectedServ
   if (tasks.some(task => !task || ['failed', 'canceled'].includes(task.stage))) { pendingLaunch.value = undefined; return }
   if (!launchPreparing.value && tasks.every(task => task?.stage === 'completed')) { pendingLaunch.value = undefined; void launch() }
 })
-const choices = computed(() => (selectedGame.value?.builds ?? []).flatMap(build => {
+const choices = computed(() => listedBuilds.value.flatMap(build => {
   const installed = gameInstances.value.filter(i => i.build === build.id)
-  return installed.length ? installed.map(i => ({ value: `instance:${i.id}`, label: localized(build.name, { dates: true }), group: clientRegion(build.branch), caption: [clientVersionCaption(build), i.name].filter(Boolean).join(' · ') }))
+  return installed.length ? installed.map(i => ({ value: `instance:${i.id}`, label: localized(build.name, { dates: true }), group: clientRegion(build.branch), caption: clientVersionCaption(build) ? `${clientVersionCaption(build)} · ${i.name}` : `${i.name} (${clientWireId(build)})` }))
     : [{ value: `build:${build.id}`, label: localized(build.name, { dates: true }), group: clientRegion(build.branch), caption: clientVersionCaption(build) }]
 }))
 const versionChoice = computed({ get: () => selectedInstance.value ? `instance:${selectedInstance.value.id}` : `build:${selectedBuild.value?.id ?? ''}`,

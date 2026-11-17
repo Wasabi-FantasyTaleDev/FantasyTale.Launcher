@@ -188,6 +188,7 @@ public sealed partial class LauncherApiClient : IDisposable
             if (preset.ProtocolVersion <= 0 || preset.PatchVersion is { } patch && (string.IsNullOrWhiteSpace(patch) || patch.Any(char.IsControl)))
                 throw new InvalidDataException("Invalid server client version metadata.");
             ValidateLanguages(preset.ClientLanguages);
+            if (preset.ClanPort is < 1 or > 65535) throw new InvalidDataException("Invalid server clan port.");
             if (preset.DownloadSource is { } download)
             {
                 if (download.Kind is not ("http" or "alist" or "github")) throw new InvalidDataException("Invalid client distribution transport.");

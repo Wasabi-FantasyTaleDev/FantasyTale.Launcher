@@ -403,6 +403,7 @@ function filterPluginReleases(instanceId?: string, serverId?: string): PluginSum
 
 let pendingSupportOffers: any[] = []
 let overlayTestPrefs = { enabled: false, passThroughOutside: true }
+let developerStagesPref = false
 
 const handlers: DemoHandlers = {
   'app.info': (_p: Params) => ({ version: '0.9.5-demo', language: typeof navigator !== 'undefined' ? navigator.language : 'en', os: 'Windows 11' }),
@@ -1155,6 +1156,11 @@ const handlers: DemoHandlers = {
   'settings.setUpdates': (p: Params) => ({ autoCheck: Boolean(p.autoCheck), autoDownload: Boolean(p.autoDownload), autoCheckPlugins: Boolean(p.autoCheckPlugins ?? true), autoUpdatePlugins: Boolean(p.autoUpdatePlugins ?? true), removeOldPluginVersions: Boolean(p.removeOldPluginVersions ?? true) }),
   'settings.launcherLanguage': (_p: Params) => null,
   'settings.overlayTest': (_p: Params) => clone(overlayTestPrefs),
+  'settings.developerStages': (_p: Params) => ({ enabled: developerStagesPref }),
+  'settings.setDeveloperStages': (p: Params) => {
+    developerStagesPref = Boolean(p.enabled)
+    return { enabled: developerStagesPref }
+  },
   'settings.setOverlayTest': (p: Params) => {
     overlayTestPrefs = { enabled: Boolean(p.enabled), passThroughOutside: Boolean(p.passThroughOutside ?? overlayTestPrefs.passThroughOutside) }
     return clone(overlayTestPrefs)

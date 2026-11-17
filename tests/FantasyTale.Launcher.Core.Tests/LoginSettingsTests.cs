@@ -59,5 +59,21 @@ public sealed class LoginSettingsTests : IDisposable
         Assert.Equal(prefix.Concat(Encoding.ASCII.GetBytes("serverAddr=203.0.113.42\r\nSERVERADDR=203.0.113.42\r\nserverPort=7210\r\nServerPort=7210\r\notherServerAddr=keep\r\n")).ToArray(), File.ReadAllBytes(path));
     }
 
+    [Fact]
+    public void ClanServerIsWrittenAndAMissingFileIsCreatedForIt()
+    {
+        // cn-717 ships without login.ini; its clan connection reads clanServerAddr/clanServerPort from it.
+        var module = new BubbleFighterModule();
+        var path = Path.Combine(_root, "login.ini");
+        module.PrepareLaunch(Context(new("203.0.113.42", 7210)) with { ClanServer = new("203.0.113.42", 7400) });
+        Assert.Equal("clanServerAddr=203.0.113.42\r\nclanServerPort=7400\r\n", File.ReadAllText(path));
+
+        // An existing file keeps its other keys; a stale clan port is corrected and the game server still follows.
+        File.WriteAllText(path, "serverAddr=old\r\nclanServerPort=7103\r\nnopatch=true\r\n");
+        module.PrepareLaunch(Context(new("203.0.113.42", 7210)) with { ClanServer = new("203.0.113.42", 7400) });
+        Assert.Equal("serverAddr=203.0.113.42\r\nclanServerPort=7400\r\nnopatch=true\r\nserverPort=7210\r\nclanServerAddr=203.0.113.42\r\n",
+            File.ReadAllText(path));
+    }
+
     public void Dispose() => Directory.Delete(_root, true);
 }

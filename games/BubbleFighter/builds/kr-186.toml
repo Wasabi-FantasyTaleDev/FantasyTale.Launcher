@@ -1,0 +1,42 @@
+# Client build definition for the Korean 2009 client.
+schema = 1
+
+[build]
+id = "kr-186"
+game = "bubblefighter"
+branch = "kr"
+# Kept out of the version lists until a client of this build is imported.
+hidden = true
+# PE link time (UTC); this client is not signed. The display names use Korea time (2009-12-21 08:42).
+build_date = "2009-12-20 23:42:19"
+protocol_version = 186
+executable = "BubbleFighter.exe"
+messenger = "standin"
+server_profile = "kr-186"
+hosting_adapter = "legacy"
+default_port = 7280
+
+[build.name]
+"en" = "Korea 2009-12-21"
+"zh-CN" = "韩服 2009-12-21"
+"zh-TW" = "韓國 2009-12-21"
+"ko" = "한국 2009-12-21"
+"id" = "Korea 2009-12-21"
+"vi" = "Hàn Quốc 2009-12-21"
+
+[fingerprint]
+pe_timestamp = 0x4B2EB65B
+
+[launch]
+native_language = "ko"
+# kr-186 imports NMCO_CallNMFunc (no NMCO_CallNMFunc2) and reads its server from login.ini.
+login = "nmco"
+# kr-186 wWinMain (sub_811B50) hands its whole command line on as the login account and has no /sid option,
+# so the account is the only argument.
+arguments = ["{account}"]
+
+[plugins]
+default = []
+
+[overlay]
+theme = "v1"

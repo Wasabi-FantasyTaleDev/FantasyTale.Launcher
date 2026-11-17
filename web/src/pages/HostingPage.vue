@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { call, demoMode, inHost, hostingPreview, type HostingOverview, type HostingProfile, type HostingSession, type DirectorySource, type RoomPublication } from '../bridge'
 import { selectedGame, state, refreshServers } from '../state'
 import { localized } from '../i18n'
+import { buildListed } from '../clientVersion'
 import PageBody from '../components/PageBody.vue'
 import HostingLogDialog from '../components/HostingLogDialog.vue'
 import DirectorySourceDialog from '../components/DirectorySourceDialog.vue'
@@ -36,7 +37,7 @@ const selected = computed(() => profiles.value.find(p => p.id === selectedId.val
 const selectedBuildName = computed(() => builds.value.find(b => b.value === selected.value?.build)?.label ?? selected.value?.build)
 const session = computed(() => overview.value.sessions.find(s => s.profileId === selected.value?.id))
 const running = (s?: HostingSession) => !!s && ['starting', 'ready', 'stopping'].includes(s.state)
-const builds = computed(() => (selectedGame.value?.builds ?? []).filter(b => b.supportsHosting).map(b => ({ value: b.id, label: localized(b.name, { dates: true }), caption: b.releaseVersion })))
+const builds = computed(() => (selectedGame.value?.builds ?? []).filter(b => b.supportsHosting && buildListed(selectedGame.value!.id, b, state.instances)).map(b => ({ value: b.id, label: localized(b.name, { dates: true }), caption: b.releaseVersion })))
 let timer: ReturnType<typeof setTimeout> | undefined, disposed = false, refreshRevision = 0, contextRevision = 0
 watch([selectedId, () => state.selectedGameId], () => { ++contextRevision }, { flush: 'sync' })
 async function refresh() {

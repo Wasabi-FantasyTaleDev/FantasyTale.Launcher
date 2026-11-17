@@ -38,6 +38,7 @@ function setup(refreshServers = async () => {}, list = async () => ({ profiles, 
       return []
     } }
     if (id === '../i18n') return { localized: value => value }
+    if (id === '../clientVersion') return { buildListed: () => true }
     if (id.endsWith('.vue')) return { default: {} }
     throw new Error(`Unexpected dependency ${id}`)
   }

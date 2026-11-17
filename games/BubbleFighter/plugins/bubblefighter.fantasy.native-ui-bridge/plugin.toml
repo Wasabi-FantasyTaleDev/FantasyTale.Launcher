@@ -4,11 +4,11 @@ schema = 1
 update_source = "fantasy-tale"
 id = "bubblefighter.fantasy.native-ui-bridge"
 aliases = ["bubblefighter.fantasy.overlay-notifications"]
-version = "0.1.20"
+version = "0.1.23"
 game = "bubblefighter"
 kind = "native"
 runtime = ">=3.7.2 <4.0.0"
-minimum_launcher_version = "0.1.57"
+minimum_launcher_version = "0.2.1"
 authors = ["Fantasy Tale Studio"]
 license = "MIT"
 name = { "zh-CN" = "Fantasy Tale 游戏控件调用支持", "zh-TW" = "Fantasy Tale 遊戲控制項呼叫支援", en = "Fantasy Tale Game Control Support", ko = "Fantasy Tale 게임 컨트롤 호출 지원", id = "Dukungan Kontrol Game Fantasy Tale", vi = "Hỗ trợ gọi điều khiển trò chơi Fantasy Tale" }

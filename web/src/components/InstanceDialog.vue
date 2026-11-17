@@ -3,7 +3,7 @@ import { computed, ref, watch, onScopeDispose } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { call, demoMode, inHost, type Instance, type ServerClientRelease, type ServerPreset } from '../bridge'
 import { localized, clientRegion } from '../i18n'
-import { clientVersionCaption } from '../clientVersion'
+import { buildListed, clientVersionCaption } from '../clientVersion'
 import { perform, selectedGame, state } from '../state'
 import { supportedClientLanguages } from '../clientLanguages'
 import WDialog from '../controls/WDialog.vue'
@@ -64,7 +64,8 @@ const defaultName = computed(() => !props.mode || props.mode === 'create' ? loca
 const resolvedName = computed(() => name.value.trim() || defaultName.value)
 const languages = computed(() => supportedClientLanguages(chosenBuild.value, selectedGame.value?.clientLanguages, props.preset?.clientLanguages))
 watch(languages, values => { if (!values.includes(language.value)) language.value = values[0] ?? '' })
-const builds = computed(() => selectedGame.value?.builds.map(b => ({ value: b.id, label: localized(b.name, { dates: true }), group: clientRegion(b.branch), caption: clientVersionCaption(b) })) ?? [])
+// A hidden build is offered once a client of it exists, or when the chosen folder is detected as that build.
+const builds = computed(() => selectedGame.value?.builds.filter(b => b.id === build.value || buildListed(selectedGame.value!.id, b, state.instances)).map(b => ({ value: b.id, label: localized(b.name, { dates: true }), group: clientRegion(b.branch), caption: clientVersionCaption(b) })) ?? [])
 const title = computed(() => t(props.mode === 'edit' ? 'live.editTitle' : props.mode === 'clone' ? 'live.cloneTitle' : 'live.add'))
 watch(() => props.open, open => {
   dialogRevision++; ++identificationRevision; checking.value = false

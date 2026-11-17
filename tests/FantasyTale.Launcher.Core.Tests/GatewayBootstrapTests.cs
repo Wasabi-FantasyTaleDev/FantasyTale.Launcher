@@ -31,7 +31,7 @@ public sealed class GatewayBootstrapTests
     }
 
     [Fact]
-    public async Task UnauditedAdapterRejectsAMultipleDestinationBootstrap()
+    public async Task UnauditedAdapterConnectsDirectlyToTheFirstDestination()
     {
         var game = GameCatalog.Load(Path.Combine(TestRepository.StartDirectory().FullName, "games")).Single(row => row.Id == "bubblefighter");
         var build = game.Builds.Single(row => row.Id == "kr-812") with { Id = "fixture-unadapted" };
@@ -39,7 +39,8 @@ public sealed class GatewayBootstrapTests
         {
             GameTargets = [new("first", "First", new("192.0.2.1", 7110)), new("second", "Second", new("192.0.2.2", 7110))],
         };
-        await Assert.ThrowsAsync<InvalidDataException>(async () => await new BubbleFighterModule().PrepareBootstrapAsync(context, CancellationToken.None));
+        await using var lease = await new BubbleFighterModule().PrepareBootstrapAsync(context, CancellationToken.None);
+        Assert.Equal(new ServerEndpoint("192.0.2.1", 7110), Assert.IsAssignableFrom<ILaunchBootstrapLease>(lease).GameEndpoint);
     }
 
     [Theory]

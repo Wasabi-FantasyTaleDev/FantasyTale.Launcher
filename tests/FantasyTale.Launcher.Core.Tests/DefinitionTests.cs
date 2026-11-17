@@ -248,7 +248,8 @@ public sealed class DefinitionTests
         Assert.Equal(GameStatus.Enabled, bf.Status);
         Assert.False(bf.RoomsEnabled);
         Assert.True(bf.LocalHostingEnabled);
-        Assert.Equal(["cn-404", "cn-408", "cn-735"], bf.Builds.Where(build => !build.Enabled || build.Hidden).Select(build => build.Id));
+        Assert.Equal(["cn-404", "cn-408", "cn-735", "kr-186"], bf.Builds.Where(build => !build.Enabled || build.Hidden).Select(build => build.Id));
+        Assert.All(bf.Builds.Where(build => build.Id == "kr-186"), build => { Assert.True(build.Enabled); Assert.True(build.Hidden); Assert.Equal(["{account}"], build.Arguments); });
         Assert.All(bf.Builds.Where(build => build.Id == "cn-735"), build => { Assert.False(build.Enabled); Assert.True(build.Hidden); });
         Assert.Equal("泡泡战士", bf.Name.Resolve("zh-CN"));
         Assert.Equal("Crazy Shooter", bf.Name.Resolve("id-ID"));

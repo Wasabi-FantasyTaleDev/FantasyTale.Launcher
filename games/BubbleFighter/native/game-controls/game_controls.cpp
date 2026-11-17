@@ -1,6 +1,7 @@
 #include "ui_service.h"
 #include "presentation.h"
 #include "native_calls.h"
+#include "stage_switch.h"
 #include "control_registry.h"
 #include "signature_readiness.h"
 #include "selection_records.h"
@@ -60,6 +61,8 @@ struct Descriptor {
     std::map<std::string, uint32_t> values;
     std::vector<std::pair<uintptr_t, std::vector<uint8_t>>> signatures;
     std::vector<SelectionGroup> selection_groups;
+    // Build-independent names of the stage ids, from the descriptor's [stages] table (the build's stage factory).
+    std::map<int32_t, std::string> stage_names;
     uintptr_t address(const char* name) const { return addresses.at(name); }
     uint32_t value(const char* name) const { return values.at(name); }
     uint32_t convention(const char* name) const { const auto it = values.find(name); return it == values.end() ? 1 : it->second; }
@@ -89,7 +92,7 @@ std::optional<Descriptor> load_descriptor() {
     const auto& table = parsed.table();
     for (const auto& [key, node] : table) {
         (void)node;
-        if (key != "schema" && key != "build" && key != "timestamp" && key != "addresses" && key != "values" && key != "signatures" && key != "selection_groups") throw std::invalid_argument("Unknown native UI descriptor field");
+        if (key != "schema" && key != "build" && key != "timestamp" && key != "addresses" && key != "values" && key != "signatures" && key != "selection_groups" && key != "stages") throw std::invalid_argument("Unknown native UI descriptor field");
     }
     if (table["schema"].value<int64_t>() != 1 || table["build"].value<std::string>() != runtime->build) throw std::invalid_argument("Native UI descriptor identity mismatch");
     Descriptor result;
@@ -131,6 +134,21 @@ std::optional<Descriptor> load_descriptor() {
         if (result.addresses.at(*name) - result.base + expected.size() > pe.OptionalHeader.SizeOfImage)
             throw std::invalid_argument("Native UI signature extends beyond the main image");
         result.signatures.emplace_back(result.addresses.at(*name), std::move(expected));
+    }
+    if (const auto* node = table.get("stages")) {
+        const auto* stages = node->as_table();
+        if (!stages) throw std::invalid_argument("Native stage names must be a table");
+        for (const auto& [key, value] : *stages) {
+            const auto name = value.value<std::string>();
+            int32_t id = 0;
+            const auto text = std::string(key.str());
+            size_t used = 0;
+            try { id = std::stoi(text, &used); } catch (const std::exception&) { used = 0; }
+            if (used == 0 || used != text.size() || !name || name->empty() || name->size() > 32
+                || !std::all_of(name->begin(), name->end(), [](unsigned char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); })
+                || *name == "tool" || *name == "unknown" || !result.stage_names.emplace(id, *name).second)
+                throw std::invalid_argument("Invalid native stage name");
+        }
     }
     if (const auto* node = table.get("selection_groups")) {
         const auto* groups = node->as_array();
@@ -303,6 +321,29 @@ std::optional<Descriptor> load_descriptor() {
             throw std::invalid_argument("Missing native control function signature");
     }
     if (!result.selection_groups.empty() && !result.values.contains("control_abi")) throw std::invalid_argument("Native selections require a control adapter");
+    const auto tools = std::count_if(result.addresses.begin(), result.addresses.end(), [](const auto& entry) { return entry.first.starts_with(stage_tool_prefix); });
+    if (!result.stage_names.empty()) {
+        // The stage read needs only where the application keeps its stage ids and the ids that mean idle and
+        // factory-built, so a build without tool stages still names its stages.
+        // stage_application names the stage manager where it is not the notification owner (kr-1256).
+        (void)result.address(result.addresses.contains("stage_application") ? "stage_application" : "application");
+        for (const auto* name : {"stage_current_offset", "stage_next_offset", "stage_custom", "stage_idle"}) (void)result.value(name);
+        if (result.value("stage_current_offset") % 4 || result.value("stage_next_offset") % 4) throw std::invalid_argument("Invalid native stage layout");
+    }
+    if (result.addresses.contains("stage_switch") || result.values.contains("stage_factory_offset") || tools) {
+        // Developer tool stages: every switch target and both stage methods are signed, and at least one tool is named.
+        // A build opens a tool either through its switch function or, without one, by storing the factory at
+        // stage_factory_offset and setting the id stage_custom; a descriptor names exactly one of the two.
+        if (result.addresses.contains("stage_switch") == result.values.contains("stage_factory_offset")) throw std::invalid_argument("Invalid native stage layout");
+        if (!result.addresses.contains("stage_switch") && result.value("stage_factory_offset") % 4) throw std::invalid_argument("Invalid native stage layout");
+        (void)result.address("stage_set");
+        for (const auto* name : {"stage_current_offset", "stage_next_offset", "stage_set_slot", "stage_main_menu", "stage_custom", "stage_idle"}) (void)result.value(name);
+        if (!tools || result.value("stage_set_slot") % sizeof(uintptr_t) || result.stage_names.empty()) throw std::invalid_argument("Invalid native stage layout");
+        for (const auto& [name, address] : result.addresses)
+            if ((name == "stage_switch" || name == "stage_set" || name.starts_with(stage_tool_prefix))
+                && std::none_of(result.signatures.begin(), result.signatures.end(), [&](const auto& signature) { return signature.first == address; }))
+                throw std::invalid_argument("Missing native stage function signature");
+    }
     return result;
 }
 
@@ -464,11 +505,65 @@ class NativeAdapter final : public Adapter {
         context[3] = reinterpret_cast<uintptr_t>(&size);
         return reinterpret_cast<void*(__thiscall*)(void*, int, uint32_t, void*)>(method)(reinterpret_cast<void*>(allocator), 0, size, context);
     }
+    bool stages_supported() const {
+        return descriptor_ && (descriptor_->addresses.contains("stage_switch") || descriptor_->values.contains("stage_factory_offset"));
+    }
+    uintptr_t stage_application() const {
+        const auto& descriptor = *descriptor_;
+        return pointer(descriptor.address(descriptor.addresses.contains("stage_application") ? "stage_application" : "application"));
+    }
+    // The stage read is offered wherever the descriptor names its stages; switching also needs the tool stages.
+    bool stage_read_supported() const { return descriptor_ && !descriptor_->stage_names.empty(); }
+    StageLayout stage_layout() const {
+        const auto& descriptor = *descriptor_;
+        return {descriptor.value("stage_current_offset"), descriptor.value("stage_next_offset"),
+            descriptor.values.contains("stage_main_menu") ? descriptor.value("stage_main_menu") : 0,
+            descriptor.value("stage_custom"), descriptor.value("stage_idle")};
+    }
+    Result open_stage(const Request& value) const {
+        if (!stages_supported()) return {value.operation_id, "unsupported", {}, "adapterUnavailable"};
+        const auto& descriptor = *descriptor_;
+        const auto to_main_menu = value.stage == stage_main_menu;
+        const auto tool = std::string(stage_tool_prefix) + value.stage;
+        if (!to_main_menu && !descriptor.addresses.contains(tool)) return {value.operation_id, "unsupported", {}, "unknownStage"};
+        const auto application = stage_application();
+        const auto refusal = stage_refusal(application, stage_layout(), to_main_menu, read);
+        if (!refusal.empty()) return {value.operation_id, "notReady", {}, std::string(refusal)};
+        // kr-812 sub_820060 changes stage through the application's vtable slot +36 (kr-812 sub_8E1240).
+        if (pointer(pointer(application) + descriptor.value("stage_set_slot")) != descriptor.address("stage_set"))
+            return {value.operation_id, "failed", {}, "unexpectedStageMethod"};
+        const auto set = reinterpret_cast<void(__thiscall*)(void*, uint32_t)>(descriptor.address("stage_set"));
+        if (to_main_menu) {
+            set(reinterpret_cast<void*>(application), descriptor.value("stage_main_menu"));
+        } else if (!descriptor.addresses.contains("stage_switch")) {
+            // cn-774 sub_C51250 opens each tool by storing its factory at +92 and setting the id 16, which the stage
+            // setter cn-774 sub_A1A9B0 keeps without a factory of its own; cn-774 sub_F5DE60 builds it on the next frame.
+            // The setter ignores the id while its ready byte is clear, so a factory it did not take is removed again.
+            const auto factory = application + descriptor.value("stage_factory_offset");
+            uint32_t previous = 0, next = 0;
+            if (!read(factory, &previous, static_cast<uint32_t>(sizeof(previous)))) return {value.operation_id, "notReady", {}, "gameUiNotReady"};
+            *reinterpret_cast<volatile uint32_t*>(factory) = static_cast<uint32_t>(descriptor.address(tool.c_str()));
+            set(reinterpret_cast<void*>(application), descriptor.value("stage_custom"));
+            if (!read(application + descriptor.value("stage_next_offset"), &next, static_cast<uint32_t>(sizeof(next))) || next != descriptor.value("stage_custom")) {
+                *reinterpret_cast<volatile uint32_t*>(factory) = previous;
+                return {value.operation_id, "notReady", {}, "stageSwitchRefused"};
+            }
+        } else {
+            // kr-812 sub_688390 opens each tool as sub_A8A920(application, factory); the game builds the stage on its next frame.
+            reinterpret_cast<void(__thiscall*)(void*, uintptr_t)>(descriptor.address("stage_switch"))(reinterpret_cast<void*>(application), descriptor.address(tool.c_str()));
+        }
+        return {value.operation_id, "opened", {}, {}};
+    }
     void execute(Work& work) {
         const auto& value = work.request;
         const auto& descriptor = *descriptor_;
         if (failed_.load() || !descriptor.matches() || !descriptor.ui_ready()) {
             work.complete({value.operation_id, "notReady", {}, "gameUiNotReady"}); return;
+        }
+        if (value.kind == "stage.open") {
+            phase_ = "stage";
+            work.complete(open_stage(value));
+            return;
         }
         if (value.kind.starts_with("control.")) {
             phase_ = "controls";
@@ -672,7 +767,20 @@ public:
         result.push_back({"control.setEnabled", enable_supported, enable_supported && ready, {"form", "name", "id", "visibleOnly", "callerScoped", "cosmetic"},
             enable_supported ? "" : "adapterUnavailable"});
         result.push_back({"control.events", control_supported, control_supported && ready, {"callerScoped", "cursor", "retained", "lossBoundary"}, control_supported ? "" : "adapterUnavailable"});
+        const auto stage_supported = supported && stages_supported();
+        std::vector<std::string> stages;
+        if (stage_supported) {
+            for (const auto& [name, address] : descriptor_->addresses)
+                if (name.starts_with(stage_tool_prefix)) stages.push_back("tool:" + name.substr(stage_tool_prefix.size()));
+            stages.push_back("mainMenu");
+        }
+        // Readiness is the game UI; whether the current stage allows the move is answered per request.
+        result.push_back({"stage.open", stage_supported, stage_supported && ready, std::move(stages), stage_supported ? "" : "adapterUnavailable"});
         return result;
+    }
+    std::optional<StageState> stage() override {
+        if (failed_.load() || !stage_read_supported() || !descriptor_->matches()) return std::nullopt;
+        return read_stage(stage_application(), stage_layout(), descriptor_->stage_names, read);
     }
     std::optional<std::vector<FormState>> forms(const std::string& resource) override {
         if (failed_.load() || !controls_ || !controls_->available() || !descriptor_->matches()) return std::nullopt;

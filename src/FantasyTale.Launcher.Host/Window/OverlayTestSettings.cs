@@ -4,7 +4,7 @@ using Tomlyn.Model;
 namespace FantasyTale.Launcher.Host.Window;
 
 // Developer diagnostics are local preferences, never part of a shipped game definition.
-internal sealed record OverlayTestSettings(bool StartupMessage, string? ResourceRoot, bool PassThroughOutside = true)
+internal sealed record OverlayTestSettings(bool StartupMessage, string? ResourceRoot, bool PassThroughOutside = true, bool DeveloperStages = false)
 {
     internal static OverlayTestSettings Load(string dataRoot)
     {
@@ -13,7 +13,7 @@ internal sealed record OverlayTestSettings(bool StartupMessage, string? Resource
         if (!File.Exists(file)) return new(false, null);
         var table = TomlSerializer.Deserialize<TomlTable>(File.ReadAllText(file))
             ?? throw new InvalidDataException("overlay-test.toml must contain a table.");
-        if (table.Keys.Any(key => key is not ("startup_message" or "resource_root" or "pass_through_outside")))
+        if (table.Keys.Any(key => key is not ("startup_message" or "resource_root" or "pass_through_outside" or "developer_stages")))
             throw new InvalidDataException("overlay-test.toml contains an unknown setting.");
         var enabled = table.TryGetValue("startup_message", out var value)
             ? value is bool flag ? flag : throw new InvalidDataException("overlay-test.toml: startup_message must be a boolean.")
@@ -28,7 +28,10 @@ internal sealed record OverlayTestSettings(bool StartupMessage, string? Resource
         var passThrough = table.TryGetValue("pass_through_outside", out var outside)
             ? outside is bool passFlag ? passFlag : throw new InvalidDataException("overlay-test.toml: pass_through_outside must be a boolean.")
             : true;
-        return new(enabled, resources, passThrough);
+        var stages = table.TryGetValue("developer_stages", out var developer)
+            ? developer is bool stageFlag ? stageFlag : throw new InvalidDataException("overlay-test.toml: developer_stages must be a boolean.")
+            : false;
+        return new(enabled, resources, passThrough, stages);
     }
 
     internal void Save(string dataRoot)
@@ -36,7 +39,7 @@ internal sealed record OverlayTestSettings(bool StartupMessage, string? Resource
         var file = Path.Combine(dataRoot, "overlay-test.toml");
         RejectLinks(file);
         Directory.CreateDirectory(dataRoot);
-        var table = new TomlTable { ["startup_message"] = StartupMessage, ["pass_through_outside"] = PassThroughOutside };
+        var table = new TomlTable { ["startup_message"] = StartupMessage, ["pass_through_outside"] = PassThroughOutside, ["developer_stages"] = DeveloperStages };
         if (ResourceRoot is not null) table["resource_root"] = ResourceRoot;
         var temporary = file + "." + Guid.NewGuid().ToString("N");
         try
