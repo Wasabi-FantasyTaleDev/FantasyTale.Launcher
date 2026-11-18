@@ -130,11 +130,12 @@ export default async function setup({vue, components, theme, locale, buildContex
       const EntryButton = {
         props:{sessionId:String},
         setup(props) {
-          // v3 clients (kr-1256) draw DlgCreateRoom's own Create button, a plain 83x34 text button
-          // (Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui btnCreate), captioned like the picker's v3 actions;
-          // older themes use the O/X button.
+          // v3 clients draw DlgCreateRoom's own Create button, a plain text button (Ui/Stages/Lobby/DlgCreateRoom_add_survival.ui
+          // btnCreate: 83x34 on kr-1256, 83x33 on cn-774), captioned like the picker's v3 actions; older themes use the O/X
+          // button. The skin is nine-sliced, so the height is the entry rectangle's: a fixed 34 was cut at the bottom of
+          // cn-774's 33-pixel box.
           const native = style === 'v3'
-            ? {skins:V3_ENTRY_SKINS, height:34, fitMinimum:83, fitMargin:24, fontSize:15, fontWeight:400}
+            ? {skins:V3_ENTRY_SKINS, height:view.entry?.height ?? 34, fitMinimum:83, fitMargin:24, fontSize:15, fontWeight:400}
             : {skins:looks[style]?.actionSkins?.Ok, fontSize:13};
           return () => h(BfAnchoredPanel, {width:view.entry?.width ?? 0, height:view.entry?.height ?? 0}, {
             default:({zoom}) => h(BfCaptionButton, {label:entryLabel(), ...native, fit:true, fontFamily:family,

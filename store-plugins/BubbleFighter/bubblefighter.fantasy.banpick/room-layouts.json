@@ -1,0 +1,2004 @@
+{
+ "format": 1,
+ "sprite": "Images/RoomStage/NewRoom2/RoomStage2_MapSelectBtn00",
+ "builds": {
+  "cn-279": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-324": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-404": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-406": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-408": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-706": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-717": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "cn-735": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage7_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 584,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    },
+    "member": {
+     "x": 698,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 216,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 301,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage8temp.ui",
+    "style": "sheet",
+    "host": {
+     "x": 373,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 458,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    }
+   }
+  ],
+  "cn-774": [
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver04.ui",
+    "style": "v3",
+    "host": {
+     "x": 174,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    },
+    "member": {
+     "x": 231,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    }
+   }
+  ],
+  "id-1809": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 144,
+     "y": 96,
+     "width": 72,
+     "height": 30
+    },
+    "member": {
+     "x": 217,
+     "y": 96,
+     "width": 72,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 144,
+     "y": 96,
+     "width": 72,
+     "height": 30
+    },
+    "member": {
+     "x": 217,
+     "y": 96,
+     "width": 72,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 584,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    },
+    "member": {
+     "x": 698,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    }
+   },
+   {
+    "form": "Ui/RoomStage8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 216,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 301,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    }
+   }
+  ],
+  "id-400": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 584,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    },
+    "member": {
+     "x": 698,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    }
+   },
+   {
+    "form": "Ui/RoomStage8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 216,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 301,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    }
+   }
+  ],
+  "kr-1256": [
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver04.ui",
+    "style": "v3",
+    "host": {
+     "x": 174,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    },
+    "member": {
+     "x": 231,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    }
+   }
+  ],
+  "kr-812": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver02.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage7_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 584,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    },
+    "member": {
+     "x": 698,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    }
+   },
+   {
+    "form": "Ui/RoomStage8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 216,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 301,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    }
+   },
+   {
+    "form": "Ui/RoomStage8temp.ui",
+    "style": "sheet",
+    "host": {
+     "x": 373,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 458,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    }
+   }
+  ],
+  "tw-410": [
+   {
+    "form": "Ui/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   }
+  ],
+  "tw-454": [
+   {
+    "form": "Ui/Stages/Room/RoomStage.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver03.ui",
+    "style": "sheet",
+    "host": {
+     "x": 164,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 227,
+     "y": 96,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage2_8vs8ver04.ui",
+    "style": "v3",
+    "host": {
+     "x": 174,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    },
+    "member": {
+     "x": 231,
+     "y": 102,
+     "width": 56,
+     "height": 23
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage3.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage4.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage5.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage6.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage7.ui",
+    "style": "sheet",
+    "host": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    },
+    "member": {
+     "x": 742,
+     "y": 468,
+     "width": 62,
+     "height": 30
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage7_8vs8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 584,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    },
+    "member": {
+     "x": 698,
+     "y": 294,
+     "width": 113,
+     "height": 35
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage8.ui",
+    "style": "sheet",
+    "host": {
+     "x": 216,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 301,
+     "y": 303,
+     "width": 84,
+     "height": 44
+    }
+   },
+   {
+    "form": "Ui/Stages/Room/RoomStage8temp.ui",
+    "style": "sheet",
+    "host": {
+     "x": 373,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    },
+    "member": {
+     "x": 458,
+     "y": 272,
+     "width": 84,
+     "height": 44
+    }
+   }
+  ]
+ }
+}

@@ -46,7 +46,8 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
     /// <summary>Starts an overlay only when the selected instance contains an available overlay package.</summary>
     internal void StartForClient(InstanceDefinition instance, BuildDefinition build, IReadOnlyList<PluginDefinition> packages,
         RunningClient client, string? locale = null, IGameOverlayControllerProvider? controllerProvider = null,
-        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion = null)
+        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion = null,
+        IReadOnlyList<string>? messageBoxResources = null)
     {
         ArgumentNullException.ThrowIfNull(instance);
         ArgumentNullException.ThrowIfNull(build);
@@ -67,7 +68,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed != 0, this);
             var work = Task.Run(() => RunSessionAsync(instance.Id, build, panels, packageFolders, client.ProcessId,
-                client.Control, client.Completion, TestSettings, locale, controllerProvider, controllerCompanion));
+                client.Control, client.Completion, TestSettings, locale, controllerProvider, controllerCompanion, messageBoxResources));
             _runs.Add(work);
             _ = work.ContinueWith(completed =>
             {
@@ -102,9 +103,11 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         IReadOnlyDictionary<string, string> packageFolders, int gameProcessId, HookChannel? control,
         Task<LaunchResult> gameCompletion, OverlayTestSettings test, string? locale,
         IGameOverlayControllerProvider? controllerProvider,
-        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion)
+        Func<string, CancellationToken, Task<ICompanionChannel?>>? controllerCompanion,
+        IReadOnlyList<string>? messageBoxResources)
     {
         OverlaySession? session = null;
+        NativeDialogHoleWatcher? dialogHoles = null;
         Process? overlay = null;
         NamedPipeServerStream? pipe = null;
         IOverlayPanel? startupTest = null;
@@ -127,6 +130,10 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             var hwnd = await WaitForMainWindowAsync(game, gameCompletion, _stop.Token).ConfigureAwait(false);
             if (hwnd == nint.Zero) return;
             if (gameCompletion.IsCompleted || Volatile.Read(ref _disposed) != 0) return;
+
+            string? clientFolder = null;
+            try { clientFolder = Path.GetDirectoryName(game.MainModule?.FileName); }
+            catch (Exception error) when (error is System.ComponentModel.Win32Exception or InvalidOperationException or NotSupportedException) { }
 
             var launchId = Guid.NewGuid().ToString("N");
             var pipeName = "FantasyTale.Overlay." + launchId;
@@ -195,7 +202,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
             if (previous is not null) await previous.DisposeAsync().ConfigureAwait(false);
             foreach (var package in panels)
             {
-                var companion = package.Overlay?.Controller is null || controllerCompanion is null ? null
+                var companion = package.Overlay is not { Controller: not null, ControllerCompanion: true } || controllerCompanion is null ? null
                     : await controllerCompanion(package.Id, _stop.Token).ConfigureAwait(false);
                 var entry = Path.Combine(package.Folder, package.Overlay!.Entry!);
                 for (var path = entry; path is not null; path = Path.GetDirectoryName(path))
@@ -211,7 +218,7 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                         try
                         {
                             session.Backends.Start(package, build, prepared, control is null ? null : new GameNativeUiClient(control, build.Id),
-                                locale, controllerProvider, (name, detail) => WriteLog(name, detail), companion);
+                                locale, controllerProvider, (name, detail) => WriteLog(name, detail), companion, clientFolder);
                         }
                         catch (Exception error) when (error is InvalidOperationException or ArgumentException or IOException or JsonException)
                         {
@@ -245,6 +252,9 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 });
                 WriteLog("overlay-test-requested");
             }
+            // The game's own message boxes stay visible and usable under overlay panels; builds without a list get no holes.
+            if (control is not null && messageBoxResources is { Count: > 0 })
+                dialogHoles = new NativeDialogHoleWatcher(session, new GameNativeUiClient(control, build.Id), messageBoxResources);
             // The developer tool stages exist only while the Developer switch is on: no panel, query or call otherwise.
             if (test.DeveloperStages && control is not null)
                 developerStages = await DeveloperStageMenu.StartAsync(session, new GameNativeUiClient(control, build.Id),
@@ -268,7 +278,11 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                 if (session is not null) await session.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception error) { WriteLog("overlay-controller-stop-failed", error.GetType().Name); }
-            finally { developerStages?.Dispose(); startupTest?.Dispose(); }
+            finally
+            {
+                developerStages?.Dispose(); startupTest?.Dispose();
+                if (dialogHoles is not null) await dialogHoles.DisposeAsync().ConfigureAwait(false);
+            }
             if (session is null && overlay is not null)
             {
                 try { if (!overlay.HasExited) overlay.Kill(entireProcessTree: true); }
@@ -397,6 +411,12 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
         internal Task ConnectionCompletion => _reader ?? throw new InvalidOperationException("The overlay reader has not started.");
 
         internal Task SendContextAsync() => SendCommandAsync(new { type = "build-context", context = buildContext });
+
+        public Task SetNativeHolesAsync(IReadOnlyList<OverlayNativeHole> holes, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(holes);
+            return SendCommandAsync(new { type = "native-holes", holes = holes.Select(hole => new { x = hole.X, y = hole.Y, width = hole.Width, height = hole.Height }) });
+        }
 
         internal Task SendPackageRootsAsync(IReadOnlyDictionary<string, string> roots) => SendCommandAsync(new { type = "package-roots", roots });
 

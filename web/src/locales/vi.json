@@ -1139,6 +1139,7 @@
     "required": "Bắt buộc",
     "recommended": "Đề xuất",
     "installed": "Đã cài và bật",
+    "checkingInstalled": "Đang kiểm tra plugin đã cài đặt",
     "noPlugins": "Máy chủ chưa công bố plugin đề xuất hoặc bắt buộc.",
     "sources": "Nguồn plugin đề xuất",
     "addSource": "Thêm nguồn",

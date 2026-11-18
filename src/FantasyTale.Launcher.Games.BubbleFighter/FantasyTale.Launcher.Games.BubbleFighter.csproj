@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Tomlyn" Version="2.10.1" />
     <EmbeddedResource Include="native-center-names.json" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.native-center-names.json" />
+    <EmbeddedResource Include="native-message-boxes.json" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.native-message-boxes.json" />
     <EmbeddedResource Include="gateway-capabilities.json" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.gateway-capabilities.json" />
     <EmbeddedResource Include="resource-targets.toml" LogicalName="FantasyTale.Launcher.Games.BubbleFighter.resource-targets.toml" />
   </ItemGroup>

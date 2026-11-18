@@ -26,6 +26,7 @@
     <None Update="overlay\index.html" CopyToOutputDirectory="PreserveNewest" />
     <None Update="overlay\panel-stack.js" CopyToOutputDirectory="PreserveNewest" />
     <None Update="overlay\anchors.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="overlay\native-holes.js" CopyToOutputDirectory="PreserveNewest" />
     <None Update="overlay\surface-ready.js" CopyToOutputDirectory="PreserveNewest" />
     <None Update="overlay\locales.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="overlay\ui-library\**\*" CopyToOutputDirectory="PreserveNewest" />

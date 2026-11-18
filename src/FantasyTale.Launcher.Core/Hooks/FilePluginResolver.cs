@@ -69,17 +69,10 @@ public static class FilePluginResolver
         var rules = ProfileClientPolicy.CanonicalRules(ProfileClientPolicy.Rules(build), packages);
         var notices = new List<PluginRecoveryNotice>();
         var retained = new List<InstancePlugin>(instance.Plugins.Count);
-        // The enabled state belongs to the plugin id. A selection that moves to another package keeps its enabled state only
-        // when that package grants what the user approved; otherwise it stays off until the user approves the new grants.
-        (InstancePlugin Selection, bool Pending) Approve(InstancePlugin current, PluginDefinition package, bool moved)
-        {
-            var fingerprint = PluginGrants.Fingerprint(package);
-            if (current.Grants == fingerprint) return (current, false);
-            // A selection saved before grants were recorded has no approval to compare with. Its enabled state is carried
-            // over as it always was. Reads never write: the grants are recorded when the selection moves to a new package.
-            if (current.Grants is null) return (moved ? current with { Grants = fingerprint } : current, false);
-            return (current with { Enabled = false, Required = false }, true);
-        }
+        // The enabled state belongs to the plugin id and never changes when the selection moves to another package.
+        // Only the recorded grants follow the package; reads never write, so an unmoved selection keeps its record.
+        InstancePlugin Approve(InstancePlugin current, PluginDefinition package, bool moved) =>
+            moved ? current with { Grants = PluginGrants.Fingerprint(package) } : current;
         foreach (var original in instance.Plugins)
         {
             var selection = PluginIdentityMigration.Resolve(original, build, packages);
@@ -126,19 +119,17 @@ public static class FilePluginResolver
                     var repointed = selection with { Version = fallback.Version, Options = options,
                         Required = rules.Any(rule => rule.Id == fallback.Id && rule.Required) || PluginCatalog.IsRequired(fallback, build),
                         Enabled = selection.Enabled || rules.Any(rule => rule.Id == fallback.Id && rule.Required) || PluginCatalog.IsRequired(fallback, build) };
-                    retained.Add(Approve(repointed, fallback, moved: true).Selection);
+                    retained.Add(Approve(repointed, fallback, moved: true));
                 }
                 continue;
             }
 
-            var pending = false;
             if (selectedPackage is not null)
             {
-                (selection, pending) = Approve(selection, selectedPackage, moved);
-                // A package whose grants await consent is not enabled by policy either; the user's approval comes first.
+                selection = Approve(selection, selectedPackage, moved);
                 var required = rules.Any(rule => rule.Id == selection.Id && rule.Required)
                     || PluginCatalog.IsRequired(selectedPackage, build);
-                if (!pending && (required != selection.Required || required && !selection.Enabled))
+                if ((required != selection.Required || required && !selection.Enabled))
                     selection = selection with { Required = required, Enabled = required || selection.Enabled };
             }
             if (!game.StoreManagedPlugins.Contains(selection.Id, StringComparer.Ordinal))
@@ -152,7 +143,7 @@ public static class FilePluginResolver
             {
                 var options = selection.Options.Where(pair => successor.Options.Any(option => option.Key == pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
                 _ = PluginCatalog.ResolveOptionValues(successor, options);
-                (selection, _) = Approve(selection with { Version = successor.Version, Options = options }, successor, moved: true);
+                selection = Approve(selection with { Version = successor.Version, Options = options }, successor, moved: true);
             }
             retained.Add(selection);
         }

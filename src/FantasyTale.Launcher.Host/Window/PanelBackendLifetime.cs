@@ -10,7 +10,7 @@ internal sealed class PanelBackendLifetime : IAsyncDisposable
     private Task? _dispose;
 
     internal void Start(PluginDefinition package, BuildDefinition build, IOverlayPanel panel, IGameNativeUi? native,
-        string? locale, IGameOverlayControllerProvider? provider, Action<string, string>? record = null, ICompanionChannel? companion = null)
+        string? locale, IGameOverlayControllerProvider? provider, Action<string, string>? record = null, ICompanionChannel? companion = null, string? clientFolder = null)
     {
         lock (_gate)
         {
@@ -20,7 +20,7 @@ internal sealed class PanelBackendLifetime : IAsyncDisposable
                 if (provider is null)
                     throw new InvalidOperationException("The game module does not provide the declared overlay controller.");
                 var scoped = native is IGameNativeUiScopes scopes ? scopes.ForOwner(package.Id) : native;
-                var controller = provider.StartController(new(package, build, panel, scoped, locale) { Record = record, Companion = companion })
+                var controller = provider.StartController(new(package, build, panel, scoped, locale) { Record = record, Companion = companion, ClientFolder = clientFolder })
                     ?? throw new InvalidOperationException("The game module did not return an overlay controller lifetime.");
                 _backends.Add(controller);
             }

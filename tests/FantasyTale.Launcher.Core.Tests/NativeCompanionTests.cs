@@ -68,6 +68,9 @@ public sealed class NativeCompanionTests
             [new(plugin.Id, plugin.Version, true, false, new Dictionary<string, object>())]);
         Assert.Empty(LauncherServicePlan.NativeConsumers(instance, build, [plugin]));
         Assert.Equal(plugin.CompanionMessages, LauncherServicePlan.PanelConsumers(instance, build, [plugin])[plugin.Id]);
+        // Ban Rules has a backend controller that only reads the client; its page keeps the companion bridge.
+        Assert.False(plugin.Overlay!.ControllerCompanion);
+        Assert.Empty(LauncherServicePlan.ControllerConsumers(instance, build, [plugin]));
     }
 
     [Fact]

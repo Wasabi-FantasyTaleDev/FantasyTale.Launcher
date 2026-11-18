@@ -1205,6 +1205,7 @@
     "required": "Required",
     "recommended": "Recommended",
     "installed": "Installed and enabled",
+    "checkingInstalled": "Checking installed plugins",
     "noPlugins": "This server has not advertised any recommended or required plugins.",
     "sources": "Recommended plugin sources",
     "addSource": "Add source",

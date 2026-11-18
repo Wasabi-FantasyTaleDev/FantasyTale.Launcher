@@ -277,7 +277,7 @@ test('stale scrollbar decoding cannot settle the current draw or revive an unmou
   assert.equal(fixture.events.length, 0);
 });
 
-async function roomPackage(nativeUi) {
+async function roomPackage(nativeUi, buildId = 'kr-812') {
   const fixture = runtime(), requests = [], commands = [], handlers = new Map(), presentations = [];
   const looks = {v2:{actionHeight:27, actionSkins:{Ok:['a','b','c','d']}, categorySizes:{weapons:{height:32}}}};
   fixture.sandbox.fetch = async url => ({ok:true, json:async () => url === 'ui.json' ? looks
@@ -289,8 +289,8 @@ async function roomPackage(nativeUi) {
   const source = readFileSync(new URL('../../store-plugins/BubbleFighter/bubblefighter.fantasy.banpick/ban-pick.js', import.meta.url), 'utf8');
   runInNewContext(transpile(source), fixture.sandbox);
   const component = await fixture.sandbox.module.exports.default({
-    vue:fixture.api, components:{BfUiProvider:'provider', BfBanPick:'editor', BfCaptionButton:'caption', BfMessageBox:'message', BfReveal:'reveal'},
-    theme:'v2', locale:'en', buildContext:{buildId:'kr-812'}, packages:{url:file => file}, nativeUi,
+    vue:fixture.api, components:{BfUiProvider:'provider', BfBanPick:'editor', BfCaptionButton:'caption', BfMessageBox:'message', BfNotifyBox:'notify', BfReveal:'reveal'},
+    theme:'v2', locale:'en', buildContext:{buildId}, packages:{url:file => file}, nativeUi,
     present:value => presentations.push(value),
     companion:{
       request(name, version, payload) {
@@ -304,8 +304,8 @@ async function roomPackage(nativeUi) {
   const render = fixture.scope.run(() => component.setup());
   const nodes = () => render().children[0].children.default();
   const button = () => fixture.scope.run(() => nodes()[1].type.setup())();
-  // The confirmation is wrapped in its native-scale zoom box; the room button in its measured panel box.
-  const message = () => nodes().children[0];
+  // The confirmation is a layer over the editor, wrapped in its native-scale zoom box; the room button in its measured panel box.
+  const message = () => nodes()[2].children.children[0];
   return {...fixture, requests, commands, presentations, nodes, button, message,
     room(payload = {in_room:true, is_host:true}) { handlers.get('game.ban.list.changed')(payload); },
     ask(payload = {command:'bp start fixture', expires_in_ms:10000}) { handlers.get('game.ban.start.confirm')(payload); },
@@ -327,7 +327,7 @@ test('a late open and refresh cannot restore a departed room', async () => {
     const opening = fixture.open(); await flush();
     fixture.room({in_room:false}); await flush();
     fixture.requests.shift().resolve(roomReply); await opening; await flush();
-    assert.deepEqual(Array.from(fixture.nodes()), [null, null]);
+    assert.deepEqual(Array.from(fixture.nodes()), [null, null, null, null]);
     assert.equal(fixture.presentations.at(-1).visible, false);
   } finally { fixture.dispose(); }
 });
@@ -365,6 +365,65 @@ test('room entry and prepared editor use actual opacity and input barriers', asy
     assert.equal(fixture.nodes()[0].props.style.opacity, 1);
     assert.equal(fixture.nodes()[0].props.inert, false);
   } finally { fixture.dispose(); }
+});
+
+test('an error is a buttonless notice layered over the mounted editor, not a replacement', async () => {
+  const fixture = await roomPackage();
+  try {
+    fixture.room(); await flush(); await openRoom(fixture);
+    fixture.nodes()[0].children[0].props.onReady();
+    fixture.nodes()[0].children[0].props.onError(new Error('refused')); await flush();
+    const nodes = fixture.nodes();
+    assert.equal(nodes[0].children[0].type, 'editor');
+    assert.equal(nodes[0].props.style.opacity, 1);
+    assert.equal(nodes[2], null);
+    const notice = nodes[3].children.children[0];
+    assert.equal(notice.type, 'notify');
+    assert.equal(notice.props.text, 'refused');
+    assert.equal(nodes[3].props.style.zIndex, 10);
+    assert.equal(fixture.presentations.at(-1).modal, true);
+  } finally { fixture.dispose(); }
+});
+
+test('a component error notice hides by itself after three seconds', async () => {
+  const fixture = await roomPackage();
+  try {
+    fixture.room(); await flush(); await openRoom(fixture);
+    fixture.nodes()[0].children[0].props.onReady();
+    fixture.nodes()[0].children[0].props.onError(new Error('refused')); await flush();
+    assert.equal(fixture.nodes()[3].children.children[0].type, 'notify');
+    fixture.takeTimer(3000)(); await flush();
+    assert.equal(fixture.nodes()[3], null);
+    assert.equal(fixture.nodes()[0].children[0].type, 'editor');
+  } finally { fixture.dispose(); }
+});
+
+test('an error uses the native notice and draws the layer only when that returns failed', async () => {
+  for (const [status, layered] of [['shown', false], ['failed', true]]) {
+    const texts = [], fixture = await roomPackage({ async notify(text) { texts.push(text); return {status, presenter: null}; } });
+    try {
+      fixture.room(); await flush();
+      const opening = fixture.open(); await flush();
+      fixture.requests.shift().reject(new Error('refused')); await opening; await flush();
+      assert.deepEqual(texts, ['refused'], status);
+      assert.equal(fixture.nodes()[3] != null, layered, status);
+    } finally { fixture.dispose(); }
+  }
+});
+
+test('a member\'s room button takes the map setting button\'s place and follows host changes', async () => {
+  for (const build of ['kr-1256', 'cn-774', 'tw-454']) {
+    const fixture = await roomPackage(undefined, build);
+    try {
+      fixture.room({in_room:true, is_host:true, count:1}); await flush();
+      assert.deepEqual({x:fixture.presentations.at(-1).anchor.x, y:fixture.presentations.at(-1).anchor.y}, {x:174, y:102}, build);
+      fixture.room({in_room:true, is_host:false, count:1}); await flush();
+      const guest = fixture.presentations.at(-1).anchor;
+      assert.deepEqual([guest.x, guest.y, guest.width, guest.height], [231, 102, 56, 23], build);
+      fixture.room({in_room:true, is_host:true, count:1}); await flush();
+      assert.equal(fixture.presentations.at(-1).anchor.x, 174, build);
+    } finally { fixture.dispose(); }
+  }
 });
 
 function nativeDialog() {
@@ -437,7 +496,7 @@ test('fallback confirmation and expiry are cleared on departure without affectin
     assert.equal(fixture.message().type, 'message');
     const oldExpiry = fixture.takeTimer(10000);
     fixture.room({in_room:false}); await flush();
-    assert.deepEqual(Array.from(fixture.nodes()), [null, null]);
+    assert.deepEqual(Array.from(fixture.nodes()), [null, null, null, null]);
     assert.equal(fixture.timers.size, 0);
     fixture.room(); await flush(); fixture.ask({command:'bp start later', expires_in_ms:10000}); await flush();
     oldExpiry();

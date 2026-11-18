@@ -2,7 +2,7 @@ schema = 2
 
 [plugin]
 id = "bubblefighter.fantasy.mode-extension"
-version = "0.1.25"
+version = "0.1.26"
 game = "bubblefighter"
 kind = "overlay"
 minimum_launcher_version = "0.1.71"

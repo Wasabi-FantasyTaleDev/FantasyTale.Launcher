@@ -22,11 +22,14 @@ public sealed partial class InstanceStore
         RejectLinks(registryLock);
         using var registration = OpenLease(registryLock);
         using var lease = Acquire(id);
+        var file = Path.Combine(Folder(id), "instance.toml");
+        RejectLinks(file);
+        // A registration whose definition file is gone cannot be read; removal must still succeed and clean what remains.
+        if (!File.Exists(file)) return RemoveOrphan(id, deleteFiles, cancellationToken);
         var instance = Load(id);
         if (game.Id != instance.Game) throw new InvalidOperationException("The removal game does not match the client.");
         var build = game.Builds.Single(item => item.Id == instance.Build);
         var client = ClientFolder(id);
-        var file = Path.Combine(Folder(id), "instance.toml");
         var removed = Path.Combine(Folder(id), RemovedDefinition);
         RejectLinks(removed);
         if (Path.Exists(removed)) throw new IOException("client_remove_pending");
@@ -71,6 +74,67 @@ public sealed partial class InstanceStore
         cancellationToken.ThrowIfCancellationRequested();
         File.Move(file, removed);
         return new(deleted, preserved);
+    }
+
+    /// <summary>Whether the instance has a readable registration file.</summary>
+    public bool HasDefinition(string id) => File.Exists(Path.Combine(Folder(id), "instance.toml"));
+
+    /// <summary>Removes a client whose instance.toml is missing without reading it; only launcher-owned folders are cleaned.</summary>
+    public Task<ClientRemovalResult> RemoveMissingAsync(string id, bool deleteFiles, CancellationToken cancellationToken = default)
+    {
+        var registryLock = Path.Combine(_root, ".locks", ".installation-paths.lock");
+        RejectLinks(registryLock);
+        using var registration = OpenLease(registryLock);
+        using var lease = Acquire(id);
+        if (File.Exists(Path.Combine(Folder(id), "instance.toml"))) throw new IOException("client_remove_pending");
+        return Task.FromResult(RemoveOrphan(id, deleteFiles, cancellationToken));
+    }
+
+    private ClientRemovalResult RemoveOrphan(string id, bool deleteFiles, CancellationToken cancellationToken)
+    {
+        if (!deleteFiles) return new(0, 0);
+        var folder = Folder(id);
+        if (!Directory.Exists(folder)) return new(0, 0);
+        var deleted = 0; var preserved = 0;
+        // Without a definition the installation path is unknown, so only the managed client folder is considered, and only through its install receipt.
+        var client = ChildFolder(id, "client");
+        if (Directory.Exists(client) && Directory.EnumerateFileSystemEntries(client).Any())
+        {
+            if (ClientInstallTransaction.ReadReceipt(client) is not null && !InstanceRecovery.Required(client))
+            {
+                foreach (var entry in new ClientFileCache(client).InstalledFiles())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var path = ClientInstallTransaction.Safe(client, ClientRelease.ValidatePath(entry.Path));
+                    if (!File.Exists(path)) continue;
+                    if (VerifiedFileRemoval.TryDeleteAsync(path, entry.Size, entry.Sha256, cancellationToken).GetAwaiter().GetResult()) deleted++;
+                    else preserved++;
+                }
+            }
+        }
+        foreach (var child in new[] { "logs", "resource-cache" })
+        {
+            var path = ChildFolder(id, child);
+            if (Directory.Exists(path)) DeleteWithoutFollowingLinks(path);
+        }
+        try { Directory.Delete(folder, false); } catch (IOException) { } // Remaining user files keep the folder.
+        return new(deleted, preserved);
+    }
+
+    private static void DeleteWithoutFollowingLinks(string directory)
+    {
+        foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
+        {
+            var attributes = File.GetAttributes(entry);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                // Remove only the link itself; its target is never entered.
+                if ((attributes & FileAttributes.Directory) != 0) Directory.Delete(entry, false); else File.Delete(entry);
+            }
+            else if ((attributes & FileAttributes.Directory) != 0) DeleteWithoutFollowingLinks(entry);
+            else File.Delete(entry);
+        }
+        Directory.Delete(directory, false);
     }
 
     private void ValidateRemovalPath(string id, string client)

@@ -262,6 +262,18 @@ public sealed class ModeExtensionDataTests : IDisposable
     }
 
     [Fact]
+    public void ABuildListsItsOwnDialogModesUnlessTheDataStatesItsList()
+    {
+        Assert.False(Load().ModeListStated);
+        Write("mode-availability.json", """{"format":1,"rules":[{"builds":["kr-812"],"hidden":[]}]}""");
+        Assert.True(Load().ModeListStated);
+        Write("mode-availability.json", """{"format":1,"rules":[{"builds":["cn-*"],"allow":[1]}]}""");
+        Assert.False(Load().ModeListStated);
+        Write("mode-availability.json", """{"format":1,"rules":[{"builds":["kr-812"],"allow":[1]}]}""");
+        Assert.True(Load().ModeListStated);
+    }
+
+    [Fact]
     public void ExplicitEmptyAllowListDoesNotFallBackToAllModes()
     {
         Write("mode-availability.json", """{"format":1,"rules":[{"builds":["*"],"allow":[]}]}""");

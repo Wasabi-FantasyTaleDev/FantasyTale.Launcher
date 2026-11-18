@@ -16,6 +16,15 @@ public sealed class OverlayRoomModeControllerTests
     }
 
     [Fact]
+    public void OnlyADeclinedActivationFallsBackToATitleTag()
+    {
+        Assert.True(OverlayRoomModeController.FallsBackToTag(new("a", "notReady", null, "selectionNotApplied")));
+        Assert.True(OverlayRoomModeController.FallsBackToTag(new("a", "notReady", null, "controlDisabled")));
+        Assert.False(OverlayRoomModeController.FallsBackToTag(new("a", "notReady", null, "controlOwnerUnavailable")));
+        Assert.False(OverlayRoomModeController.FallsBackToTag(new("a", "failed", null, "selectionNotApplied")));
+    }
+
+    [Fact]
     public void ALabelIsRestoredOnlyWhileItStillShowsTheExtensionText()
     {
         var replaced = ("Classic team match.", "Zombie mode: survive the night.");

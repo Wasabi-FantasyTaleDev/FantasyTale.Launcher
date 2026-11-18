@@ -101,18 +101,32 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
                 if (input.IsCompleted)
                 {
                     if (!await input.ConfigureAwait(false)) break;
-                    while (_intents.Reader.TryRead(out var intent)) await HandleAsync(intent).ConfigureAwait(false);
+                    while (_intents.Reader.TryRead(out var intent)) await Guarded(() => HandleAsync(intent)).ConfigureAwait(false);
                     input = _intents.Reader.WaitToReadAsync(_stop.Token).AsTask();
                 }
                 if (tick.IsCompleted)
                 {
                     await tick.ConfigureAwait(false);
-                    await ObserveAsync().ConfigureAwait(false);
+                    await Guarded(ObserveAsync).ConfigureAwait(false);
                     tick = Task.Delay(_data.PollMs, _stop.Token);
                 }
             }
         }
         catch (OperationCanceledException) when (_stop.IsCancellationRequested) { }
+    }
+
+    /// <summary>
+    /// Runs one step of the controller loop so that an unexpected failure is recorded and survived: a faulted loop would
+    /// leave the dialog's entry and picker dead for the rest of the session with nothing in the log.
+    /// </summary>
+    private async Task Guarded(Func<Task> step)
+    {
+        try { await step().ConfigureAwait(false); }
+        catch (Exception error) when (error is not OperationCanceledException)
+        {
+            _busy = false;
+            Record("loop." + error.GetType().Name);
+        }
     }
 
     /// <summary>
@@ -154,6 +168,7 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
             _disguisedButton = null;
             _restores.Clear();
             _open = false;
+            _listed = null;
             _busy = false;
             _error = null;
             _entry = entry;
@@ -259,6 +274,15 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
         switch (intent.Kind)
         {
             case "open":
+                // A build whose mode list the data does not state lists what its own dialog shows, read when the window opens.
+                if (!_data.ModeListStated)
+                {
+                    Record("mode-data-missing." + _data.BuildId);
+                    var proven = await ProvenModesAsync().ConfigureAwait(false);
+                    if (intent.SessionId != _sessionId) return;
+                    if (proven.Failure is not null) { _error = proven.Failure; Record("list." + proven.Failure.Reason); Publish(); return; }
+                    _listed = proven.Modes;
+                }
                 _open = true; _error = null; Publish(); return;
             case "cancel":
                 _open = false; Publish(); return;
@@ -266,11 +290,16 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
                 _error = null; Publish(); return;
             case "confirm":
                 if (_busy) return;
-                var mode = _data.Modes.SingleOrDefault(value => value.Id == intent.ModeId);
+                var mode = Listed.SingleOrDefault(value => value.Id == intent.ModeId);
                 if (mode is null) { _error = new("unsupported", "modeUnavailable"); Publish(); return; }
                 _busy = true; _error = null; Publish();
                 var before = await SelectionAsync().ConfigureAwait(false);
-                var failure = await ApplyAsync(mode, intent.Description).ConfigureAwait(false);
+                Failure? failure;
+                // Whatever the native calls throw, the picker must leave its busy state: an unobserved failure here would
+                // keep the window open and ignore every later click.
+                try { failure = await ApplyAsync(mode, intent.Description).ConfigureAwait(false); }
+                catch (Exception error) when (error is not OperationCanceledException)
+                { failure = new("failed", "applyException." + error.GetType().Name); }
                 if (intent.SessionId != _sessionId) return;
                 _busy = false;
                 if (failure is null)
@@ -283,7 +312,12 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
                     var after = _tagged ? await SelectionAsync().ConfigureAwait(false) : before;
                     _taggedOver = TaggedOver(before, after);
                 }
-                else { _error = failure; Record("apply." + failure.Reason); }
+                else
+                {
+                    // A failed apply closes the picker and shows the error box alone, so the player is never left on a
+                    // window that cannot finish; the log names the status and reason of the failing native call.
+                    _error = failure; _open = false; Record("apply." + failure.Status + "." + failure.Reason);
+                }
                 Publish();
                 return;
         }
@@ -313,19 +347,28 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
             if (listed.Length == 1)
             {
                 var button = listed[0];
-                if (button.Enabled != true && button.Selected != true) return new("notReady", "nativeModeDisabled");
-                if (plain != edit.Text && await SetTextAsync(native, edit, plain, null).ConfigureAwait(false) is { } cleared) return cleared;
-                _disguisedButton = null;
-                if (button.Selected == true)
+                if (button.Enabled != true && button.Selected != true) _lastApplyTagged = true;
+                else
                 {
-                    // Already the dialog's value: undo the disguise so it looks selected again, with its own description.
-                    if (button.Enabled == true && await SetEnabledAsync(native, button, false).ConfigureAwait(false) is { } shown) return shown;
-                    await RestoreLabelsAsync(native, read.Controls).ConfigureAwait(false);
-                    return null;
+                    if (plain != edit.Text && await SetTextAsync(native, edit, plain, null).ConfigureAwait(false) is { } cleared) return cleared;
+                    _disguisedButton = null;
+                    if (button.Selected == true)
+                    {
+                        // Already the dialog's value: undo the disguise so it looks selected again, with its own description.
+                        if (button.Enabled == true && await SetEnabledAsync(native, button, false).ConfigureAwait(false) is { } shown) return shown;
+                        await RestoreLabelsAsync(native, read.Controls).ConfigureAwait(false);
+                        return null;
+                    }
+                    var activated = await RunAsync(native, new(Guid.NewGuid().ToString("N"), "control.activate", "")
+                    { Target = new GameNativeUiControlTarget { Id = button.Id } }).ConfigureAwait(false);
+                    if (activated.Status == "completed") return null;
+                    // A button the client's own handler leaves unselected (it ignores modes its feature table excludes, as
+                    // cn-774 sub_6B9940 skips records whose flag at +8 is clear) is applied as a title tag instead, so the
+                    // server still gets the mode.
+                    if (!FallsBackToTag(activated)) return new(activated.Status, activated.Reason ?? "nativeModeNotSelected");
+                    Record("native-activation-fallback." + activated.Reason);
+                    _lastApplyTagged = true;
                 }
-                var activated = await RunAsync(native, new(Guid.NewGuid().ToString("N"), "control.activate", "")
-                { Target = new GameNativeUiControlTarget { Id = button.Id } }).ConfigureAwait(false);
-                return activated.Status == "completed" ? null : new(activated.Status, activated.Reason ?? "nativeModeNotSelected");
             }
             var token = mode.Tokens.GetValueOrDefault(_data.Language) ?? mode.Tokens.GetValueOrDefault("en");
             if (string.IsNullOrEmpty(token)) return new("unsupported", "modeTokenUnavailable");
@@ -344,6 +387,39 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
     }
 
     private bool _lastApplyTagged;
+
+    // The modes the picker lists: the data's list, or for a build without a stated list the ones its dialog shows.
+    private IReadOnlyList<ModeDefinition>? _listed;
+
+    private IReadOnlyList<ModeDefinition> Listed => _data.ModeListStated ? _data.Modes : _listed ?? [];
+
+    /// <summary>The catalogue modes the open dialog's own mode buttons carry; the client's Create Room table proves them.</summary>
+    private async Task<(IReadOnlyList<ModeDefinition> Modes, Failure? Failure)> ProvenModesAsync()
+    {
+        if (_context.NativeUi is not { } native || _binding is not { } binding) return ([], new("unsupported", "nativeUiUnavailable"));
+        try
+        {
+            var read = await RunAsync(native, new(Guid.NewGuid().ToString("N"), "control.inspect", "")
+            { Target = new GameNativeUiControlTarget { Form = binding.Form } }).ConfigureAwait(false);
+            if (read.Status != "completed") return ([], new(read.Status, read.Reason ?? "dialogUnavailable"));
+            var shown = read.Controls.Where(control => control.Name == binding.ModeButton && control.SelectionValue is not null)
+                .Select(control => control.SelectionValue!.Value).ToHashSet();
+            var modes = _data.Modes.Where(mode => shown.Contains(mode.Id)).ToArray();
+            return modes.Length == 0 ? ([], new("unsupported", "modeListUnavailable")) : (modes, null);
+        }
+        catch (Exception error) when (error is IOException or InvalidDataException or InvalidOperationException or JsonException
+            or TimeoutException or ArgumentException)
+        {
+            return ([], new("failed", "listInterrupted"));
+        }
+    }
+
+    /// <summary>
+    /// Whether a native mode button's activation result means the client declined the mode rather than failed: the button
+    /// is disabled or the click left the dialog's selection unchanged. Such a mode is applied as a title tag.
+    /// </summary>
+    internal static bool FallsBackToTag(GameNativeUiResult activation) =>
+        activation.Status == "notReady" && activation.Reason is "selectionNotApplied" or "controlDisabled";
 
     /// <summary>
     /// Makes the dialog look as if the extension mode were selected: its selected mode button is re-enabled (the client
@@ -444,6 +520,7 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
         try
         {
             var selected = _selectedId is { } id ? _data.Modes.SingleOrDefault(mode => mode.Id == id) : null;
+            var listed = Listed;
             _context.Panel.Send("mode-extension.state", new
             {
                 // The picker highlights the mode in effect: an applied tag, otherwise the dialog's own selection.
@@ -455,7 +532,7 @@ internal sealed class OverlayRoomModeController : IAsyncDisposable
                     referenceWidth = _entry.ReferenceWidth, referenceHeight = _entry.ReferenceHeight,
                 },
                 selectedName = selected is null ? null : selected.Names.GetValueOrDefault(_data.Language),
-                modes = _data.Modes.Select(mode => new { id = mode.Id, key = mode.Key, names = mode.Names }).ToArray(),
+                modes = listed.Select(mode => new { id = mode.Id, key = mode.Key, names = mode.Names }).ToArray(),
                 error = _error is null ? null : new { status = _error.Status, reason = _error.Reason, recovery = (string?)null },
             });
         }

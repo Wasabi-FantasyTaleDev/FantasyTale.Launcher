@@ -77,13 +77,12 @@ public static class ServerPluginPolicy
     /// <summary>
     /// Whether the plugin id is enabled for this client on this build. The enabled state belongs to the id: the selection's
     /// version is only where it points, so the installed package of that id counts (the selected version, or else the newest
-    /// installed one that the launcher can run). A recorded approval of other grants does not count until the user renews it.
+    /// installed one that the launcher can run).
     /// </summary>
     public static bool Enabled(InstanceDefinition instance, BuildDefinition build, IReadOnlyList<PluginDefinition> packages, string id)
     {
         id = PluginCatalog.CanonicalId(packages, id);
-        return instance.Plugins.Any(selection => selection.Id == id && selection.Enabled && CurrentPackage(selection, instance.Game, build, packages) is { } package
-            && (selection.Grants is null || selection.Grants == PluginGrants.Fingerprint(package)));
+        return instance.Plugins.Any(selection => selection.Id == id && selection.Enabled && CurrentPackage(selection, instance.Game, build, packages) is not null);
     }
 
     /// <summary>The package a selection runs: its selected version when installed, else the newest installed package of its id.</summary>

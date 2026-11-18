@@ -23,11 +23,13 @@ public sealed class PluginPolicyEnforcementTests
         var previewsPath = Path.Combine(repo, "store-plugins", "BubbleFighter", "bubblefighter.fantasy.item-previews", "plugin.toml");
         var uiResourcesPath = Path.Combine(repo, "store-plugins", "BubbleFighter", "bubblefighter.fantasy.game-ui-resources", "plugin.toml");
         var nirinsouPath = Path.Combine(repo, "games", "BubbleFighter", "plugins", "bubble.fighter.fantasy.nirinsoulink", "plugin.toml");
+        var bridgePath = Path.Combine(repo, "games", "BubbleFighter", "plugins", "bubblefighter.fantasy.native-ui-bridge", "plugin.toml");
 
         var banRules = PluginCatalog.Parse(banRulesPath, File.ReadAllText(banRulesPath));
         var previews = PluginCatalog.Parse(previewsPath, File.ReadAllText(previewsPath));
         var uiResources = PluginCatalog.Parse(uiResourcesPath, File.ReadAllText(uiResourcesPath));
         var nirinsou = PluginCatalog.Parse(nirinsouPath, File.ReadAllText(nirinsouPath));
+        var bridge = PluginCatalog.Parse(bridgePath, File.ReadAllText(bridgePath));
 
         Assert.Equal("bubblefighter.fantasy.banpick", banRules.Id);
         Assert.Equal("0.1.71", banRules.MinimumLauncherVersion);
@@ -42,7 +44,7 @@ public sealed class PluginPolicyEnforcementTests
         }
 
         Assert.Equal(
-            ["bubble.fighter.fantasy.nirinsoulink", "bubblefighter.fantasy.game-ui-resources", "bubblefighter.fantasy.item-previews"],
+            ["bubble.fighter.fantasy.nirinsoulink", "bubblefighter.fantasy.game-ui-resources", "bubblefighter.fantasy.item-previews", "bubblefighter.fantasy.native-ui-bridge"],
             banRules.Policy.Where(rule => rule.Type == "require").Select(rule => rule.Plugin).Order(StringComparer.Ordinal));
 
         Assert.Equal(["bubblefighter.fantasy.banpick"],
@@ -54,11 +56,12 @@ public sealed class PluginPolicyEnforcementTests
             StoreRelease(previews),
             StoreRelease(uiResources),
             StoreRelease(nirinsou),
+            StoreRelease(bridge),
             StoreRelease(banRules),
         ]);
         var planned = PluginRequirements.PlanStoreInstall(catalog, catalog.Packages.Single(item => item.Id == banRules.Id), []);
-        Assert.Equal(["bubble.fighter.fantasy.nirinsoulink", "bubblefighter.fantasy.item-previews", "bubblefighter.fantasy.game-ui-resources"],
-            planned.Select(item => item.Id));
+        Assert.Equal(["bubble.fighter.fantasy.nirinsoulink", "bubblefighter.fantasy.game-ui-resources", "bubblefighter.fantasy.item-previews",
+            "bubblefighter.fantasy.native-ui-bridge"], planned.Select(item => item.Id).Order(StringComparer.Ordinal));
 
         StorePackage StoreRelease(PluginDefinition definition) =>
             new(definition.Id, "plugin", definition.Game, [], definition.Version, definition.Name.Values,

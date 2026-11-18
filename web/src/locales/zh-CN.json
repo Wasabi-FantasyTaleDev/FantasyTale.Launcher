@@ -1139,6 +1139,7 @@
     "required": "必装",
     "recommended": "推荐",
     "installed": "已安装并启用",
+    "checkingInstalled": "正在检查已安装的插件",
     "noPlugins": "服务器尚未声明推荐或必装插件。",
     "sources": "推荐插件源",
     "addSource": "添加源",

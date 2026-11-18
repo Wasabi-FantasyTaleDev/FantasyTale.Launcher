@@ -59,6 +59,8 @@ public partial class OverlayWindow : Window
     private bool _pointerCaptured;
     private readonly bool _preserveGameActivation;
     private Rect[] _inputRegions = [];
+    // Page-pixel rectangles of the game's own dialogs; pointer input inside them always reaches the game.
+    private Rect[] _nativeHoles = [];
     private DispatcherTimer? _inputTimer;
     private HwndSource? _source;
     private (int Width, int Height, uint Dpi)? _viewport;
@@ -326,6 +328,10 @@ public partial class OverlayWindow : Window
                         _pointerCaptured = message.RootElement.TryGetProperty("capturePointer", out var capture) && capture.GetBoolean();
                         _inputRegions = message.RootElement.TryGetProperty("regions", out var regions)
                             ? regions.EnumerateArray().Take(64).Select(r => new Rect(r.GetProperty("x").GetDouble(),
+                                r.GetProperty("y").GetDouble(), Math.Max(0, r.GetProperty("width").GetDouble()),
+                                Math.Max(0, r.GetProperty("height").GetDouble()))).ToArray() : [];
+                        _nativeHoles = message.RootElement.TryGetProperty("holes", out var holes) && holes.ValueKind == System.Text.Json.JsonValueKind.Array
+                            ? holes.EnumerateArray().Take(OverlayNativeHole.MaximumCount).Select(r => new Rect(r.GetProperty("x").GetDouble(),
                                 r.GetProperty("y").GetDouble(), Math.Max(0, r.GetProperty("width").GetDouble()),
                                 Math.Max(0, r.GetProperty("height").GetDouble()))).ToArray() : [];
                         if (_gamePid == 0) SetSurfaceVisible(_panelsVisible || !_pageReady);
@@ -660,7 +666,8 @@ public partial class OverlayWindow : Window
         }
         // Modal priority among panels is independent of game input outside their
         // bounds. A drag retains capture even when outside clicks pass through.
-        if ((_modalInput && !_passThroughOutside) || _pointerCaptured)
+        // A native dialog's hole needs the pointer routed even when a modal panel would otherwise take the whole client area.
+        if (_pointerCaptured || (_modalInput && !_passThroughOutside && _nativeHoles.Length == 0))
         {
             _inputTimer?.Stop();
             ApplyClickThrough(false);
@@ -684,7 +691,9 @@ public partial class OverlayWindow : Window
         // Input regions are page (CSS) pixels: device-independent pixels divided by the page zoom.
         var scale = Math.Max(1, GetDpiForWindow(_hwnd)) / 96.0 * (WebView.CoreWebView2 is null ? 1 : WebView.ZoomFactor);
         var point = new Point((cursor.X - rect.Left) / scale, (cursor.Y - rect.Top) / scale);
-        ApplyClickThrough(!_inputRegions.Any(region => region.Contains(point)));
+        if (_nativeHoles.Any(hole => hole.Contains(point))) ApplyClickThrough(true);
+        else if (_modalInput && !_passThroughOutside) ApplyClickThrough(false);
+        else ApplyClickThrough(!_inputRegions.Any(region => region.Contains(point)));
     }
 
     /// <summary>

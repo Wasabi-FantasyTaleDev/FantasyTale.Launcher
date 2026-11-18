@@ -157,7 +157,7 @@ public static class PluginCatalog
         }
         if (kind == "native" && native is null) throw root.Error("native", "required for native plugins");
         var overlay = root.Table("overlay");
-        overlay?.OnlyKeys("entry", "controller");
+        overlay?.OnlyKeys("entry", "controller", "controller_companion");
         OverlayPluginDefinition? overlayDefinition = null;
         if (kind == "overlay")
         {
@@ -167,6 +167,9 @@ public static class PluginCatalog
                 || overlayEntry.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || overlayEntry.Contains("..", StringComparison.Ordinal)))
                 throw overlay.Error("entry", "must be a single package-relative .html file name");
             string? controller = null;
+            var controllerCompanion = overlay.Boolean("controller_companion", true);
+            if (overlay.Has("controller_companion") && !overlay.Has("controller"))
+                throw overlay.Error("controller_companion", "requires a controller");
             if (overlay.Has("controller"))
             {
                 controller = overlay.String("controller", true);
@@ -175,7 +178,7 @@ public static class PluginCatalog
                     throw overlay.Error("controller", "must be an identifier using ASCII letters, digits, dots, underscores or hyphens");
                 if (overlayEntry.Length == 0) throw overlay.Error("controller", "requires an overlay entry page");
             }
-            overlayDefinition = new OverlayPluginDefinition(overlayEntry.Length == 0 ? null : overlayEntry) { Controller = controller };
+            overlayDefinition = new OverlayPluginDefinition(overlayEntry.Length == 0 ? null : overlayEntry) { Controller = controller, ControllerCompanion = controllerCompanion };
         }
         else if (overlay is not null) throw root.Error("overlay", "only allowed for overlay plugins");
         var service = root.Table("service");

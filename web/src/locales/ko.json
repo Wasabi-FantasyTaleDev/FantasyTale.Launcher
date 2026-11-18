@@ -1139,6 +1139,7 @@
     "required": "필수",
     "recommended": "권장",
     "installed": "설치 및 활성화됨",
+    "checkingInstalled": "설치된 플러그인 확인 중",
     "noPlugins": "서버에서 권장하거나 요구하는 플러그인이 없습니다.",
     "sources": "권장 플러그인 소스",
     "addSource": "소스 추가",

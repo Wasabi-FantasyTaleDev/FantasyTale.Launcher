@@ -41,6 +41,17 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
         PostToPage(JsonSerializer.Serialize(new { type = "build-context", context }, JsonSerializerOptions.Web));
     }
 
+    internal void SetNativeHoles(IReadOnlyList<OverlayNativeHole> holes) =>
+        PostToPage(JsonSerializer.Serialize(new { type = "native-holes", holes }, JsonSerializerOptions.Web));
+
+    /// <inheritdoc />
+    public Task SetNativeHolesAsync(IReadOnlyList<OverlayNativeHole> holes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(holes);
+        SetNativeHoles(holes);
+        return Task.CompletedTask;
+    }
+
     /// <summary>Replaces the package folders overlay pages can read; throws without changes when an entry is invalid.</summary>
     internal void SetPackageRoots(IReadOnlyDictionary<string, string> roots)
     {

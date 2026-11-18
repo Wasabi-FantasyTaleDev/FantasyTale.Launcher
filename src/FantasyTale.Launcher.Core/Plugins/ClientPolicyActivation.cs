@@ -152,15 +152,10 @@ public static class ClientPolicyActivation
         var retainEnabled = !forceEnable && (upgrade || explicitSelection && previous is not null
             && (selectionId != pluginId || PluginCatalog.CompareVersions(version, previous.Version) > 0));
         var required = previous?.Required == true || PluginCatalog.IsRequired(package, build) || ProfileClientPolicy.Has(build, package, "require");
-        // An automatic upgrade keeps the enabled state only while the package's grants are the ones the user approved.
-        // Changed grants stay off until an explicit selection, which is the user's new consent.
-        var fingerprint = PluginGrants.Fingerprint(package);
-        var approved = previous is null ? null : previous.Grants ?? (packages.SingleOrDefault(item => item.Id == previous.Id && item.Version == previous.Version)
-            is { } recorded ? PluginGrants.Fingerprint(recorded) : null);
-        // A selection saved before grants were recorded, whose package can no longer be read, has no approval to compare with.
-        var grantsChanged = upgrade && !explicitSelection && approved is not null && approved != fingerprint;
-        var enabled = !grantsChanged && (required || (retainEnabled ? previous?.Enabled ?? true : true));
-        var selected = new InstancePlugin(pluginId, version, enabled, required && enabled, options, grantsChanged ? previous?.Grants : fingerprint);
+        // An update never changes whether the plugin is on: the enabled state is the user's, and the selection records
+        // the grants of the package it now points at.
+        var enabled = required || (retainEnabled ? previous?.Enabled ?? true : true);
+        var selected = new InstancePlugin(pluginId, version, enabled, required && enabled, options, PluginGrants.Fingerprint(package));
         if (package.Resources is not null)
         {
             var module = GameModules.Load(game, AppContext.BaseDirectory) as IGameResourceModule

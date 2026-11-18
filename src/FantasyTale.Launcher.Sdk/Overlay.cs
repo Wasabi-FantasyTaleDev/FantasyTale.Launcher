@@ -23,6 +23,14 @@ public interface IOverlayHost
 
     /// <summary>Raised after <see cref="Presentation"/> changes; hosts that never report do not raise it.</summary>
     event EventHandler? PresentationChanged { add { } remove { } }
+
+    /// <summary>
+    /// Replaces the rectangles of the game's own dialogs the overlay must leave visible and usable; an empty list removes
+    /// them all. Hosts that cannot cut holes ignore the call.
+    /// </summary>
+    /// <param name="holes">Rectangles in game client pixels.</param>
+    /// <param name="cancellationToken">Cancels waiting for the overlay to accept the change.</param>
+    Task SetNativeHolesAsync(IReadOnlyList<OverlayNativeHole> holes, CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
 
 /// <summary>Describes one bounded HTML panel supplied by a trusted installed package.</summary>

@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "builds": {
+    "kr-812": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui"],
+    "kr-1256": ["Ui/DlgMessageBox.ui", "Ui/DlgMessageBoxOk.ui", "Ui/DlgCustomMessageBox.ui", "Ui/DlgCommon/DlgCommonNotice.ui"],
+    "cn-324": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui"],
+    "cn-406": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui"],
+    "cn-408": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui"],
+    "cn-706": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui"],
+    "cn-774": ["Ui/DlgMessageBox.ui", "Ui/DlgCustomMessageBox.ui", "Ui/DlgCommon/DlgCommonNotice.ui"]
+  }
+}

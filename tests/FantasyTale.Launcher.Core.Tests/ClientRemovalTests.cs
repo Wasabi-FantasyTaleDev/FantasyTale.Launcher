@@ -186,6 +186,70 @@ public sealed class ClientRemovalTests : IDisposable
         finally { if (!process.HasExited) process.Kill(); await process.WaitForExitAsync(); }
     }
 
+    [Fact]
+    public async Task RecordOnlyRemovalSucceedsWhenInstanceFileIsMissing()
+    {
+        var store = new InstanceStore(Path.Combine(_root, "metadata")); await store.CreateAsync(Definition());
+        var client = store.ClientFolder("sample"); File.WriteAllText(Path.Combine(client, "personal.txt"), "personal");
+        File.Delete(Path.Combine(_root, "metadata", "sample", "instance.toml"));
+        Assert.False(store.HasDefinition("sample"));
+        Assert.Equal(new ClientRemovalResult(0, 0), await store.RemoveAsync("sample", false, Game));
+        Assert.Equal(new ClientRemovalResult(0, 0), await store.RemoveMissingAsync("sample", false));
+        Assert.Equal("personal", File.ReadAllText(Path.Combine(client, "personal.txt")));
+    }
+
+    [Fact]
+    public async Task DeleteNowSucceedsWhenInstanceFileIsMissingAndCleansOwnedFiles()
+    {
+        var store = new InstanceStore(Path.Combine(_root, "metadata")); await store.CreateAsync(Definition());
+        var client = store.ClientFolder("sample"); await InstallAsync(client, ("game.exe", "game"), ("data/keep.bin", "original"));
+        File.WriteAllText(Path.Combine(client, "data", "keep.bin"), "user modification");
+        File.WriteAllText(Path.Combine(store.LogFolder("sample"), "launch.log"), "log");
+        File.Delete(Path.Combine(_root, "metadata", "sample", "instance.toml"));
+        var result = await store.RemoveAsync("sample", true, Game);
+        Assert.Equal(new ClientRemovalResult(1, 1), result);
+        Assert.False(File.Exists(Path.Combine(client, "game.exe")));
+        Assert.Equal("user modification", File.ReadAllText(Path.Combine(client, "data", "keep.bin")));
+        Assert.False(Directory.Exists(store.LogFolder("sample")));
+    }
+
+    [Fact]
+    public async Task DeleteNowSucceedsWhenWholeInstanceFolderIsMissing()
+    {
+        var store = new InstanceStore(Path.Combine(_root, "metadata")); await store.CreateAsync(Definition());
+        Directory.Delete(Path.Combine(_root, "metadata", "sample"), true);
+        Assert.Equal(new ClientRemovalResult(0, 0), await store.RemoveAsync("sample", true, Game));
+        Assert.Equal(new ClientRemovalResult(0, 0), await store.RemoveMissingAsync("sample", true));
+        Assert.Equal(new ClientRemovalResult(0, 0), await store.RemoveMissingAsync("sample", false));
+    }
+
+    [Fact]
+    public async Task MissingInstanceFileCleanupNeverFollowsLinksOutOfTheInstanceFolder()
+    {
+        var store = new InstanceStore(Path.Combine(_root, "metadata")); await store.CreateAsync(Definition());
+        var outside = Directory.CreateDirectory(Path.Combine(_root, "outside")).FullName; File.WriteAllText(Path.Combine(outside, "file.bin"), "data");
+        var cache = Path.Combine(_root, "metadata", "sample", "resource-cache"); Directory.CreateDirectory(cache);
+        using (var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe")
+        { ArgumentList = { "/c", "mklink", "/J", Path.Combine(cache, "link"), outside }, CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true }))
+        { Assert.NotNull(process); await process.WaitForExitAsync(); Assert.Equal(0, process.ExitCode); }
+        File.Delete(Path.Combine(_root, "metadata", "sample", "instance.toml"));
+        await store.RemoveMissingAsync("sample", true);
+        Assert.Equal("data", File.ReadAllText(Path.Combine(outside, "file.bin")));
+        Assert.False(Directory.Exists(cache));
+    }
+
+    [Fact]
+    public void RetiredDefaultBuildNameShowsTheCurrentNameButTypedNamesStay()
+    {
+        var korea = new BuildDefinition("kr-186", "test", 186, new LocalizedText(new Dictionary<string, string> { ["en"] = "Korea 2009-12-21", ["ko"] = "한국 2009-12-21" }),
+            "game.exe", "", "", null, null, "test", [], []) { BuildDate = new DateTime(2009, 12, 20, 23, 42, 19) };
+        Assert.Equal("Korea 2009-12-21", InstanceNames.Current("Korea 2009-12-20", korea));
+        Assert.Equal("한국 2009-12-21", InstanceNames.Current("한국 2009-12-20", korea));
+        Assert.Equal("Korea 2009-12-21", InstanceNames.Current("Korea 2009-12-21", korea));
+        Assert.Equal("My Korea 2009-12-20", InstanceNames.Current("My Korea 2009-12-20", korea));
+        Assert.Equal("Korea 2009-12-20", InstanceNames.Current("Korea 2009-12-20", null));
+    }
+
     private static async Task InstallAsync(string client, params (string Path, string Content)[] files)
     {
         var manifest = new List<ClientReleaseFile>();

@@ -45,6 +45,7 @@
 <script type="module">
 import { orderedPanels, inputPanels, bringToFront, passesOutsideClicks, subscribePanel } from './panel-stack.js';
 import { resolveAnchor } from './anchors.js';
+import { mapHoles, holesWithin, clipPath, DIM_FILTER } from './native-holes.js';
 import { waitForNativeSurface } from './surface-ready.js';
 /**
  * overlayBus — the communication contract between C# and panel components.
@@ -127,6 +128,31 @@ function createPanel(panelId, html) {
     return entry;
 }
 
+// Rectangles, in game client pixels, of the game's own dialogs the overlay must leave visible; the launcher sends them.
+let nativeHoles = [];
+let lastHoleKey = '';
+// Cuts every shown panel (the overlay's own notice excepted) and the scrim open over the holes and dims the panels that
+// are cut, so a native message box shows through and stays usable. Returns the holes in page pixels.
+function applyNativeHoles(shown) {
+    const pageHoles = mapHoles(nativeHoles, { ...physicalViewport, width: innerWidth, height: innerHeight });
+    for (const p of panels.values()) {
+        const rect = p.host.getBoundingClientRect();
+        const cuts = pageHoles.length && p.notice !== true && shown.includes(p) ? holesWithin(rect, pageHoles) : [];
+        if (cuts.length) {
+            p.host.style.clipPath = clipPath(rect.width, rect.height, cuts);
+            p.host.style.filter = DIM_FILTER;
+            p.holeCut = true;
+        } else if (p.holeCut) {
+            p.host.style.clipPath = '';
+            p.host.style.filter = '';
+            p.holeCut = false;
+        }
+    }
+    backdrop.style.clipPath = pageHoles.length && backdrop.style.display === 'block'
+        ? clipPath(innerWidth, innerHeight, holesWithin({ x: 0, y: 0, width: innerWidth, height: innerHeight }, pageHoles)) : '';
+    return pageHoles;
+}
+
 let lastPresentation = '';
 function reportPresentation(force = false) {
     const shown = orderedPanels(panels);
@@ -145,6 +171,7 @@ function reportPresentation(force = false) {
         backdrop.style.zIndex = String(shown.indexOf(scrimOwner) * 2 + 1);
     }
     shown.forEach((p, index) => { p.host.style.zIndex = String(index * 2 + 2); });
+    const pageHoles = applyNativeHoles(shown);
     const state = JSON.stringify({
         type: 'presentation-state', visible: shown.length > 0,
         busy: pendingCommands > 0,
@@ -161,6 +188,7 @@ function reportPresentation(force = false) {
             return { x: r.x, y: r.y, width: r.width, height: r.height, modal: !!p.modal, backdrop: !!p.backdrop };
         }),
         viewport: { width: innerWidth, height: innerHeight },
+        holes: pageHoles,
     });
     if (force === true || state !== lastPresentation) {
         lastPresentation = state;
@@ -627,6 +655,12 @@ async function handleMessage(e) {
     if (type === 'build-context') {
         window.overlayBus.buildContext = msg.context;
         for (const id of panels.keys()) window.overlayBus.emit(id, 'game-ui.context', msg.context);
+        return;
+    }
+    if (type === 'native-holes') {
+        nativeHoles = Array.isArray(msg.holes) ? msg.holes.slice(0, 16) : [];
+        const key = JSON.stringify(nativeHoles);
+        if (key !== lastHoleKey) { lastHoleKey = key; reportPresentation(); }
         return;
     }
     if (type === 'viewport') {

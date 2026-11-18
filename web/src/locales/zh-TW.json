@@ -1139,6 +1139,7 @@
     "required": "必裝",
     "recommended": "推薦",
     "installed": "已安裝並啟用",
+    "checkingInstalled": "正在檢查已安裝的模組",
     "noPlugins": "伺服器尚未宣告推薦或必裝模組。",
     "sources": "推薦模組來源",
     "addSource": "新增來源",

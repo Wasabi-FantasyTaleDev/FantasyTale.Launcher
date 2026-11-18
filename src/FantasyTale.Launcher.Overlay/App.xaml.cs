@@ -137,6 +137,13 @@ public partial class App : Application
                         ?? throw new ArgumentException("Missing build context."));
                     await WriteResponseAsync(pipe, requestId, true, null, cancellationToken).ConfigureAwait(false);
                     break;
+                case "native-holes":
+                    host.SetNativeHoles(root.GetProperty("holes").EnumerateArray().Take(OverlayNativeHole.MaximumCount)
+                        .Select(hole => new OverlayNativeHole(hole.GetProperty("x").GetInt32(), hole.GetProperty("y").GetInt32(),
+                            hole.GetProperty("width").GetInt32(), hole.GetProperty("height").GetInt32()))
+                        .Where(hole => hole.Width > 0 && hole.Height > 0).ToArray());
+                    await WriteResponseAsync(pipe, requestId, true, null, cancellationToken).ConfigureAwait(false);
+                    break;
                 case "package-roots":
                     {
                         var roots = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -189,7 +196,7 @@ public partial class App : Application
                 default: throw new ArgumentException("Unknown overlay command.");
             }
         }
-        catch (Exception error) when (error is ArgumentException or InvalidOperationException or KeyNotFoundException or JsonException)
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or KeyNotFoundException or JsonException or FormatException)
         {
             await WriteResponseAsync(pipe, requestId, false, error.Message, cancellationToken).ConfigureAwait(false);
         }

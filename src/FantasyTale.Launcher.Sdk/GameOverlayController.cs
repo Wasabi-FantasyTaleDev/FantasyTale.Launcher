@@ -19,6 +19,9 @@ public sealed record GameOverlayControllerContext(PluginDefinition Plugin, Build
     /// <summary>Gets the stable owner-scoped companion view for this package's declared grants, or null when no service is available.</summary>
     public ICompanionChannel? Companion { get; init; }
 
+    /// <summary>Gets the running client's installation folder, or null when it is unknown; a controller may read the client's own data from it.</summary>
+    public string? ClientFolder { get; init; }
+
     /// <summary>Gets an optional sink for fixed diagnostic categories and status identities, excluding game text and credentials.</summary>
     public Action<string, string>? Record { get; init; }
 }

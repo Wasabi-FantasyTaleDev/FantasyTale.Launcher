@@ -55,7 +55,7 @@ can be created.
 Native form bindings cover `kr-812`, `kr-1256`, `cn-279`, `cn-324`, `cn-404`, `cn-406`, `cn-408`, `cn-706`, `cn-717`, `cn-735`, `cn-774`, `id-400`, `id-1809` and `tw-454`. Other builds require their own
 native bridge adaptation and `room-bindings.json` entry. Support verification is
 separate from the 47-entry labels catalogue. The catalogue includes modes from the
-original room dialog, and the default availability policy displays every entry.
+original room dialog, and only kr-1256 is stated as showing every entry.
 
 ## Build-specific availability
 
@@ -67,7 +67,7 @@ recognized and replaced correctly.
 The shipped policy is:
 
 ```json
-{"format":1,"rules":[]}
+{"format":1,"rules":[{"builds":["kr-1256"],"hidden":[]}]}
 ```
 
 The following is a configuration example, not a supplied support matrix:
@@ -85,15 +85,18 @@ The following is a configuration example, not a supplied support matrix:
 | Field | Meaning |
 | --- | --- |
 | `format` | Required format version, currently `1`. |
-| `rules` | Ordered array of explicit restrictions. An empty array retains the complete catalogue. |
+| `rules` | Ordered array of explicit restrictions. An empty array states no build. |
 | `builds` | Nonempty list of build IDs or `*` wildcard patterns. Matching is case-insensitive and covers the entire ID. |
 | `allow` | Optional list of mode IDs to retain. Matching allow lists intersect. An empty allow list retains no modes. |
 | `hidden` | Optional list of mode IDs to remove. A matching hidden list takes precedence over an allow list. |
 
+With a launcher that includes the per-build list (0.2.4 and later), a build that no rule matches (an empty `hidden` list is the way to state a fully checked build) lists only the modes its own Create Room dialog shows
+(the visible `btnGameMode` buttons, read when the window opens) and logs `mode-data-missing.<build>`. The shipped data
+states only kr-1256.
+
 Each rule requires `allow`, `hidden`, or both. IDs must be distinct integers present
 in the complete catalogue. Invalid policy data fails before opening a partial
-list. Unmatched builds retain the catalogue unless another matching rule restricts
-them. The schema is `mode-availability.schema.json`; the runtime additionally
+list. Builds no rule matches list only their own dialog's modes. The schema is `mode-availability.schema.json`; the runtime additionally
 checks IDs against the actual catalogue. Populate rules from verified client and
 server behavior for the deployment.
 

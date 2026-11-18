@@ -2,7 +2,7 @@ schema = 2
 
 [plugin]
 id = "bubblefighter.fantasy.banpick"
-version = "0.2.5"
+version = "0.3.0"
 game = "bubblefighter"
 kind = "overlay"
 minimum_launcher_version = "0.1.71"
@@ -31,6 +31,12 @@ th = "เลือกอาวุธ ตัวละคร ชุด เคร�
 plugin = "bubble.fighter.fantasy.nirinsoulink"
 type = "require"
 
+# The room window's position comes from the bridge's native form read.
+[[plugin_policy]]
+plugin = "bubblefighter.fantasy.native-ui-bridge"
+type = "require"
+version = ">=0.1.20"
+
 [[plugin_policy]]
 plugin = "bubblefighter.fantasy.item-previews"
 type = "require"
@@ -44,6 +50,9 @@ builds = ["*"]
 
 [overlay]
 entry = "ban-pick.html"
+controller = "ban-pick-room"
+# The controller only reads the client (room window, button picture); the page keeps its own companion bridge.
+controller_companion = false
 
 [companion.messages]
 "game.ban.list.changed" = 1

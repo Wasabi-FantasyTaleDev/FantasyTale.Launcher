@@ -152,6 +152,12 @@ public sealed record OverlayPluginDefinition(string? Entry)
 {
     /// <summary>Gets the game-module controller identity that owns this panel's background behavior; null retains a presentation-only package.</summary>
     public string? Controller { get; init; }
+
+    /// <summary>
+    /// Gets whether the controller also owns the package's companion grants. A controller that needs only the running
+    /// client (the room window's position, say) sets this false, so the entry page keeps its own companion bridge.
+    /// </summary>
+    public bool ControllerCompanion { get; init; } = true;
 }
 
 /// <summary>A hashed package file temporarily replacing a relative client path for selected builds.</summary>

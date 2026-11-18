@@ -15,6 +15,14 @@ internal sealed class ModeExtensionData
 
     internal IReadOnlyList<ModeDefinition> Modes { get; }
     internal IReadOnlyList<ModeDefinition> AllModes { get; }
+    /// <summary>
+    /// Whether <c>mode-availability.json</c> states this build's mode list (any matching rule: an <c>allow</c> list, or an empty
+    /// <c>hidden</c> list after the catalogue was checked against the client). A build without that evidence lists only the modes its own Create
+    /// Room dialog shows, so a client never offers a mode nothing proves it has.
+    /// </summary>
+    internal bool ModeListStated { get; }
+    /// <summary>Gets the client build this data was loaded for.</summary>
+    internal string BuildId { get; }
     // A build whose Create Room constructor picks between resources at run time binds each of them (cn-735 sub_A88A90).
     internal IReadOnlyList<RoomBinding> Bindings { get; }
     internal string Language { get; }
@@ -26,12 +34,12 @@ internal sealed class ModeExtensionData
     internal int StartupTimeoutMs { get; }
     internal int MaxPendingActions { get; }
 
-    private ModeExtensionData(IReadOnlyList<ModeDefinition> modes, IReadOnlyList<ModeDefinition> allModes,
+    private ModeExtensionData(IReadOnlyList<ModeDefinition> modes, IReadOnlyList<ModeDefinition> allModes, bool modeListStated, string buildId,
         IReadOnlyList<RoomBinding> bindings, string language, string title, string selectedCaption,
         int pollMs, int operationTimeoutMs, int resultPollMs, int startupTimeoutMs, int maxPendingActions,
         IReadOnlyDictionary<string, int> tokens)
     {
-        Modes = modes; AllModes = allModes; Bindings = bindings; Language = language; Title = title;
+        Modes = modes; AllModes = allModes; ModeListStated = modeListStated; BuildId = buildId; Bindings = bindings; Language = language; Title = title;
         SelectedCaption = selectedCaption; PollMs = pollMs; OperationTimeoutMs = operationTimeoutMs;
         ResultPollMs = resultPollMs; StartupTimeoutMs = startupTimeoutMs; MaxPendingActions = maxPendingActions;
         _tokens = tokens;
@@ -63,7 +71,7 @@ internal sealed class ModeExtensionData
                 tokens[token] = mode.Id;
             }
 
-        var modes = FilterModes(availability.RootElement, allModes, build.Id);
+        var (modes, stated) = FilterModes(availability.RootElement, allModes, build.Id);
         var bound = ReadBindings(bindings.RootElement, build.Id);
         var controller = settings.RootElement;
         RequireFormat(controller, "controller.json");
@@ -83,7 +91,7 @@ internal sealed class ModeExtensionData
         var title = plugin.Name.Resolve(language);
         if (string.IsNullOrWhiteSpace(title) || title.Contains('\0'))
             throw Invalid("plugin.toml", "plugin.name", "a native entry title is required");
-        return new(modes, allModes, bound, language, title, captions.GetValueOrDefault(language, captions["en"]),
+        return new(modes, allModes, stated, build.Id, bound, language, title, captions.GetValueOrDefault(language, captions["en"]),
             pollMs, operationTimeoutMs, resultPollMs, startupTimeoutMs, maxPendingActions,
             new ReadOnlyDictionary<string, int>(tokens));
     }
@@ -167,13 +175,14 @@ internal sealed class ModeExtensionData
         return result.AsReadOnly();
     }
 
-    private static ReadOnlyCollection<ModeDefinition> FilterModes(JsonElement root, IReadOnlyList<ModeDefinition> modes, string build)
+    private static (ReadOnlyCollection<ModeDefinition> Modes, bool Stated) FilterModes(JsonElement root, IReadOnlyList<ModeDefinition> modes, string build)
     {
         const string file = "mode-availability.json";
         RequireFormat(root, file);
         OnlyKeys(root, file, "", "format", "rules");
         var known = modes.Select(mode => mode.Id).ToHashSet();
         var visible = known.ToHashSet();
+        var stated = false;
         foreach (var rule in Array(root, "rules", file))
         {
             OnlyKeys(rule, file, "rules", "builds", "allow", "hidden");
@@ -188,8 +197,9 @@ internal sealed class ModeExtensionData
             if (!builds.Any(pattern => FileSystemName.MatchesSimpleExpression(pattern, build, ignoreCase: true))) continue;
             if (allow is not null) visible.IntersectWith(allow);
             visible.ExceptWith(hidden);
+            stated = true;
         }
-        return System.Array.AsReadOnly(modes.Where(mode => visible.Contains(mode.Id)).ToArray());
+        return (System.Array.AsReadOnly(modes.Where(mode => visible.Contains(mode.Id)).ToArray()), stated);
     }
 
     /// <summary>

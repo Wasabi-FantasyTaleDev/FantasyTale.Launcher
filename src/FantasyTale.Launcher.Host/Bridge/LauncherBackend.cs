@@ -570,7 +570,7 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                 var game = games.SingleOrDefault(g => g.Id == instance.Game);
                 var diagnostics = game is not null && build is not null && packages[game.Id].Any(plugin => plugin.Diagnostics && PluginCatalog.IsAvailable(plugin, build)
                     && instance.Plugins.Any(selection => selection.Id == plugin.Id && selection.Version == plugin.Version && selection.Enabled));
-                return new { instance.Id, instance.Name, instance.Game, instance.Build, instance.Endpoint, instance.Plugins, instance.Language, instance.CheckIntegrity,
+                return new { instance.Id, Name = InstanceNames.Current(instance.Name, build), instance.Game, instance.Build, instance.Endpoint, instance.Plugins, instance.Language, instance.CheckIntegrity,
                     DiagnosticsEnabled = diagnostics,
                     InstallationPath = _store.ClientFolder(instance.Id), ExternalInstallation = instance.InstallationPath is not null, ClientInstalled = installed,
                     RecoveryRequired = InstanceRecovery.Required(_store.ClientFolder(instance.Id)) && !_launches.IsActive(instance.Id) };
@@ -684,8 +684,10 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             Keys(p, "id", "deleteFiles");
             var id = Text(p, "id");
             var deleteFiles = p?["deleteFiles"]?.GetValue<bool>() ?? throw new ArgumentException("Choose whether to delete files or remove only the registration.");
-            var instance = _store.Load(id);
-            var result = await Task.Run(() => _store.RemoveAsync(id, deleteFiles, Game(instance.Game), ct), ct).ConfigureAwait(false);
+            // A record whose instance.toml is missing is removed without reading it.
+            var result = !_store.HasDefinition(id)
+                ? await Task.Run(() => _store.RemoveMissingAsync(id, deleteFiles, ct), ct).ConfigureAwait(false)
+                : await Task.Run(() => _store.RemoveAsync(id, deleteFiles, Game(_store.Load(id).Game), ct), ct).ConfigureAwait(false);
             bridge.Emit("instances.changed", new { id }); return result;
         });
         bridge.Add("instances.update", async (p, ct) =>
@@ -1113,7 +1115,8 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
             _sessionServices.StartForClient(instance, build, servicePlan, client.Completion, nativeConsumers, client.Control, panelConsumers, controllerConsumers);
             _overlay.StartForClient(instance, build with { Overlay = overlayProfile }, packageList, client, languageMetadata.LauncherLanguage,
                 module.GetCapability<IGameOverlayControllerProvider>(),
-                (owner, token) => _sessionServices.GetControllerChannelAsync(instance.Id, owner, token));
+                (owner, token) => _sessionServices.GetControllerChannelAsync(instance.Id, owner, token),
+                module.GetCapability<IGameNativeMessageBoxes>()?.MessageBoxResources(build.Id));
             if (server.Id.StartsWith("local-", StringComparison.Ordinal)
                 && _hosting.List().SingleOrDefault(s => s.ProfileId == server.Id[6..] && s.State == "ready") is { } hosted
                 && _hosting.StartedProfile(hosted.ProfileId, hosted.RunId).Mode == "private")

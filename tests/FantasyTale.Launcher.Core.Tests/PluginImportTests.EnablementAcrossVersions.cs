@@ -41,35 +41,37 @@ public sealed partial class PluginImportTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ChangedGrantsStayOffUntilTheUserApprovesThem(bool policyRequires)
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    public void ChangedGrantsDoNotChangeTheEnabledState(bool enabled, bool policyRequires)
     {
         var original = Game(); var build = original.Builds[0] with
         { ClientPolicy = policyRequires ? PolicyFixture.Rules("fixture.optional", "require") : ClientPolicy.Empty };
         var game = original with { Builds = [build] };
         var approved = FixtureVersion("1.0.0"); var changed = FixtureVersion("1.1.0", "fixture.shared");
         var instance = new InstanceDefinition("client", "Client", game.Id, build.Id, null,
-            [Selected(approved, true, PluginGrants.Fingerprint(approved))]);
+            [Selected(approved, enabled, PluginGrants.Fingerprint(approved))]);
         var repaired = FilePluginResolver.EnsureComponents(instance, game, build, [changed]);
         var selection = Assert.Single(repaired.Plugins);
         Assert.Equal("1.1.0", selection.Version);
-        Assert.False(selection.Enabled);
-        Assert.False(selection.Required);
-        Assert.Equal(PluginGrants.Fingerprint(approved), selection.Grants);
-        // Repeating the repair does not turn it back on, even when the policy requires the plugin.
-        Assert.False(Assert.Single(FilePluginResolver.EnsureComponents(repaired, game, build, [changed]).Plugins).Enabled);
+        // A required policy keeps the plugin on; otherwise the user's choice is untouched.
+        Assert.Equal(enabled || policyRequires, selection.Enabled);
+        Assert.Equal(PluginGrants.Fingerprint(changed), selection.Grants);
+        Assert.Equal(enabled || policyRequires, ServerPluginPolicy.Enabled(repaired, build, [changed], changed.Id));
+        Assert.Equal(enabled || policyRequires, Assert.Single(FilePluginResolver.EnsureComponents(repaired, game, build, [changed]).Plugins).Enabled);
     }
 
     [Fact]
-    public async Task AnExplicitChoiceApprovesChangedGrantsAndRecordsThem()
+    public async Task AnExplicitChoiceRecordsTheGrantsOfTheSelectedPackage()
     {
         var game = Game(); var build = game.Builds[0];
         var approved = FixtureVersion("1.0.0"); var changed = FixtureVersion("1.1.0", "fixture.shared");
         var store = new InstanceStore(Path.Combine(_root, "grant-consent-instances"));
         await store.CreateAsync(new("grant", "Grant", game.Id, build.Id, null, [Selected(approved, true, PluginGrants.Fingerprint(approved))]));
         var repaired = FilePluginResolver.RecoverInstalled(store, "grant", game, build, [changed], false, out _);
-        Assert.False(Assert.Single(repaired.Plugins).Enabled);
+        Assert.True(Assert.Single(repaired.Plugins).Enabled);
         ClientPolicyActivation.EnableExplicit(store, "grant", game, [changed], changed.Id, changed.Version, forceEnable: true);
         var stored = Assert.Single(store.Load("grant").Plugins);
         Assert.True(stored.Enabled);
@@ -78,34 +80,38 @@ public sealed partial class PluginImportTests
     }
 
     [Fact]
-    public async Task AnAutomaticUpgradeKeepsTheEnabledStateAndWaitsForChangedGrants()
+    public async Task AnAutomaticUpgradeKeepsTheEnabledAndDisabledStateAndOptions()
     {
         var game = Game(); var build = game.Builds[0];
-        var older = FixtureVersion("1.0.0"); var same = FixtureVersion("1.1.0"); var changed = FixtureVersion("1.2.0", "fixture.shared");
+        const string color = "\n[[options]]\nkey = \"font_color\"\ntype = \"enum\"\ndefault = \"white\"\nvalues = [\"white\", \"yellow\"]\nlabel = { en = \"Color\" }\n";
+        const string old = "\n[[options]]\nkey = \"old_setting\"\ntype = \"bool\"\ndefault = false\nlabel = { en = \"Old\" }\n";
+        PluginDefinition Versioned(string version, string? requires, string options)
+        {
+            var text = Manifest.Replace("version = \"1.0.0\"", $"version = \"{version}\"", StringComparison.Ordinal) + options;
+            if (requires is not null) text = text.Replace("kind = \"patch\"", $"kind = \"patch\"\nrequires = [\"{requires}\"]", StringComparison.Ordinal);
+            return PluginCatalog.LoadFile(Path.Combine(Folder(text), "plugin.toml"));
+        }
+        var older = Versioned("1.0.0", null, color + old); var same = Versioned("1.1.0", null, color); var changed = Versioned("1.2.0", "fixture.shared", color);
+        var chosen = new Dictionary<string, object> { ["font_color"] = "yellow", ["old_setting"] = true };
         var store = new InstanceStore(Path.Combine(_root, "upgrade-consent-instances"));
-        await store.CreateAsync(new("on", "On", game.Id, build.Id, null, [Selected(older, true, PluginGrants.Fingerprint(older))]));
-        await store.CreateAsync(new("off", "Off", game.Id, build.Id, null, [Selected(older, false, PluginGrants.Fingerprint(older))]));
+        foreach (var (id, enabled) in new[] { ("on", true), ("off", false) })
+            await store.CreateAsync(new(id, id, game.Id, build.Id, null,
+                [new(older.Id, older.Version, enabled, false, chosen, PluginGrants.Fingerprint(older))]));
 
-        using (store.Acquire("on"))
-            ClientPolicyActivation.EnableLeased(store, "on", game, [older, same], same.Id, same.Version,
-                ClientPolicyActivation.SelectionStamp(store.Load("on"), same.Id), upgrade: true);
-        Assert.True(Assert.Single(store.Load("on").Plugins).Enabled);
-
-        using (store.Acquire("off"))
-            ClientPolicyActivation.EnableLeased(store, "off", game, [older, same], same.Id, same.Version,
-                ClientPolicyActivation.SelectionStamp(store.Load("off"), same.Id), upgrade: true);
-        var disabled = Assert.Single(store.Load("off").Plugins);
-        Assert.False(disabled.Enabled);
-        Assert.Equal("1.1.0", disabled.Version);
-
-        // A grant change moves the selection to the new version, but it stays off and keeps the approved grants until renewed.
-        using (store.Acquire("on"))
-            ClientPolicyActivation.EnableLeased(store, "on", game, [older, same, changed], changed.Id, changed.Version,
-                ClientPolicyActivation.SelectionStamp(store.Load("on"), changed.Id), upgrade: true);
-        var waiting = Assert.Single(store.Load("on").Plugins);
-        Assert.Equal("1.2.0", waiting.Version);
-        Assert.False(waiting.Enabled);
-        Assert.Equal(PluginGrants.Fingerprint(same), waiting.Grants);
+        // Two successive automatic upgrades, the second changing the grants, leave each client exactly as it was.
+        foreach (var (id, enabled) in new[] { ("on", true), ("off", false) })
+            foreach (var next in new[] { same, changed })
+            {
+                using var lease = store.Acquire(id);
+                ClientPolicyActivation.EnableLeased(store, id, game, [older, same, changed], next.Id, next.Version,
+                    ClientPolicyActivation.SelectionStamp(store.Load(id), next.Id), upgrade: true);
+                var selection = Assert.Single(store.Load(id).Plugins);
+                Assert.Equal(next.Version, selection.Version);
+                Assert.Equal(enabled, selection.Enabled);
+                Assert.Equal("yellow", selection.Options["font_color"]);
+                Assert.DoesNotContain("old_setting", selection.Options.Keys);
+                Assert.Equal(PluginGrants.Fingerprint(next), selection.Grants);
+            }
     }
 
     [Theory]

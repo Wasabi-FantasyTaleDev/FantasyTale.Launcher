@@ -1,8 +1,26 @@
 # Changelog
 
-## Unreleased
+## 0.2.4 (2026-11-18)
+
+Clients
+- Deleting a client no longer fails with "Could not find file ... instance.toml" when the client's settings file or whole folder is already gone: both "Delete now" and "Remove record only" now remove the client from the list, and "Delete now" still cleans up the launcher-owned files that remain without ever following a link out of the launcher's folder.
+- A client that was created with the old kr-186 2009-12-21 2nd Stage default name "Korea 2009-12-20" (or its translations) now shows the correct date 2009-12-21; names you typed yourself are never changed.
+
+Overlay
+- Overlay plugins can declare a game-module controller that only reads the running client and leaves the package's companion messages to its page (`controller_companion = false` in the overlay table); Ban Rules uses it to find the room window.
+- When the game shows one of its own message boxes while an overlay window covers that spot, the overlay now cuts a hole at the message box and dims the window around it, so the real message box can be seen and clicked. The hole and the dimming go away when the message box closes. Available on kr-812, kr-1256 (Patch V1304) 2026-05-08, cn-324, cn-406, cn-408, cn-706 and cn-774.
+- Mode Extension's controller: a failed apply now closes the mode picker and shows the error box instead of leaving the picker open; an unexpected native failure while applying a mode now ends the apply with a logged `apply.failed.applyException.<type>` and closes the window instead of leaving it open and ignoring later clicks; an unexpected failure in the controller's own loop is logged as `loop.<type>` and the controller keeps running.
 
 Plugins
+- Ban Rules 0.3.0: the room button is placed from where the client's own room window actually is, not from fixed 1024x768 positions. On the room screens with a select-map button it sits immediately left of that button for the host, and right-aligned on the button's own spot for a member (kr-1256 (Patch V1304) 2026-05-08, cn-774 (Ver.0.2.98.3) 2019-05-30 and tw-454 (Patch V369) 2018-12-11 no longer have it cover the native button); on the legacy 8-slot room it sits in the bottom right of the map picture. Needs the native UI bridge 0.1.20 or newer and a launcher newer than 0.2.3 (the room window position comes from a new game-module controller).
+- Ban Rules 0.3.0: on the older room screens the button now wears the client's own yellow select-map button, read from the running client's files at run time (nothing is shipped), with its printed caption hidden and the localized name drawn in white bold with a dark outline; a client without that picture keeps the plain yellow button.
+- Mode Extension 0.1.26: on cn-774 (Ver.0.2.98.3) 2019-05-30 the entry button is drawn at the height of the native Create button (33 pixels) so its bottom edge is no longer cut off. A mode whose own button the client leaves unselected (the client skips modes its feature table excludes) is now applied through the room-title tag instead of failing, which kept the window open with an error.
+- Mode Extension 0.1.26: the mode list follows the running client. Only kr-1256 (Patch V1304) 2026-05-08 is stated as supporting the whole catalogue; every other build lists the modes its own Create Room dialog shows, read when the window opens, and logs `mode-data-missing.<build>`. A matching rule in `mode-availability.json` (an `allow` list, or an empty `hidden` list) marks a build as stated.
+- Ban Rules 0.2.7: on kr-812 (Patch V458) 2015-04-22, cn-404, cn-408, cn-706, cn-717, cn-735 and id-1809 the room button now uses the yellow select-map button look at its size (62x30): the host's button sits left of the map setting button and a member's takes its place. On the old 8-slot room of cn-279, cn-324, cn-406, tw-410, id-400 and kr-186 it sits at the bottom right of the map panel. Builds with the newer room (kr-1256, cn-774, tw-454) are unchanged.
+- Ban Rules 0.2.6: on kr-1256 (Patch V1304) 2026-05-08 a room member, who has no map setting button, sees the button where the map setting button is, and it moves when the host changes.
+- Ban Rules 0.2.6: the same room button, with the same member position, on cn-774 (Ver.0.2.98.3) 2019-05-30 and tw-454 (Patch V369) 2018-12-11.
+- Ban Rules 0.2.6: a notice or the host's start question now appears on top of the open rules editor instead of replacing it, and an error is always the game's buttonless notification box, never a message box with an OK button.
+- Updating a plugin to a newer version, automatically or by hand, no longer turns it off when the new version asks for different grants: an enabled plugin stays enabled and a disabled one stays disabled, with its still-valid options kept.
 - Ban Rules 0.2.5: errors appear as the client's notification box, also while the rules editor is open.
 - Ban Rules 0.2.4: on kr-1256 (Patch V1304) 2026-05-08 the room button is drawn like the room's own map setting button, with the same yellow button art, 56x23 size and caption size.
 - Ban Rules 0.2.3: on kr-1256 (Patch V1304) 2026-05-08 the room button sits left of the room's map setting button instead of over the top bar. An error, such as a server that refuses the rules, now appears in the game's own warning message box when the game control support plugin is installed, and otherwise in a game-styled message box drawn by the overlay, instead of a plain red label.

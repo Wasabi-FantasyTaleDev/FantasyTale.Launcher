@@ -1,4 +1,6 @@
 {
   "format": 1,
-  "rules": []
+  "rules": [
+    {"builds": ["kr-1256"], "hidden": []}
+  ]
 }

@@ -1139,6 +1139,7 @@
     "required": "Wajib",
     "recommended": "Disarankan",
     "installed": "Terinstal dan aktif",
+    "checkingInstalled": "Memeriksa plugin terpasang",
     "noPlugins": "Server belum mengumumkan plugin yang disarankan atau wajib.",
     "sources": "Sumber plugin yang disarankan",
     "addSource": "Tambah sumber",
