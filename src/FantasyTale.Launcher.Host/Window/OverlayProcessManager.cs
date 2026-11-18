@@ -390,6 +390,9 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
 
         public bool IsReady => _ready.Task.IsCompletedSuccessfully;
         public OverlayBuildContext BuildContext => buildContext;
+        private OverlayPresentation _presentation = OverlayPresentation.Hidden;
+        public OverlayPresentation Presentation => Volatile.Read(ref _presentation);
+        public event EventHandler? PresentationChanged;
         public Task WaitUntilReadyAsync(CancellationToken cancellationToken = default) => _ready.Task.WaitAsync(cancellationToken);
         internal Task ConnectionCompletion => _reader ?? throw new InvalidOperationException("The overlay reader has not started.");
 
@@ -546,6 +549,13 @@ internal sealed partial class OverlayProcessManager : IAsyncDisposable
                     var root = document.RootElement;
                     var type = root.GetProperty("type").GetString();
                     if (type == "renderer-ready") _ready.TrySetResult();
+                    else if (type == "presentation")
+                    {
+                        // A malformed report keeps the last known presentation; it never ends the connection.
+                        try { Volatile.Write(ref _presentation, OverlayPresentation.FromState(root.GetProperty("state").Clone())); }
+                        catch (Exception error) when (error is FormatException or KeyNotFoundException) { continue; }
+                        PresentationChanged?.Invoke(this, EventArgs.Empty);
+                    }
                     else if (type == "response")
                     {
                         var id = root.GetProperty("requestId").GetString();

@@ -160,17 +160,17 @@ async function L(e, t, n = {}) {
 		throw Error(`Unable to load UI font ${a} at weight ${o}.`, { cause: e });
 	}
 	let s = n.renderer || globalThis.__BF_TEXT_RENDERER || "canvas";
-	if (s === "svg") return ee(e, t, n, {
+	if (s === "svg") return R(e, t, n, {
 		size: i,
 		family: a,
 		weight: o
 	});
-	if (s === "native") return R(e, t, n, {
+	if (s === "native") return z(e, t, n, {
 		size: i,
 		family: a,
 		weight: o
 	});
-	if (s === "freetype") return ie(e, t, n, {
+	if (s === "freetype") return re(e, t, n, {
 		size: i,
 		family: a,
 		weight: o
@@ -193,7 +193,7 @@ async function L(e, t, n = {}) {
 		n.outline && g > 1 && (p.strokeStyle = n.outline, p.lineWidth = 2 * (n.outlineWidth || .75), p.strokeText(e, S, r)), p.fillText(e, S, r);
 	}), e.textContent = t, e.style.color = "transparent", e.classList.add("bf-canvas-text"), e.dataset.text = t, e.append(u), e;
 }
-function ee(e, t, n, { size: r, family: i, weight: a }) {
+function R(e, t, n, { size: r, family: i, weight: a }) {
 	let o = n.width || parseFloat(e.style.width) || e.clientWidth, s = n.height || parseFloat(e.style.height) || e.clientHeight;
 	if (!(o > 0 && s > 0)) throw Error("Text requires positive logical dimensions.");
 	let c = document.createElement("canvas").getContext("2d");
@@ -203,7 +203,7 @@ function ee(e, t, n, { size: r, family: i, weight: a }) {
 	let f = document.createElementNS(u, "text"), p = n.align || "left";
 	return f.setAttribute("x", String(p === "center" ? o / 2 : p === "right" ? o - 2 : n.inset ?? 2)), f.setAttribute("y", String((s - l.actualBoundingBoxAscent - l.actualBoundingBoxDescent) / 2 + l.actualBoundingBoxAscent)), f.setAttribute("text-anchor", p === "center" ? "middle" : p === "right" ? "end" : "start"), f.style.font = `${a} ${r}px ${i}`, f.style.fontSynthesis = "none", f.setAttribute("fill", n.color || "#5b5b5b"), n.outline && (f.setAttribute("stroke", n.outline), f.setAttribute("stroke-width", String((n.outlineWidth ?? .5) * 2)), f.setAttribute("stroke-linejoin", "round"), f.setAttribute("paint-order", "stroke fill")), f.textContent = t, d.append(f), e.textContent = t, e.style.color = "transparent", e.dataset.text = t, e.append(d), e;
 }
-function R(e, t, n, r) {
+function z(e, t, n, r) {
 	let { size: i, family: a, weight: o } = r, s = getComputedStyle(e), c = n.decoration ?? (n.outline ? 4 : 1), l = n.align || "left", u = n.vertical || "middle";
 	return e.textContent = t, e.classList.remove("bf-canvas-text"), Object.assign(e.style, {
 		color: n.color || e.style.color || s.color || "#5b5b5b",
@@ -226,9 +226,9 @@ function R(e, t, n, r) {
 		paintOrder: "stroke fill"
 	}), e.dataset.text = t, e;
 }
-var z = /* @__PURE__ */ new Map(), B = null, V = null, H = 2e3, te = 200, U = /* @__PURE__ */ new Map(), W = /* @__PURE__ */ new Map();
-async function ne() {
-	return V || (B ||= (async () => {
+var B = /* @__PURE__ */ new Map(), V = null, H = null, U = 2e3, ee = 200, W = /* @__PURE__ */ new Map(), G = /* @__PURE__ */ new Map();
+async function te() {
+	return H || (V ||= (async () => {
 		let { default: e } = await import("./dist--VOHifh3.js"), t = await e(), n = t.module._malloc(4);
 		t.module._FT_Stroker_New(t.library, n);
 		let r = t.module.getValue(n, "i32");
@@ -255,12 +255,12 @@ async function ne() {
 			dispose() {
 				t.module._FT_Stroker_Done(r), t.module._FT_Stroker_Done(i), t.module._FT_Stroker_Done(a), t.module._FT_Stroker_Done(o);
 				for (let e of s.values()) e.destroy();
-				s.clear(), t.destroy(), V = null, B = null;
+				s.clear(), t.destroy(), H = null, V = null;
 			}
 		};
-	})(), V = await B, V);
+	})(), H = await V, H);
 }
-function G(e, t = {
+function K(e, t = {
 	r: 91,
 	g: 91,
 	b: 91,
@@ -275,7 +275,7 @@ function G(e, t = {
 		a: 255
 	} : t;
 }
-function re(e, t, { size: n, weight: r = 400, glyphWidths: i = null }) {
+function ne(e, t, { size: n, weight: r = 400, glyphWidths: i = null }) {
 	let a = t.exactPixelSize ? n : Math.max(11, n), o = r === 700 || t.weight === 700 || t.bold === !0, s = t.decoration ?? (t.outline ? 4 : 1), c = s === 4 || s === 2 ? 2 : +(s === 3), l = t.lineHeight || a + 1, u = t.inset ?? 2, d = t.width, f = t.height;
 	if (!(d > 0 && f > 0)) throw Error("Text requires positive logical dimensions.");
 	let p = (e) => i && i.has(e) ? i.get(e) : e.charCodeAt(0) > 127 ? a : Math.ceil(a * .55), m = e.split("\n"), h = [], g = d - c * 2 - u * 2;
@@ -322,7 +322,7 @@ function re(e, t, { size: n, weight: r = 400, glyphWidths: i = null }) {
 		firstLineY: v
 	};
 }
-async function ie(e, t, n, r) {
+async function re(e, t, n, r) {
 	let i = n.width || parseFloat(e.style.width) || e.clientWidth, a = n.height || parseFloat(e.style.height) || e.clientHeight;
 	if (!(i > 0 && a > 0)) throw Error("Text requires positive logical dimensions.");
 	let o = Math.max(.25, (n.pixelRatio ?? 1) * (globalThis.devicePixelRatio || 1)), s = Math.ceil(i * o), c = Math.ceil(a * o), { size: l, family: u, weight: d = 400 } = r, f = Math.max(1, Math.round(Math.max(11, l) * o)), p = d === 700 || n.weight === 700 || n.bold === !0, m = !p && (d === 600 || n.weight === 600), h = n.decoration ?? (n.outline ? 4 : 1), g = JSON.stringify([
@@ -345,13 +345,13 @@ async function ie(e, t, n, r) {
 		n.baselineOffset,
 		!!n.bold,
 		!!n.nativeMetrics
-	]), _ = U.get(g);
+	]), _ = W.get(g);
 	if (_) {
-		U.delete(g), U.set(g, _);
+		W.delete(g), W.set(g, _);
 		let n = document.createElement("canvas");
-		return n.width = s, n.height = c, n.style.cssText = `position:absolute;inset:0;width:${i}px;height:${a}px;pointer-events:none`, n.ariaHidden = "true", n.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(_), s, c), 0, 0), ae(e, t, n);
+		return n.width = s, n.height = c, n.style.cssText = `position:absolute;inset:0;width:${i}px;height:${a}px;pointer-events:none`, n.ariaHidden = "true", n.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(_), s, c), 0, 0), ie(e, t, n);
 	}
-	let v = n.fontData || n.fontBuffer || z.get(u);
+	let v = n.fontData || n.fontBuffer || B.get(u);
 	if (!v && typeof fetch == "function") {
 		let e = (n.resourceRoot || globalThis.__BF_RESOURCE_ROOT || "").replace(/\/?$/, "/"), t = {
 			BF: "GB13000.woff2",
@@ -362,12 +362,12 @@ async function ie(e, t, n, r) {
 			let n = t ? await fetch(`${e}fonts/${t}`) : null;
 			if (n?.ok) {
 				let e = await n.arrayBuffer();
-				v = new Uint8Array(e), z.set(u, v);
+				v = new Uint8Array(e), B.set(u, v);
 			}
 		} catch {}
 	}
 	if (!v) throw Error(`FreeType font data for family '${u}' is not loaded or registered.`);
-	let y = await ne(), b = y.getFace(u, v);
+	let y = await te(), b = y.getFace(u, v);
 	b.setPixelSize(f, f);
 	let x = /* @__PURE__ */ new Map();
 	for (let e of t) {
@@ -377,7 +377,7 @@ async function ie(e, t, n, r) {
 		let n = y.ft.module.getValue(b.ptr + y.ft.offsets.FT_FaceRec.glyph, "i32"), r = y.ft.module.getValue(n + y.ft.offsets.FT_GlyphSlotRec.advance + y.ft.offsets.FT_Vector.x, "i32") >> 6;
 		x.set(e, r);
 	}
-	let S = re(t, {
+	let S = ne(t, {
 		...n,
 		width: s,
 		height: c,
@@ -396,7 +396,7 @@ async function ie(e, t, n, r) {
 		data: new Uint8Array(C.width * C.height * 4),
 		width: C.width,
 		height: C.height
-	}, E = T.data, D = getComputedStyle(e), O = G(n.color || e.style.color || D?.color || "#5b5b5b"), k = G(n.outline || "#ffffff");
+	}, E = T.data, D = getComputedStyle(e), O = K(n.color || e.style.color || D?.color || "#5b5b5b"), k = K(n.outline || "#ffffff");
 	function A(e, t, n, r, i, a) {
 		if (e < 0 || e >= C.width || t < 0 || t >= C.height) return;
 		let o = (t * C.width + e) * 4, s = E[o + 3], c = Math.min(255, Math.round(s + a * (255 - s) / 255));
@@ -408,7 +408,7 @@ async function ie(e, t, n, r) {
 		t = Math.round(t), n = Math.round(n);
 		let a = b.charIndex(e);
 		a ||= b.charIndex(9633) || b.charIndex(32);
-		let o = `${u}:${f}:${p ? 1 : m ? 2 : 0}:${+!!i}:${e}`, s = W.get(o);
+		let o = `${u}:${f}:${p ? 1 : m ? 2 : 0}:${+!!i}:${e}`, s = G.get(o);
 		if (!s) {
 			y.ft.module._FT_Load_Glyph(b.ptr, a, 40968);
 			let e = y.ft.module.getValue(b.ptr + y.ft.offsets.FT_FaceRec.glyph, "i32"), t = y.ft.module._malloc(4);
@@ -421,7 +421,7 @@ async function ie(e, t, n, r) {
 				rows: l,
 				cols: u,
 				coverageBuffer: h
-			}, W.size >= H && W.delete(W.keys().next().value), W.set(o, s);
+			}, G.size >= U && G.delete(G.keys().next().value), G.set(o, s);
 		}
 		let { left: c, top: l, rows: d, cols: h, coverageBuffer: g } = s;
 		for (let e = 0; e < d; e++) for (let i = 0; i < h; i++) {
@@ -467,14 +467,14 @@ async function ie(e, t, n, r) {
 			E.set(i);
 		}
 	}
-	for (w.putImageData(T, 0, 0), U.set(g, E.slice()); U.size > te;) U.delete(U.keys().next().value);
-	return ae(e, t, C);
+	for (w.putImageData(T, 0, 0), W.set(g, E.slice()); W.size > ee;) W.delete(W.keys().next().value);
+	return ie(e, t, C);
 }
-function ae(e, t, n) {
+function ie(e, t, n) {
 	return e.textContent = t, e.style.color = "transparent", e.classList.remove("bf-canvas-text"), e.classList.add("bf-freetype-text"), e.dataset.text = t, e.append(n), e;
 }
 // ../tools/game-ui/native-layout.js
-function oe(e, t, n, r, i = 1) {
+function ae(e, t, n, r, i = 1) {
 	if (![
 		e,
 		t,
@@ -489,7 +489,7 @@ function oe(e, t, n, r, i = 1) {
 		knobX: (e) => Math.trunc(15 + s * (Math.max(n, Math.min(r, e)) - n))
 	};
 }
-function se(e, t, n, r = 1, i = 15) {
+function oe(e, t, n, r = 1, i = 15) {
 	if (![
 		e,
 		t,
@@ -505,8 +505,8 @@ function se(e, t, n, r = 1, i = 15) {
 	};
 }
 // ../tools/game-ui/extension-settings.js
-var ce = 0;
-function le(e = {}) {
+var se = 0;
+function ce(e = {}) {
 	let t = {
 		oneClickRun: !1,
 		healthDisplay: "percent",
@@ -517,8 +517,8 @@ function le(e = {}) {
 	if (typeof t.oneClickRun != "boolean" || typeof t.allowEscLeave != "boolean" || !["percent", "value"].includes(t.healthDisplay) || !["old", "new"].includes(t.bgm)) throw Error("Invalid extension settings.");
 	return t;
 }
-async function ue(e, { value: t = {}, onChange: n = () => {} } = {}) {
-	let r = le(t), i = ++ce, a = await e.dialog({
+async function le(e, { value: t = {}, onChange: n = () => {} } = {}) {
+	let r = ce(t), i = ++se, a = await e.dialog({
 		title: "扩展设置",
 		text: "",
 		contentWidth: 350,
@@ -613,7 +613,7 @@ async function ue(e, { value: t = {}, onChange: n = () => {} } = {}) {
 	}), a.getSettings = () => ({ ...r }), a;
 }
 // ../tools/game-ui/game-ui.js
-async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } = {}) {
+async function ue({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } = {}) {
 	if (![
 		"v1",
 		"v2",
@@ -870,17 +870,17 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 			buttonSpan: N
 		}), I = F.buttonY + Math.max(0, ...M.map((e) => e.height));
 		F.height = Math.max(F.height, I);
-		let ee = Number(a.scheme.Dialog.Title_Margin_Right), R = Number(a.scheme.Dialog.Title_Margin_Bottom), z = await m(Math.max(b ?? 0, v + F.width + ee), Math.max(x ?? 0, y + F.height + R), n, T), B = c(document.createElement("div"), v, y, F.width, F.height);
-		if (B.className = "bf-form", z.append(B), k) await u(B, F);
+		let R = Number(a.scheme.Dialog.Title_Margin_Right), z = Number(a.scheme.Dialog.Title_Margin_Bottom), B = await m(Math.max(b ?? 0, v + F.width + R), Math.max(x ?? 0, y + F.height + z), n, T), V = c(document.createElement("div"), v, y, F.width, F.height);
+		if (V.className = "bf-form", B.append(V), k) await u(V, F);
 		else {
 			let e = E ? F.width - 1 : F.width, t = c(document.createElement("div"), +!!E, 2, e, F.bodyHeight);
-			t.className = "control", await f(t, "Images/Ui/FrameBox.smf", e, F.bodyHeight), B.append(t);
+			t.className = "control", await f(t, "Images/Ui/FrameBox.smf", e, F.bodyHeight), V.append(t);
 			let n = Object.assign(new Image(), { crossOrigin: "anonymous" });
 			n.src = r() + A, n.className = "control", await n.decode().catch(() => {});
 			let a = n.naturalWidth || 63, o = n.naturalHeight || 58;
-			c(n, 11, Math.round(2 + (F.bodyHeight - o) / 2), a, o), B.append(n);
+			c(n, 11, Math.round(2 + (F.bodyHeight - o) / 2), a, o), V.append(n);
 			let s = Math.max(40, P.height), l = c(document.createElement("div"), 90, Math.round(2 + (F.bodyHeight - s) / 2), F.width - 104, s);
-			l.className = "message-copy", B.append(l), await L(l, i, {
+			l.className = "message-copy", V.append(l), await L(l, i, {
 				size: 13,
 				weight: 400,
 				family: "BF",
@@ -891,12 +891,12 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 				...T
 			});
 		}
-		let V = !E && M.length > 1 ? F.width - N : Math.floor((F.width - N) / 2);
+		let H = !E && M.length > 1 ? F.width - N : Math.floor((F.width - N) / 2);
 		for (let e of M) {
-			let t = F.width - D, n = e.x === void 0 ? V : e.x + (E ? t / 2 : t), r = e.sprite || (E ? `Images/Ui/DialogBtn${e.name}.smf` : `Images/Ui/DialogButton${e.name}-Up.smf`);
-			await p(B, e.name, n, F.buttonY, e.width, e.height, e.label, r), V += e.width + j;
+			let t = F.width - D, n = e.x === void 0 ? H : e.x + (E ? t / 2 : t), r = e.sprite || (E ? `Images/Ui/DialogBtn${e.name}.smf` : `Images/Ui/DialogButton${e.name}-Up.smf`);
+			await p(V, e.name, n, F.buttonY, e.width, e.height, e.label, r), H += e.width + j;
 		}
-		return z;
+		return B;
 	}
 	async function v(t, n = typeof t == "boolean" && t ? "question" : "notice") {
 		let r = e !== "v1", i = typeof t == "boolean" ? t : !!t?.confirm, a = typeof t == "object" && t ? t : {}, o = e === "v3" ? i ? [{
@@ -1025,7 +1025,7 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 				e.type = "range", e.min = o.Min ?? 0, e.max = o.Max ?? 100, e.value = o.Position ?? 75, e.ariaLabel = o.Name;
 				let t = "Images/Ui/TrackBar.smf", n = a.sprites[t], r = h - 35;
 				await l(g, t, n[0], 15, r, 7, 31), await l(g, t, n[1], 22, r, m - 44, 31), await l(g, t, n[2], m - 22, r, 7, 31);
-				let i = oe(m, h, Number(e.min), Number(e.max), Number(o.Interval) || 1);
+				let i = ae(m, h, Number(e.min), Number(e.max), Number(o.Interval) || 1);
 				for (let e of i.ticks) await l(g, t, n[7], e, r, 1, 31);
 				let s = c(document.createElement("span"), i.knobX(Number(e.value)), r, 12, 31);
 				s.className = "control", await l(s, t, n[3], 0, 0, 12, 31), g.append(s, e), o.MinText && M(g, o.MinText === "작게" ? "缩小" : o.MinText, 0, h - 50, 50, 15, "#808080", {
@@ -1137,7 +1137,7 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 				h.classList.add("bf-track");
 				let e = document.createElement("input");
 				e.type = "range", e.min = i.Min ?? 0, e.max = i.Max ?? 100, e.value = i.Position ?? 50, e.ariaLabel = i.Name, h.append(e);
-				let t = i.HasText !== "False", n = se(d, Number(e.min), Number(e.max), Number(i.Interval) || 1, t ? 15 : 0), r = a.scheme.TrackBar.SkinImage, o = a.sprites[r], s = n.railY;
+				let t = i.HasText !== "False", n = oe(d, Number(e.min), Number(e.max), Number(i.Interval) || 1, t ? 15 : 0), r = a.scheme.TrackBar.SkinImage, o = a.sprites[r], s = n.railY;
 				if (await l(h, r, o[0], 15, s, 4, 18), await l(h, r, o[1], 19, s, d - 38, 18), await l(h, r, o[2], d - 19, s, 4, 18), i.HasPoint !== "False") for (let e of n.ticks) await l(h, r, o[7], e, s, 1, 18);
 				let u = c(document.createElement("span"), n.knobX(Number(e.value)), s, 9, 18);
 				u.className = "control", await l(u, r, o[3], 0, 0, 9, 18), h.append(u);
@@ -1530,43 +1530,43 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 		return l.style.alignItems = "flex-start", l.style.lineHeight = "15px", await p(r, "Ok", t ? 157 : 298, n - 35, t ? 65 : 67, t ? 27 : 25, "确认"), await p(r, "Cancel", t ? 226 : 373, n - 35, t ? 65 : 68, t ? 27 : 25, "取消"), r;
 	}
 	async function F(e) {
-		return ue(ee, e);
+		return le(R, e);
 	}
-	async function I() {
-		let t = e !== "v1", n = t ? 300 : 320, i = t ? 60 : 82, o = c(document.createElement("div"), 0, 0, n, i);
-		o.className = "bf-form", await f(o, t ? "Images/Ui/dialogue_Notify_Back00.smf" : "Images/Ui/NotifyBox.smf", n, i);
-		let s = c(document.createElement("span"), 18, 8, n - 36, i - 16);
-		s.className = "control", o.append(s);
-		let l = a.scheme.NotifyBox;
-		if (await L(s, t ? "9不在线" : "9不在线。", {
-			size: t ? 14 : Number(l.FontSize),
-			weight: t ? 400 : Number(l.FontWeight),
+	async function I({ text: t } = {}) {
+		let n = e !== "v1", i = typeof t == "string" && t ? t : n ? "9不在线" : "9不在线。", s = a.scheme.NotifyBox, l = n ? 14 : Number(s.FontSize), u = n ? 300 : 320, d = n ? 60 : 82, p = Math.min(640, Math.max(u, Math.ceil(h(i, l, "BF").width) + 48)), m = c(document.createElement("div"), 0, 0, p, d);
+		m.className = "bf-form bf-notify-box", await f(m, n ? "Images/Ui/dialogue_Notify_Back00.smf" : "Images/Ui/NotifyBox.smf", p, d);
+		let g = c(document.createElement("span"), 18, 8, p - 36, d - 16);
+		if (g.className = "control", m.append(g), await L(g, i, {
+			size: l,
+			weight: n ? 400 : Number(s.FontWeight),
 			family: "BF",
 			align: "center",
-			color: t ? "white" : "#111",
-			outline: t ? "#168ac2" : "#888",
-			outlineWidth: t ? 2 : .75,
-			decoration: t ? 4 : Number(l.TextDecoration)
-		}), t) {
-			let e = "Images/Ui/Notify_Progress.smf", t = a.sprites[e], s = 0, l = async () => {
-				o.querySelectorAll(".notify-progress").forEach((e) => e.remove());
-				let t = c(document.createElement("span"), n - 28, i - 28, 20, 20);
+			wrap: !0,
+			color: n ? "white" : "#111",
+			outline: n ? "#168ac2" : "#888",
+			outlineWidth: n ? 2 : .75,
+			decoration: n ? 4 : Number(s.TextDecoration)
+		}), n) {
+			let e = "Images/Ui/Notify_Progress.smf", t = a.sprites[e], n = 0, i = async () => {
+				m.querySelectorAll(".notify-progress").forEach((e) => e.remove());
+				let t = c(document.createElement("span"), p - 28, d - 28, 20, 20);
 				t.className = "tile notify-progress";
-				let a = Object.assign(new Image(), { crossOrigin: "anonymous" });
-				a.src = r() + e.replace(/\.smf$/i, "") + "/" + a(s + ".png"), Object.assign(a.style, {
+				let i = Object.assign(new Image(), { crossOrigin: "anonymous" });
+				i.src = r() + e.replace(/\.smf$/i, "") + "/" + o(n + ".png"), Object.assign(i.style, {
 					width: "100%",
 					height: "100%",
 					left: "0",
 					top: "0"
-				}), t.append(a), o.append(t);
+				}), t.append(i), m.append(t);
 			};
-			await l(), window.setInterval(() => {
-				s = (s + 1) % t.length, l();
+			await i();
+			let s = window.setInterval(() => {
+				!m.isConnected && m.dataset.mounted ? window.clearInterval(s) : (m.isConnected && (m.dataset.mounted = "1"), n = (n + 1) % t.length, i());
 			}, 180);
 		}
-		return o;
+		return m;
 	}
-	let ee = {
+	let R = {
 		theme: e,
 		manifest: a,
 		sounds: n,
@@ -1597,17 +1597,17 @@ async function de({ theme: e = "v2", resourceRoot: t = "./local/", sounds: n } =
 		textTab: j
 	};
 	return {
-		...ee,
+		...R,
 		image: o,
-		extensionSettings: (e) => ue(ee, e)
+		extensionSettings: (e) => le(R, e)
 	};
 }
 // ../tools/game-ui/src/context.ts
-var fe = Symbol("bf-ui"), K = Symbol("bf-ui-draws");
-function pe() {
-	return l(K, void 0);
+var de = Symbol("bf-ui"), q = Symbol("bf-ui-draws");
+function fe() {
+	return l(q, void 0);
 }
-function me(e, t, n = () => !0, r = () => N) {
+function pe(e, t, n = () => !0, r = () => N) {
 	let i = S(), a = S(), o = 0, s, c;
 	D(() => [e(), t()], async ([e, t]) => {
 		let l = ++o;
@@ -1622,8 +1622,8 @@ function me(e, t, n = () => !0, r = () => N) {
 				}
 			}));
 			let u = s;
-			if (await Promise.all([ge(t), n() ? u.preload() : Promise.resolve()]), l !== o) return;
-			let d = await de({
+			if (await Promise.all([he(t), n() ? u.preload() : Promise.resolve()]), l !== o) return;
+			let d = await ue({
 				theme: e,
 				resourceRoot: t,
 				sounds: u
@@ -1640,20 +1640,20 @@ function me(e, t, n = () => !0, r = () => N) {
 		}
 	}), m(() => {
 		o++, s?.dispose();
-	}), _(fe, i);
+	}), _(de, i);
 	let l = S(0);
-	return _(K, { pending: l }), {
+	return _(q, { pending: l }), {
 		renderer: i,
 		error: a,
 		pending: l
 	};
 }
-function he() {
-	let e = l(fe);
+function me() {
+	let e = l(de);
 	if (!e) throw Error("Game UI controls require BfUiProvider");
 	return n(() => e.value);
 }
-async function ge(e) {
+async function he(e) {
 	let t = e.replace(/\/?$/, "/"), n = await fetch(t + "fonts/fonts.json").catch(() => null), r = n?.ok ? await n.json() : {};
 	await Promise.all([["BF", "GB13000.ttf"], ["BFMalgun", "DF_GB_Y9.TTF"]].map(async ([e, n]) => {
 		if (document.fonts.check(`13px ${e}`) && Array.from(document.fonts).some((t) => t.family === e)) return;
@@ -1662,7 +1662,7 @@ async function ge(e) {
 	}));
 }
 // ../tools/game-ui/src/components/BfUiProvider.vue?vue&type=script&setup=true&lang.ts
-var _e = { role: "alert" }, q = /* @__PURE__ */ c({
+var ge = { role: "alert" }, J = /* @__PURE__ */ c({
 	__name: "BfUiProvider",
 	props: {
 		theme: { default: "v2" },
@@ -1676,7 +1676,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 	},
 	emits: ["error"],
 	setup(e, { expose: t, emit: r }) {
-		let i = e, s = r, { renderer: c, error: l } = me(() => I(i.clientDate, i.theme), () => i.resourceRoot, () => i.sound, () => i.volume);
+		let i = e, s = r, { renderer: c, error: l } = pe(() => I(i.clientDate, i.theme), () => i.resourceRoot, () => i.sound, () => i.volume);
 		t({
 			unlockSound: () => c.value?.sounds?.unlock(),
 			playSound: (e) => c.value?.sounds?.play(e)
@@ -1693,9 +1693,9 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		return (e, t) => (g(), a("div", {
 			class: "bf-ui-root",
 			style: p(u.value)
-		}, [w(c) ? x(e.$slots, "default", {}, void 0, void 0, 0) : w(l) ? x(e.$slots, "error", { error: w(l) }, () => [o("div", _e, C(w(l).message), 1)], void 0, 1) : x(e.$slots, "loading", {}, void 0, void 0, 2)], 4));
+		}, [w(c) ? x(e.$slots, "default", {}, void 0, void 0, 0) : w(l) ? x(e.$slots, "error", { error: w(l) }, () => [o("div", ge, C(w(l).message), 1)], void 0, 1) : x(e.$slots, "loading", {}, void 0, void 0, 2)], 4));
 	}
-}), J = /* @__PURE__ */ c({
+}), Y = /* @__PURE__ */ c({
 	__name: "BfNative",
 	props: {
 		draw: { type: Function },
@@ -1707,7 +1707,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		"error"
 	],
 	setup(n, { expose: s, emit: c }) {
-		let l = n, u = c, f = he(), p = y(), h = y(), _ = 0, v;
+		let l = n, u = c, f = me(), p = y(), h = y(), _ = 0, v;
 		function b() {
 			v?.(), v = void 0, h.value = void 0, p.value?.replaceChildren();
 		}
@@ -1717,7 +1717,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			} catch {
 				return String(Math.random());
 			}
-		}, C = pe(), w = !1, T = () => {
+		}, C = fe(), w = !1, T = () => {
 			w && C && (C.pending.value--, w = !1);
 		};
 		D([
@@ -1757,7 +1757,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			to: h.value
 		}, [x(n.$slots, "default")], 8, ["to"])) : i("v-if", !0)], 64));
 	}
-}), ve = /* @__PURE__ */ c({
+}), _e = /* @__PURE__ */ c({
 	__name: "BfWindow",
 	props: {
 		title: {},
@@ -1827,7 +1827,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			}
 			return t;
 		}
-		return (e, t) => (g(), r(J, {
+		return (e, t) => (g(), r(Y, {
 			revision: o.value,
 			draw: c,
 			onAction: s,
@@ -1837,7 +1837,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			_: 3
 		}, 8, ["revision"]));
 	}
-}), ye = /* @__PURE__ */ c({
+}), ve = /* @__PURE__ */ c({
 	__name: "BfPanel",
 	props: {
 		x: {},
@@ -1851,7 +1851,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		function n() {
 			return document.createElement("div");
 		}
-		return (i, a) => (g(), r(J, {
+		return (i, a) => (g(), r(Y, {
 			revision: [
 				t.x,
 				t.y,
@@ -1865,7 +1865,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			_: 3
 		}, 8, ["revision", "draw"]));
 	}
-}), be = /* @__PURE__ */ c({
+}), ye = /* @__PURE__ */ c({
 	__name: "BfControl",
 	props: {
 		type: {},
@@ -1889,7 +1889,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			(o.value?.surface)?.setValue?.(i.type === "UiCheckBox" ? i.attrs.Check === "1" : Number(i.attrs.Position));
 		}, { flush: "post" });
 		let c = t;
-		return (t, n) => (g(), r(J, {
+		return (t, n) => (g(), r(Y, {
 			ref_key: "native",
 			ref: o,
 			revision: s.value,
@@ -1906,7 +1906,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			_: 3
 		}, 8, ["revision", "draw"]));
 	}
-}), xe = /* @__PURE__ */ c({
+}), be = /* @__PURE__ */ c({
 	__name: "BfGroupBox",
 	props: {
 		title: {},
@@ -1916,7 +1916,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		height: {}
 	},
 	setup(e) {
-		let t = e, i = he(), a = n(() => {
+		let t = e, i = me(), a = n(() => {
 			let e = i.value;
 			return e ? {
 				...e.manifest.forms[e.theme === "v3" ? "Option/DlgOption-VideoSound3.ui" : e.theme === "v2" ? "DlgOption-VideoSound2.ui" : "DlgOption-VideoSound.ui"].children.find((e) => e.type === "UiGroupBox" || e.type === "UiPanel").attrs,
@@ -1928,7 +1928,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 				Height: String(t.height)
 			} : {};
 		});
-		return (e, t) => (g(), r(be, {
+		return (e, t) => (g(), r(ye, {
 			type: "UiGroupBox",
 			attrs: a.value
 		}, {
@@ -1936,7 +1936,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			_: 3
 		}, 8, ["attrs"]));
 	}
-}), Y = /* @__PURE__ */ c({
+}), X = /* @__PURE__ */ c({
 	__name: "BfLabel",
 	props: {
 		text: {},
@@ -1959,12 +1959,12 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			TextColor: t.color,
 			TextFormat: t.align === "center" ? "5" : "4"
 		}));
-		return (e, t) => (g(), r(be, {
+		return (e, t) => (g(), r(ye, {
 			type: "UiLabel",
 			attrs: i.value
 		}, null, 8, ["attrs"]));
 	}
-}), Se = /* @__PURE__ */ c({
+}), xe = /* @__PURE__ */ c({
 	__name: "BfCheckbox",
 	props: {
 		modelValue: { type: Boolean },
@@ -1988,11 +1988,11 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			let t = !!e.value;
 			o("update:modelValue", t), o("change", t);
 		}
-		return (n, r) => (g(), a(e, null, [s(be, {
+		return (n, r) => (g(), a(e, null, [s(ye, {
 			type: "UiCheckBox",
 			attrs: c.value,
 			onChange: l
-		}, null, 8, ["attrs"]), s(Y, {
+		}, null, 8, ["attrs"]), s(X, {
 			text: t.label,
 			x: t.x + 23,
 			y: t.y,
@@ -2005,7 +2005,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			"width"
 		])], 64));
 	}
-}), Ce = /* @__PURE__ */ c({
+}), Se = /* @__PURE__ */ c({
 	__name: "BfSlider",
 	props: {
 		modelValue: {},
@@ -2038,13 +2038,13 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		function s(e) {
 			a("update:modelValue", Number(e.value)), a("change", Number(e.value));
 		}
-		return (e, t) => (g(), r(be, {
+		return (e, t) => (g(), r(ye, {
 			type: "UiTrackBar",
 			attrs: o.value,
 			onChange: s
 		}, null, 8, ["attrs"]));
 	}
-}), X = /* @__PURE__ */ c({
+}), Z = /* @__PURE__ */ c({
 	__name: "BfButton",
 	props: {
 		kind: { default: "Ok" },
@@ -2060,7 +2060,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		function a() {
 			return document.createElement("div");
 		}
-		return (t, o) => (g(), r(J, {
+		return (t, o) => (g(), r(Y, {
 			revision: [
 				n.kind,
 				n.label,
@@ -2073,7 +2073,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			onAction: o[0] ||= (e) => i("click")
 		}, null, 8, ["revision", "draw"]));
 	}
-}), we = /* @__PURE__ */ c({
+}), Ce = /* @__PURE__ */ c({
 	__name: "BfGamePage",
 	props: { page: {} },
 	emits: [
@@ -2083,7 +2083,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 	],
 	setup(e, { emit: t }) {
 		let n = e, i = t;
-		return (t, a) => (g(), r(J, {
+		return (t, a) => (g(), r(Y, {
 			revision: n.page,
 			draw: (t) => e.page === "notice" || e.page === "warning" || e.page === "error" || e.page === "confirm" ? t.dialog({
 				confirm: e.page === "confirm",
@@ -2095,7 +2095,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			onError: a[2] ||= (e) => i("error", e)
 		}, null, 8, ["revision", "draw"]));
 	}
-}), Te = /* @__PURE__ */ c({
+}), we = /* @__PURE__ */ c({
 	__name: "BfDialog",
 	props: {
 		title: { default: "公告" },
@@ -2141,7 +2141,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			openSound: n.openSound,
 			textScale: n.textScale
 		});
-		return (e, t) => (g(), r(J, {
+		return (e, t) => (g(), r(Y, {
 			revision: JSON.stringify({
 				title: n.title,
 				text: n.text,
@@ -2160,7 +2160,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			onError: t[2] ||= (e) => i("error", e)
 		}, null, 8, ["revision"]));
 	}
-}), Ee = /* @__PURE__ */ c({
+}), Te = /* @__PURE__ */ c({
 	__name: "BfMessageBox",
 	props: {
 		title: { default: "公告" },
@@ -2177,7 +2177,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 	],
 	setup(e, { emit: t }) {
 		let n = e, i = t;
-		return (e, t) => (g(), r(Te, {
+		return (e, t) => (g(), r(we, {
 			title: n.title,
 			text: n.text,
 			icon: n.icon,
@@ -2196,6 +2196,18 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 			"text-scale"
 		]));
 	}
+}), Ee = /* @__PURE__ */ c({
+	__name: "BfNotifyBox",
+	props: { text: {} },
+	emits: ["error"],
+	setup(e, { emit: t }) {
+		let n = e, i = t;
+		return (e, t) => (g(), r(Y, {
+			revision: n.text,
+			draw: (e) => e.message({ text: n.text }),
+			onError: t[0] ||= (e) => i("error", e)
+		}, null, 8, ["revision", "draw"]));
+	}
 }), De = /* @__PURE__ */ c({
 	__name: "BfExtensionSettings",
 	props: { modelValue: {} },
@@ -2207,9 +2219,9 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		"error"
 	],
 	setup(e, { emit: t }) {
-		let n = e, i = t, a = le(n.modelValue), o = y(0);
+		let n = e, i = t, a = ce(n.modelValue), o = y(0);
 		D(() => n.modelValue, (e) => {
-			JSON.stringify(e) !== JSON.stringify(a) && (a = le(e), o.value++);
+			JSON.stringify(e) !== JSON.stringify(a) && (a = ce(e), o.value++);
 		}, { deep: !0 });
 		function s(e) {
 			a = e, i("update:modelValue", { ...e }), i("change", { ...e });
@@ -2221,7 +2233,7 @@ var _e = { role: "alert" }, q = /* @__PURE__ */ c({
 		function l(e) {
 			e.name === "Ok" && i("save", { ...a }), (e.name === "Cancel" || e.name === "close") && i("cancel");
 		}
-		return (e, t) => (g(), r(J, {
+		return (e, t) => (g(), r(Y, {
 			revision: o.value,
 			draw: c,
 			onAction: l,
@@ -2429,93 +2441,93 @@ var Le = [
 			"characters",
 			"clothes",
 			"accessories"
-		], _ = n(() => Math.max(...Object.values(l.appearance.categorySizes).map((e) => e.height))), v = (e) => Math.max(e >= 12 ? 10 : 1, Math.round(e * l.textScale)) / l.textScale, x = y("weapons"), S = y(l.defaultSubCategories.weapons ?? "all"), w = y(""), A = y(0), M = y(!1), N = y(), P = y(""), F = y(""), I = y(!1), ee = y();
+		], _ = n(() => Math.max(...Object.values(l.appearance.categorySizes).map((e) => e.height))), v = (e) => Math.max(e >= 12 ? 10 : 1, Math.round(e * l.textScale)) / l.textScale, x = y("weapons"), S = y(l.defaultSubCategories.weapons ?? "all"), w = y(""), A = y(0), M = y(!1), N = y(), P = y(""), F = y(""), I = y(!1), R = y();
 		D(I, (e) => {
-			e ? ee.value?.showModal() : ee.value?.close();
+			e ? R.value?.showModal() : R.value?.close();
 		}, { flush: "post" });
-		let R = y(), z = y(), B = pe(), V = y(!1), H = !1, te = 0, U;
-		async function W() {
+		let z = y(), B = y(), V = fe(), H = y(!1), U = !1, ee = 0, W;
+		async function G() {
 			let e = /* @__PURE__ */ new Set();
-			for (let t of Se.value) typeof t.preview == "string" ? e.add(t.preview) : t.preview && e.add(t.preview.url);
+			for (let t of xe.value) typeof t.preview == "string" ? e.add(t.preview) : t.preview && e.add(t.preview.url);
 			await Promise.all([...e].map((e) => {
 				let t = Object.assign(new Image(), { crossOrigin: "anonymous" });
 				return t.src = e, t.decode().catch(() => void 0);
-			})), await Promise.all([...R.value?.querySelectorAll("img") ?? []].map((e) => e.decode().catch(() => void 0)));
+			})), await Promise.all([...z.value?.querySelectorAll("img") ?? []].map((e) => e.decode().catch(() => void 0)));
 		}
-		function ne() {
-			if (V.value || H) return;
-			let e = ++te;
-			clearTimeout(U), U = setTimeout(async () => {
-				U = void 0, H || e !== te || (B?.pending.value ?? 0) > 0 || (await W(), !(H || e !== te) && ((B?.pending.value ?? 0) === 0 ? (V.value = !0, d("ready"), Te(h.flatMap(Rt)), Te(h.flatMap(zt)), Bt()) : ne()));
+		function te() {
+			if (H.value || U) return;
+			let e = ++ee;
+			clearTimeout(W), W = setTimeout(async () => {
+				W = void 0, U || e !== ee || (V?.pending.value ?? 0) > 0 || (await G(), !(U || e !== ee) && ((V?.pending.value ?? 0) === 0 ? (H.value = !0, d("ready"), we(h.flatMap(Lt)), we(h.flatMap(Rt)), zt()) : te()));
 			}, 50);
 		}
-		D(() => B?.pending.value ?? 0, ne, { immediate: !0 }), m(() => {
-			H = !0, te++, clearTimeout(U);
+		D(() => V?.pending.value ?? 0, te, { immediate: !0 }), m(() => {
+			U = !0, ee++, clearTimeout(W);
 		});
-		let G = y(), re = n(() => l.items.find((e) => e.id === G.value?.id && e.category !== "characters")), ie = n(() => re.value ? re.value.spec?.length ? "DlgWeaponInfoPopup.ui" : re.value.members ? "DlgInfoPopupSetArmor.ui" : "DlgInfoPopupArmor.ui" : ""), ae = y({
+		let K = y(), ne = n(() => l.items.find((e) => e.id === K.value?.id && e.category !== "characters")), re = n(() => ne.value ? ne.value.spec?.length ? "DlgWeaponInfoPopup.ui" : ne.value.members ? "DlgInfoPopupSetArmor.ui" : "DlgInfoPopupArmor.ui" : ""), ie = y({
 			width: 274,
 			height: 168
 		});
-		function oe(e, t) {
-			if (t.category === "characters" || !R.value) {
-				G.value = void 0;
+		function ae(e, t) {
+			if (t.category === "characters" || !z.value) {
+				K.value = void 0;
 				return;
 			}
-			let n = R.value.getBoundingClientRect(), r = n.width / R.value.offsetWidth || 1;
-			G.value = {
+			let n = z.value.getBoundingClientRect(), r = n.width / z.value.offsetWidth || 1;
+			K.value = {
 				id: t.id,
 				x: (e.clientX - n.left) / r,
 				y: (e.clientY - n.top) / r
 			};
 		}
-		let se = n(() => {
-			if (!G.value || !R.value) return {};
-			let { width: e, height: t } = ae.value, n = {
-				w: R.value.offsetWidth,
-				h: R.value.offsetHeight
-			}, r = G.value.x + 18 + e > n.w ? G.value.x - 8 - e : G.value.x + 18, i = Math.min(Math.max(0, G.value.y + 20), Math.max(0, n.h - t));
+		let oe = n(() => {
+			if (!K.value || !z.value) return {};
+			let { width: e, height: t } = ie.value, n = {
+				w: z.value.offsetWidth,
+				h: z.value.offsetHeight
+			}, r = K.value.x + 18 + e > n.w ? K.value.x - 8 - e : K.value.x + 18, i = Math.min(Math.max(0, K.value.y + 20), Math.max(0, n.h - t));
 			return {
 				left: Math.max(0, r) + "px",
 				top: i + "px"
 			};
-		}), ce = [
+		}), se = [
 			"Damage",
 			"HitRatio",
 			"MoveSpeed",
 			"FireCoolTick",
 			"Eiz"
-		], le = [
+		], ce = [
 			"pnlArmorPoint",
 			"pnlReloadSpeed",
 			"pnlMoveSpeed"
-		], ue = [
+		], le = [
 			"lblArmorPoint",
 			"lblReloadSpeed",
 			"lblMoveSpeed"
 		];
-		function de(e) {
+		function ue(e) {
 			let t = l.characters;
 			return (!e || e.trim().toLowerCase() === "all" ? Object.keys(t) : e.trim().split(/\s+/)).map((e) => t[e] ?? e).join(", ");
 		}
-		async function fe(e) {
-			let t = re.value, n = e.manifest.forms[ie.value], r = document.createElement("div");
+		async function de(e) {
+			let t = ne.value, n = e.manifest.forms[re.value], r = document.createElement("div");
 			if (!t || !n) return r;
-			ae.value = {
+			ie.value = {
 				width: Number(n.attrs.Width),
 				height: Number(n.attrs.Height)
 			};
 			let i = (e) => {
-				let n = ce.indexOf(e), r = le.indexOf(e);
+				let n = se.indexOf(e), r = ce.indexOf(e);
 				return n >= 0 ? t.spec?.[n] : r >= 0 ? t.setStats?.[r] ?? 0 : void 0;
-			}, a = ie.value === "DlgWeaponInfoPopup.ui" ? l.labels.stats ?? [] : [l.labels.wearable ?? "", ...ie.value === "DlgInfoPopupSetArmor.ui" ? l.labels.armorStats ?? [] : []], o = (e) => {
+			}, a = re.value === "DlgWeaponInfoPopup.ui" ? l.labels.stats ?? [] : [l.labels.wearable ?? "", ...re.value === "DlgInfoPopupSetArmor.ui" ? l.labels.armorStats ?? [] : []], o = (e) => {
 				if ([
 					"WeaponName",
 					"itemName",
 					"lblItemName"
 				].includes(e)) return t.name;
-				if (["useChars", "lblAvailableCharacters"].includes(e)) return de(t.allow);
+				if (["useChars", "lblAvailableCharacters"].includes(e)) return ue(t.allow);
 				if (["notice", "lblNotice"].includes(e)) return l.labels.wearNotice ?? "";
-				let n = ue.indexOf(e);
+				let n = le.indexOf(e);
 				return n >= 0 ? String(t.setStats?.[n] ?? 0) : void 0;
 			}, s = [], c = (e, t, n) => {
 				let r = {
@@ -2568,69 +2580,69 @@ var Le = [
 			}
 			return d;
 		}
-		let K;
-		function me(e) {
-			if (Y.value <= 1 || !z.value) return;
+		let q;
+		function pe(e) {
+			if (X.value <= 1 || !B.value) return;
 			let t = e.currentTarget;
-			K = {
+			q = {
 				pointer: e.pointerId,
 				x: e.clientX,
 				page: A.value,
-				travel: z.value.getBoundingClientRect().width - t.getBoundingClientRect().width
+				travel: B.value.getBoundingClientRect().width - t.getBoundingClientRect().width
 			}, t.setPointerCapture(e.pointerId), e.preventDefault();
 		}
+		function me(e) {
+			q?.pointer === e.pointerId && (A.value = Ie(q.page, e.clientX - q.x, q.travel, X.value));
+		}
 		function he(e) {
-			K?.pointer === e.pointerId && (A.value = Ie(K.page, e.clientX - K.x, K.travel, Y.value));
+			if (!B.value) return;
+			let t = B.value.getBoundingClientRect();
+			A.value = Math.max(0, Math.min(X.value - 1, Math.floor((e.clientX - t.left) * X.value / t.width)));
 		}
 		function ge(e) {
-			if (!z.value) return;
-			let t = z.value.getBoundingClientRect();
-			A.value = Math.max(0, Math.min(Y.value - 1, Math.floor((e.clientX - t.left) * Y.value / t.width)));
-		}
-		function _e(e) {
 			let t = {
 				ArrowLeft: A.value - 1,
 				ArrowDown: A.value - 1,
 				ArrowRight: A.value + 1,
 				ArrowUp: A.value + 1,
 				Home: 0,
-				End: Y.value - 1,
+				End: X.value - 1,
 				PageUp: A.value - 1,
 				PageDown: A.value + 1
 			}[e.key];
-			t !== void 0 && (e.preventDefault(), A.value = Math.max(0, Math.min(Y.value - 1, t)));
+			t !== void 0 && (e.preventDefault(), A.value = Math.max(0, Math.min(X.value - 1, t)));
 		}
-		let q = n(() => {
+		let J = n(() => {
 			let e = new Set(l.modelValue);
 			for (let t of l.items) t.members?.length && t.members.every((t) => e.has(t)) && e.add(t.id);
 			return e;
-		}), ye = n(() => {
+		}), ve = n(() => {
 			let e = l.defaultSubCategories[x.value];
 			return [...new Set(l.items.filter((e) => e.category === x.value).map((e) => e.subCategory))].sort((t, n) => Number(n === e) - Number(t === e) || (l.appearance.subCategoryOrder[t] ?? 0) - (l.appearance.subCategoryOrder[n] ?? 0));
-		}), xe = n(() => l.items.filter((e) => e.category === x.value && (!M.value && !l.readonly || q.value.has(e.id)) && (S.value === "all" || e.subCategory === S.value) && (!w.value.trim() || `${e.name} ${e.id}`.toLocaleLowerCase(l.locale).includes(w.value.trim().toLocaleLowerCase(l.locale))))), Y = n(() => Math.max(1, Math.ceil(xe.value.length / Ft))), Se = n(() => xe.value.slice(A.value * Ft, A.value * Ft + Ft)), Ce = /* @__PURE__ */ new Map(), X = /* @__PURE__ */ new Map();
-		function we(e) {
+		}), be = n(() => l.items.filter((e) => e.category === x.value && (!M.value && !l.readonly || J.value.has(e.id)) && (S.value === "all" || e.subCategory === S.value) && (!w.value.trim() || `${e.name} ${e.id}`.toLocaleLowerCase(l.locale).includes(w.value.trim().toLocaleLowerCase(l.locale))))), X = n(() => Math.max(1, Math.ceil(be.value.length / Ft))), xe = n(() => be.value.slice(A.value * Ft, A.value * Ft + Ft)), Se = /* @__PURE__ */ new Map(), Z = /* @__PURE__ */ new Map();
+		function Ce(e) {
 			let t = Object.assign(new Image(), { crossOrigin: "anonymous" });
 			return t.src = e, t.decode().catch(() => void 0), t;
 		}
-		function Te(e) {
-			if (!H) {
-				Lt(e, !0);
-				for (let t of new Set(e.map(Ee).filter((e) => !!e))) Ce.has(t) || Ce.set(t, X.get(t) ?? we(t));
+		function we(e) {
+			if (!U) {
+				Pe(e, !0);
+				for (let t of new Set(e.map(Te).filter((e) => !!e))) Se.has(t) || Se.set(t, Z.get(t) ?? Ce(t));
 			}
 		}
-		function Ee(e) {
+		function Te(e) {
 			return typeof e.preview == "string" ? e.preview : e.preview?.url;
 		}
-		function De(e) {
-			for (let t of new Set(e.map(Ee).filter((e) => !!e))) {
-				if (Ce.has(t)) continue;
-				let e = X.get(t);
-				if (e) X.delete(t), X.set(t, e);
-				else for (X.set(t, we(t)); X.size > It;) X.delete(X.keys().next().value);
+		function Ee(e) {
+			for (let t of new Set(e.map(Te).filter((e) => !!e))) {
+				if (Se.has(t)) continue;
+				let e = Z.get(t);
+				if (e) Z.delete(t), Z.set(t, e);
+				else for (Z.set(t, Ce(t)); Z.size > It;) Z.delete(Z.keys().next().value);
 			}
 		}
-		let Oe = /* @__PURE__ */ new Map(), ke = /* @__PURE__ */ new Map(), Ae = /* @__PURE__ */ new Set(), je = !1, Me;
-		function Ne(e) {
+		let De = /* @__PURE__ */ new Map(), Oe = /* @__PURE__ */ new Map(), ke = /* @__PURE__ */ new Set(), Ae = !1, je;
+		function Me(e) {
 			return JSON.stringify([
 				e.name,
 				$t(e.name),
@@ -2640,51 +2652,51 @@ var Le = [
 				l.resourceRoot
 			]);
 		}
-		function Pe() {
-			H || je || Me !== void 0 || (Me = setTimeout(() => {
-				if (Me = void 0, H) return;
-				let e = [...Oe, ...ke].find(([e]) => !Ae.has(e));
+		function Ne() {
+			U || Ae || je !== void 0 || (je = setTimeout(() => {
+				if (je = void 0, U) return;
+				let e = [...De, ...Oe].find(([e]) => !ke.has(e));
 				if (!e) return;
 				let [t, n] = e;
-				je = !0, tn(n).catch(() => void 0).finally(() => {
-					je = !1, !H && ((Oe.has(t) || ke.has(t)) && Ae.add(t), Pe());
+				Ae = !0, tn(n).catch(() => void 0).finally(() => {
+					Ae = !1, !U && ((De.has(t) || Oe.has(t)) && ke.add(t), Ne());
 				});
 			}, 0));
 		}
-		function Lt(e, t = !1) {
-			if (H) return;
-			let n = t ? Oe : ke;
+		function Pe(e, t = !1) {
+			if (U) return;
+			let n = t ? De : Oe;
 			t || n.clear();
-			for (let t of e) n.set(Ne(t), t);
-			for (let e of Ae) !Oe.has(e) && !ke.has(e) && Ae.delete(e);
-			Pe();
+			for (let t of e) n.set(Me(t), t);
+			for (let e of ke) !De.has(e) && !Oe.has(e) && ke.delete(e);
+			Ne();
+		}
+		function Lt(e) {
+			let t = l.defaultSubCategories[e];
+			return l.items.filter((n) => n.category === e && (!t || n.subCategory === t) && (!l.readonly || J.value.has(n.id))).slice(0, Ft);
 		}
 		function Rt(e) {
-			let t = l.defaultSubCategories[e];
-			return l.items.filter((n) => n.category === e && (!t || n.subCategory === t) && (!l.readonly || q.value.has(n.id))).slice(0, Ft);
-		}
-		function zt(e) {
-			let t = l.items.filter((t) => t.category === e && (!l.readonly || q.value.has(t.id)));
+			let t = l.items.filter((t) => t.category === e && (!l.readonly || J.value.has(t.id)));
 			return [...new Set(t.map((e) => e.subCategory))].flatMap((e) => t.filter((t) => t.subCategory === e).slice(0, Ft));
 		}
-		function Bt() {
-			if (H || !l.active) return;
-			let e = (e, t) => xe.value.slice((A.value + e) * Ft, (A.value + e + t) * Ft);
-			De(e(1, 1)), Lt(e(1, 3));
+		function zt() {
+			if (U || !l.active) return;
+			let e = (e, t) => be.value.slice((A.value + e) * Ft, (A.value + e + t) * Ft);
+			Ee(e(1, 1)), Pe(e(1, 3));
 		}
-		D([xe, A], () => Bt()), m(() => {
-			clearTimeout(Me), Ce.clear(), X.clear(), Oe.clear(), ke.clear(), Ae.clear();
+		D([be, A], () => zt()), m(() => {
+			clearTimeout(je), Se.clear(), Z.clear(), De.clear(), Oe.clear(), ke.clear();
 		}), D(() => l.active, (e) => {
-			e ? Bt() : (X.clear(), Lt([]));
+			e ? zt() : (Z.clear(), Pe([]));
 		});
-		let Vt = n(() => l.resourceRoot.replace(/\/?$/, "/") + l.appearance.theme + "/"), Z = (e) => Vt.value + (l.appearance.imageFormat === "webp" ? e.replace(/\.png$/i, ".webp") : e), Ht = n(() => l.items.find((e) => e.id === N.value) ?? Se.value[0]), Ut = () => Z("Images/Shop2/inventory_box/inventory_slot01/0-card.png"), Wt = n(() => ({
+		let Bt = n(() => l.resourceRoot.replace(/\/?$/, "/") + l.appearance.theme + "/"), Vt = (e) => Bt.value + (l.appearance.imageFormat === "webp" ? e.replace(/\.png$/i, ".webp") : e), Ht = n(() => l.items.find((e) => e.id === N.value) ?? xe.value[0]), Ut = () => Vt("Images/Shop2/inventory_box/inventory_slot01/0-card.png"), Wt = n(() => ({
 			Name: l.labels.restrictedOnly,
 			PosX: "0",
 			PosY: "0",
 			Width: "21",
 			Height: "18",
 			Check: M.value ? "1" : "0"
-		})), Gt = (e, t) => Z(e + `/${+!!t}-blank.png`), Kt = (e) => l.items.filter((t) => t.category === e && !t.members && q.value.has(t.id)).length;
+		})), Gt = (e, t) => Vt(e + `/${+!!t}-blank.png`), Kt = (e) => l.items.filter((t) => t.category === e && !t.members && J.value.has(t.id)).length;
 		function qt(e) {
 			let t = Math.min(164 / e.width, 120 / e.height);
 			return {
@@ -2705,7 +2717,7 @@ var Le = [
 		}
 		function Yt() {
 			if (l.readonly) return;
-			let e = new Set(l.modelValue), t = [...new Set(xe.value.flatMap((e) => e.members?.length ? [...e.members] : [e.id]))], n = t.length > 0 && t.every((t) => e.has(t));
+			let e = new Set(l.modelValue), t = [...new Set(be.value.flatMap((e) => e.members?.length ? [...e.members] : [e.id]))], n = t.length > 0 && t.every((t) => e.has(t));
 			for (let r of t) n ? e.delete(r) : e.add(r);
 			d("update:modelValue", [...e].sort((e, t) => e - t));
 		}
@@ -2725,7 +2737,7 @@ var Le = [
 			M
 		], () => {
 			A.value = 0, N.value = void 0;
-		}), D(Y, (e) => {
+		}), D(X, (e) => {
 			A.value = Math.min(A.value, e - 1);
 		});
 		async function Zt(e) {
@@ -2773,7 +2785,7 @@ var Le = [
 				], l = 0;
 				for (let e = 0; e < 3; e++) {
 					let t = Object.assign(new Image(), { crossOrigin: "anonymous" });
-					t.src = Z(c.skin.replace(".smf", "") + `/${e}.png`), await t.decode(), n.drawImage(t, l, 0, s[e], c.height), l += s[e];
+					t.src = Vt(c.skin.replace(".smf", "") + `/${e}.png`), await t.decode(), n.drawImage(t, l, 0, s[e], c.height), l += s[e];
 				}
 				let u = Object.assign(new Image(), { crossOrigin: "anonymous" });
 				u.className = "control", u.alt = "", u.ariaHidden = "true", u.style.cssText = t.style.cssText, u.src = t.toDataURL("image/png"), await u.decode(), o.append(u);
@@ -2840,7 +2852,7 @@ var Le = [
 			return t.classList.add("ban-pick-item-name"), t;
 		}
 		async function nn(e) {
-			let t = await en(q.value.has(e.id) ? l.labels.banned : l.labels.allowed, {
+			let t = await en(J.value.has(e.id) ? l.labels.banned : l.labels.allowed, {
 				left: 4,
 				top: l.appearance.statusBounds.top,
 				width: 164,
@@ -2896,7 +2908,7 @@ var Le = [
 			});
 		}
 		return (n, c) => (g(), a(e, null, [
-			s(ve, {
+			s(_e, {
 				onError: c[36] ||= (e) => d("error", e),
 				title: t.labels.title,
 				"title-align": t.appearance.theme === "v1" ? "left" : "center",
@@ -2913,7 +2925,7 @@ var Le = [
 			}, {
 				default: O(() => [o("section", {
 					ref_key: "panel",
-					ref: R,
+					ref: z,
 					class: f(["bf-ban-pick", { "ban-pick-active": t.active }]),
 					"data-theme": t.appearance.theme,
 					style: p({
@@ -2928,7 +2940,7 @@ var Le = [
 					o("div", Re, [o("span", {
 						class: "ban-pick-hint",
 						"aria-label": t.labels.hint
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[0] ||= (e) => d("error", e),
 						revision: [
 							t.readonly,
@@ -2941,7 +2953,7 @@ var Le = [
 					}, null, 8, ["revision", "draw"])], 8, ze), o("span", {
 						class: "ban-pick-total",
 						"aria-label": `${t.labels.selected} ${t.modelValue.length}`
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[1] ||= (e) => d("error", e),
 						revision: [
 							t.labels.selected,
@@ -2949,7 +2961,7 @@ var Le = [
 							t.textScale
 						],
 						draw: () => $(t.labels.selected, "#456779")
-					}, null, 8, ["revision", "draw"]), s(J, {
+					}, null, 8, ["revision", "draw"]), s(Y, {
 						onError: c[2] ||= (e) => d("error", e),
 						revision: [t.modelValue.length, t.textScale],
 						draw: () => $(String(t.modelValue.length), "#dc7a08", 17, 22)
@@ -2977,7 +2989,7 @@ var Le = [
 							alt: "",
 							draggable: "false"
 						}, null, 8, We),
-						s(J, {
+						s(Y, {
 							onError: c[3] ||= (e) => d("error", e),
 							revision: [
 								t.labels.categories[e],
@@ -2986,7 +2998,7 @@ var Le = [
 							],
 							draw: () => rn(e)
 						}, null, 8, ["revision", "draw"]),
-						Kt(e) ? (g(), a("span", Ge, [s(J, {
+						Kt(e) ? (g(), a("span", Ge, [s(Y, {
 							onError: c[4] ||= (e) => d("error", e),
 							revision: [Kt(e), t.textScale],
 							draw: () => $(String(Kt(e)), "#5f4600", 11, 13)
@@ -2995,12 +3007,12 @@ var Le = [
 						key: 0,
 						class: "ban-pick-only",
 						style: p({ width: Math.max(112, Q(t.labels.restrictedOnly) - 8) + "px" })
-					}, [s(be, {
+					}, [s(ye, {
 						onError: c[5] ||= (e) => d("error", e),
 						type: "UiCheckBox",
 						attrs: Wt.value,
 						onChange: c[6] ||= (e) => M.value = !!e.value
-					}, null, 8, ["attrs"]), s(J, {
+					}, null, 8, ["attrs"]), s(Y, {
 						onError: c[7] ||= (e) => d("error", e),
 						revision: [
 							t.labels.restrictedOnly,
@@ -3012,7 +3024,7 @@ var Le = [
 						"onUpdate:modelValue": c[8] ||= (e) => w.value = e,
 						type: "search",
 						"aria-label": t.labels.search
-					}, null, 8, Je), [[E, w.value]]), w.value ? i("v-if", !0) : (g(), a("span", Ye, [s(J, {
+					}, null, 8, Je), [[E, w.value]]), w.value ? i("v-if", !0) : (g(), a("span", Ye, [s(Y, {
 						onError: c[9] ||= (e) => d("error", e),
 						revision: [
 							t.labels.search,
@@ -3021,7 +3033,7 @@ var Le = [
 						],
 						draw: () => $(t.labels.search, "#9aa6ae")
 					}, null, 8, ["revision", "draw"])]))])])]),
-					o("div", Xe, [s(be, {
+					o("div", Xe, [s(ye, {
 						onError: c[10] ||= (e) => d("error", e),
 						type: "UiPanel",
 						attrs: {
@@ -3040,7 +3052,7 @@ var Le = [
 					}, [o("img", {
 						src: Gt(t.appearance.subCategorySkins.all, S.value === "all"),
 						alt: ""
-					}, null, 8, $e), s(J, {
+					}, null, 8, $e), s(Y, {
 						onError: c[11] ||= (e) => d("error", e),
 						revision: [
 							t.labels.all,
@@ -3049,7 +3061,7 @@ var Le = [
 							t.textScale
 						],
 						draw: () => $(t.labels.all, S.value === "all" ? "#ffffff" : "#a8bde0")
-					}, null, 8, ["revision", "draw"])], 10, Qe), (g(!0), a(e, null, b(ye.value, (e) => (g(), a("button", {
+					}, null, 8, ["revision", "draw"])], 10, Qe), (g(!0), a(e, null, b(ve.value, (e) => (g(), a("button", {
 						key: e,
 						type: "button",
 						class: f({ active: S.value === e }),
@@ -3059,7 +3071,7 @@ var Le = [
 						key: 0,
 						src: Gt(t.appearance.subCategorySkins[e], S.value === e),
 						alt: ""
-					}, null, 8, tt)) : i("v-if", !0), s(J, {
+					}, null, 8, tt)) : i("v-if", !0), s(Y, {
 						onError: c[13] ||= (e) => d("error", e),
 						revision: [
 							t.labels.subCategories[e] ?? e,
@@ -3075,7 +3087,7 @@ var Le = [
 						role: "tabpanel",
 						"aria-labelledby": `ban-pick-tab-${x.value}`
 					}, [
-						s(be, {
+						s(ye, {
 							onError: c[14] ||= (e) => d("error", e),
 							type: "UiPanel",
 							attrs: {
@@ -3087,19 +3099,19 @@ var Le = [
 								SkinSpriteSet: "Images/Ui/DialogInnerSkin03.smf"
 							}
 						}),
-						o("div", rt, [(g(!0), a(e, null, b(Se.value, (e) => (g(), a("button", {
+						o("div", rt, [(g(!0), a(e, null, b(xe.value, (e) => (g(), a("button", {
 							key: e.id,
 							type: "button",
-							class: f(["ban-pick-card", { banned: q.value.has(e.id) }]),
-							"aria-pressed": q.value.has(e.id),
+							class: f(["ban-pick-card", { banned: J.value.has(e.id) }]),
+							"aria-pressed": J.value.has(e.id),
 							"aria-disabled": t.readonly,
-							"aria-label": `${e.name}: ${q.value.has(e.id) ? t.labels.banned : t.labels.allowed}`,
+							"aria-label": `${e.name}: ${J.value.has(e.id) ? t.labels.banned : t.labels.allowed}`,
 							onMouseenter: (t) => N.value = e.id,
 							onFocus: (t) => N.value = e.id,
 							onClick: (t) => Jt(e.id),
-							onMouseenterPassive: (t) => oe(t, e),
-							onMousemovePassive: (t) => oe(t, e),
-							onMouseleave: c[19] ||= (e) => G.value = void 0
+							onMouseenterPassive: (t) => ae(t, e),
+							onMousemovePassive: (t) => ae(t, e),
+							onMouseleave: c[19] ||= (e) => K.value = void 0
 						}, [
 							o("img", {
 								class: "ban-pick-card-frame",
@@ -3107,7 +3119,7 @@ var Le = [
 								alt: "",
 								draggable: "false"
 							}, null, 8, at),
-							s(J, {
+							s(Y, {
 								onError: c[15] ||= (e) => d("error", e),
 								revision: [
 									e.name,
@@ -3125,7 +3137,7 @@ var Le = [
 								key: 1,
 								class: "ban-pick-sprite",
 								style: p(qt(e.preview))
-							}, null, 4)) : (g(), a("span", ct, [t.labels.noPreview ? (g(), r(J, {
+							}, null, 4)) : (g(), a("span", ct, [t.labels.noPreview ? (g(), r(Y, {
 								key: 0,
 								class: "ban-pick-inline",
 								onError: c[16] ||= (e) => d("error", e),
@@ -3136,14 +3148,14 @@ var Le = [
 								],
 								draw: () => $(t.labels.noPreview ?? "", "#e8edf0")
 							}, null, 8, ["revision", "draw"])) : i("v-if", !0)]))]),
-							q.value.has(e.id) ? (g(), a("img", {
+							J.value.has(e.id) ? (g(), a("img", {
 								key: 0,
 								class: "ban-pick-use-frame",
-								src: Z("Images/Shop2/inventory_box/inventory_use_frame.png"),
+								src: Vt("Images/Shop2/inventory_box/inventory_use_frame.png"),
 								alt: "",
 								draggable: "false"
 							}, null, 8, lt)) : i("v-if", !0),
-							q.value.has(e.id) ? (g(), a("span", ut, [s(J, {
+							J.value.has(e.id) ? (g(), a("span", ut, [s(Y, {
 								onError: c[17] ||= (e) => d("error", e),
 								revision: [
 									t.labels.banned,
@@ -3152,10 +3164,10 @@ var Le = [
 								],
 								draw: () => $(t.labels.banned, "#ffe428", 12, 18, "#705d00")
 							}, null, 8, ["revision", "draw"])])) : i("v-if", !0),
-							s(J, {
+							s(Y, {
 								onError: c[18] ||= (e) => d("error", e),
 								revision: [
-									q.value.has(e.id),
+									J.value.has(e.id),
 									t.labels.banned,
 									t.labels.allowed,
 									t.locale,
@@ -3164,7 +3176,7 @@ var Le = [
 								draw: () => nn(e)
 							}, null, 8, ["revision", "draw"])
 						], 42, it))), 128))]),
-						Se.value.length ? i("v-if", !0) : (g(), a("p", dt, [s(J, {
+						xe.value.length ? i("v-if", !0) : (g(), a("p", dt, [s(Y, {
 							onError: c[20] ||= (e) => d("error", e),
 							revision: [
 								t.labels.empty,
@@ -3181,74 +3193,74 @@ var Le = [
 								"aria-label": t.labels.previous,
 								onClick: c[21] ||= (e) => A.value--
 							}, [o("img", {
-								src: Z("Images/Ui/ScrollbarHorizon/12.png"),
+								src: Vt("Images/Ui/ScrollbarHorizon/12.png"),
 								alt: ""
 							}, null, 8, mt), o("img", {
 								class: "page-hover",
-								src: Z("Images/Ui/ScrollbarHorizon/14.png"),
+								src: Vt("Images/Ui/ScrollbarHorizon/14.png"),
 								alt: ""
 							}, null, 8, ht)], 8, pt),
 							o("span", {
 								ref_key: "pageTrack",
-								ref: z,
+								ref: B,
 								class: "page-track",
-								onPointerdown: ge
+								onPointerdown: he
 							}, [o("span", {
 								class: "page-thumb",
 								role: "slider",
 								tabindex: "0",
 								"aria-label": t.labels.page,
 								"aria-valuemin": 1,
-								"aria-valuemax": Y.value,
+								"aria-valuemax": X.value,
 								"aria-valuenow": A.value + 1,
-								onKeydown: _e,
-								onPointerdown: j(me, ["stop"]),
-								onPointermove: he,
-								onPointerup: c[23] ||= (e) => u(K) ? K.value = void 0 : K = void 0,
-								onPointercancel: c[24] ||= (e) => u(K) ? K.value = void 0 : K = void 0,
-								onLostpointercapture: c[25] ||= (e) => u(K) ? K.value = void 0 : K = void 0,
+								onKeydown: ge,
+								onPointerdown: j(pe, ["stop"]),
+								onPointermove: me,
+								onPointerup: c[23] ||= (e) => u(q) ? q.value = void 0 : q = void 0,
+								onPointercancel: c[24] ||= (e) => u(q) ? q.value = void 0 : q = void 0,
+								onLostpointercapture: c[25] ||= (e) => u(q) ? q.value = void 0 : q = void 0,
 								style: p({
-									width: `${100 / Y.value}%`,
-									left: Y.value > 1 ? `calc((100% - max(58px, ${100 / Y.value}%)) * ${A.value / (Y.value - 1)})` : "0"
+									width: `${100 / X.value}%`,
+									left: X.value > 1 ? `calc((100% - max(58px, ${100 / X.value}%)) * ${A.value / (X.value - 1)})` : "0"
 								})
 							}, [
 								o("img", {
-									src: Z("Images/Ui/ScrollbarHorizon/3.png"),
+									src: Vt("Images/Ui/ScrollbarHorizon/3.png"),
 									alt: "",
 									draggable: "false"
 								}, null, 8, _t),
 								o("img", {
-									src: Z("Images/Ui/ScrollbarHorizon/4.png"),
+									src: Vt("Images/Ui/ScrollbarHorizon/4.png"),
 									alt: "",
 									draggable: "false"
 								}, null, 8, vt),
 								o("img", {
-									src: Z("Images/Ui/ScrollbarHorizon/5.png"),
+									src: Vt("Images/Ui/ScrollbarHorizon/5.png"),
 									alt: "",
 									draggable: "false"
 								}, null, 8, yt),
-								o("span", null, [s(J, {
+								o("span", null, [s(Y, {
 									onError: c[22] ||= (e) => d("error", e),
 									revision: [
 										A.value,
-										Y.value,
+										X.value,
 										t.textScale
 									],
-									draw: () => $(`${A.value + 1} / ${Y.value}`, "#404c53")
+									draw: () => $(`${A.value + 1} / ${X.value}`, "#404c53")
 								}, null, 8, ["revision", "draw"])])
 							], 44, gt)], 544),
 							o("button", {
 								type: "button",
 								class: "page-next",
-								disabled: A.value + 1 >= Y.value,
+								disabled: A.value + 1 >= X.value,
 								"aria-label": t.labels.next,
 								onClick: c[26] ||= (e) => A.value++
 							}, [o("img", {
-								src: Z("Images/Ui/ScrollbarHorizon/15.png"),
+								src: Vt("Images/Ui/ScrollbarHorizon/15.png"),
 								alt: ""
 							}, null, 8, xt), o("img", {
 								class: "page-hover",
-								src: Z("Images/Ui/ScrollbarHorizon/17.png"),
+								src: Vt("Images/Ui/ScrollbarHorizon/17.png"),
 								alt: ""
 							}, null, 8, St)], 8, bt)
 						])
@@ -3257,7 +3269,7 @@ var Le = [
 						class: "ban-pick-info",
 						style: p({ height: t.appearance.infoSize.height + "px" }),
 						"aria-label": Ht.value?.name
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[27] ||= (e) => d("error", e),
 						revision: [
 							Ht.value,
@@ -3270,7 +3282,7 @@ var Le = [
 					o("div", Tt, [t.readonly ? i("v-if", !0) : (g(), a(e, { key: 0 }, [o("div", {
 						class: "native-action",
 						style: p({ width: Q(t.labels.reset) + "px" })
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[28] ||= (e) => d("error", e),
 						revision: [t.textScale, t.labels.reset],
 						draw: (e) => sn(e, t.labels.reset, Q(t.labels.reset), !1, "Ok"),
@@ -3278,7 +3290,7 @@ var Le = [
 					}, null, 8, ["revision", "draw"])], 4), o("div", {
 						class: "native-action",
 						style: p({ width: Q(t.labels.presets) + "px" })
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[29] ||= (e) => d("error", e),
 						revision: [t.textScale, t.labels.presets],
 						draw: (e) => sn(e, t.labels.presets, Q(t.labels.presets)),
@@ -3287,7 +3299,7 @@ var Le = [
 						key: 0,
 						class: "native-action",
 						style: p({ width: Q(t.labels.apply) + "px" })
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[31] ||= (e) => d("error", e),
 						revision: [t.textScale, t.labels.apply],
 						draw: (e) => sn(e, t.labels.apply, Q(t.labels.apply)),
@@ -3295,7 +3307,7 @@ var Le = [
 					}, null, 8, ["revision", "draw"])], 4)), o("div", {
 						class: "native-action",
 						style: p({ width: Q(t.readonly ? t.labels.close : t.labels.cancel) + "px" })
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[33] ||= (e) => d("error", e),
 						revision: [
 							t.textScale,
@@ -3306,24 +3318,24 @@ var Le = [
 						draw: (e) => sn(e, t.readonly ? t.labels.close : t.labels.cancel, Q(t.readonly ? t.labels.close : t.labels.cancel), !1, "Cancel"),
 						onAction: c[34] ||= (e) => d("cancel")
 					}, null, 8, ["revision", "draw"])], 4)])]),
-					re.value ? (g(), a("div", {
+					ne.value ? (g(), a("div", {
 						key: 0,
 						class: "ban-pick-spec",
 						style: p({
-							...se.value,
-							width: ae.value.width + "px",
-							height: ae.value.height + "px"
+							...oe.value,
+							width: ie.value.width + "px",
+							height: ie.value.height + "px"
 						})
-					}, [s(J, {
+					}, [s(Y, {
 						onError: c[35] ||= (e) => d("error", e),
 						revision: [
-							re.value.id,
-							ie.value,
+							ne.value.id,
+							re.value,
 							t.labels.stats,
 							t.locale,
 							t.textScale
 						],
-						draw: fe
+						draw: de
 					}, null, 8, ["revision"])], 4)) : i("v-if", !0)
 				], 14, Le)]),
 				_: 1
@@ -3341,14 +3353,14 @@ var Le = [
 			t.readonly ? i("v-if", !0) : (g(), a("dialog", {
 				key: 0,
 				ref_key: "presetDialog",
-				ref: ee,
+				ref: R,
 				class: "ban-pick-preset-dialog",
 				"data-theme": t.appearance.theme,
 				"aria-label": t.labels.presets,
 				onCancel: c[48] ||= j((e) => I.value = !1, ["prevent"]),
 				onClose: c[49] ||= (e) => I.value = !1,
 				style: p({ "--action-height": t.appearance.actionHeight + "px" })
-			}, [s(ve, {
+			}, [s(_e, {
 				onError: c[46] ||= (e) => d("error", e),
 				title: t.labels.presets,
 				"title-align": t.appearance.theme === "v1" ? "left" : "center",
@@ -3377,7 +3389,7 @@ var Le = [
 					o("span", jt, [k(o("input", {
 						"onUpdate:modelValue": c[39] ||= (e) => P.value = e,
 						"aria-label": t.labels.presetName
-					}, null, 8, Mt), [[E, P.value]]), P.value ? i("v-if", !0) : (g(), a("span", Nt, [s(J, {
+					}, null, 8, Mt), [[E, P.value]]), P.value ? i("v-if", !0) : (g(), a("span", Nt, [s(Y, {
 						onError: c[40] ||= (e) => d("error", e),
 						revision: [
 							t.labels.presetName,
@@ -3390,7 +3402,7 @@ var Le = [
 						o("div", {
 							class: "native-action",
 							style: p({ width: Q(t.labels.savePreset) + "px" })
-						}, [s(J, {
+						}, [s(Y, {
 							onError: c[41] ||= (e) => d("error", e),
 							revision: [
 								t.textScale,
@@ -3403,7 +3415,7 @@ var Le = [
 						o("div", {
 							class: "native-action",
 							style: p({ width: Q(t.labels.loadPreset) + "px" })
-						}, [s(J, {
+						}, [s(Y, {
 							onError: c[43] ||= (e) => d("error", e),
 							revision: [
 								t.textScale,
@@ -3416,7 +3428,7 @@ var Le = [
 						o("div", {
 							class: "native-action",
 							style: p({ width: Q(t.labels.deletePreset) + "px" })
-						}, [s(J, {
+						}, [s(Y, {
 							onError: c[44] ||= (e) => d("error", e),
 							revision: [
 								t.textScale,
@@ -3451,7 +3463,7 @@ var Le = [
 	},
 	emits: ["ready"],
 	setup(e, { emit: t }) {
-		let n = e, r = t, i = pe(), o = y(!1), s;
+		let n = e, r = t, i = fe(), o = y(!1), s;
 		function c() {
 			o.value || (o.value = !0, r("ready"));
 		}
@@ -3521,7 +3533,7 @@ function Vt(e, t, n = "v3") {
 	if (!r || r.states.length !== 4) throw Error("Four competitive-mode button states are required.");
 	return r;
 }
-function Z(e) {
+function Ht(e) {
 	let t = /* @__PURE__ */ new Set();
 	for (let n of e) {
 		if (!Number.isSafeInteger(n.id) || n.id < 0 || t.has(n.id) || typeof n.key != "string" || !n.key || !n.names || typeof n.names.en != "string") throw Error("Mode catalogue entries require unique integer IDs and localized names.");
@@ -3529,34 +3541,34 @@ function Z(e) {
 	}
 	return e;
 }
-function Ht(e, t) {
+function Ut(e, t) {
 	return e.find((e) => e.id === t);
 }
-function Ut(e, t) {
-	let n = Ht(Z(e), t)?.id;
+function Wt(e, t) {
+	let n = Ut(Ht(e), t)?.id;
 	return {
 		modes: e,
 		committedId: n,
 		draftId: n,
 		select(e) {
-			if (!Ht(this.modes, e)) throw Error("The selected mode is not in the catalogue.");
+			if (!Ut(this.modes, e)) throw Error("The selected mode is not in the catalogue.");
 			this.draftId = e;
 		},
 		reset(e) {
-			this.committedId = Ht(this.modes, e)?.id, this.cancel();
+			this.committedId = Ut(this.modes, e)?.id, this.cancel();
 		},
 		replaceModes(e) {
-			this.modes = Z(e), this.committedId = Ht(e, this.committedId)?.id, this.draftId = Ht(e, this.draftId)?.id;
+			this.modes = Ht(e), this.committedId = Ut(e, this.committedId)?.id, this.draftId = Ut(e, this.draftId)?.id;
 		},
 		confirm() {
-			return Ht(this.modes, this.draftId);
+			return Ut(this.modes, this.draftId);
 		},
 		cancel() {
 			this.draftId = this.committedId;
 		}
 	};
 }
-function Wt(e, t, n, r, i = 24) {
+function Gt(e, t, n, r, i = 24) {
 	let a = Math.max(0, e - t), o = a ? Math.min(r, Math.max(i, r * t / e)) : r, s = r - o;
 	return {
 		maximum: a,
@@ -3565,13 +3577,13 @@ function Wt(e, t, n, r, i = 24) {
 		top: a ? Math.max(0, Math.min(a, n)) / a * s : 0
 	};
 }
-function Gt(e, t, n) {
+function Kt(e, t, n) {
 	return n.travel > 0 ? Math.max(0, Math.min(n.maximum, e + t * n.maximum / n.travel)) : 0;
 }
-function Kt({ getTop: e, setTop: t, getGeometry: n, getScale: r }) {
+function qt({ getTop: e, setTop: t, getGeometry: n, getScale: r }) {
 	let i;
 	function a(e) {
-		i && e.pointerId === i.pointer && (e.preventDefault(), t(Gt(i.top, (e.clientY - i.y) / i.scale, n())));
+		i && e.pointerId === i.pointer && (e.preventDefault(), t(Kt(i.top, (e.clientY - i.y) / i.scale, n())));
 	}
 	function o(e = void 0) {
 		if (!i || e && e.pointerId !== i.pointer) return;
@@ -3602,8 +3614,8 @@ function Kt({ getTop: e, setTop: t, getGeometry: n, getScale: r }) {
 		stop: o
 	};
 }
-function qt(e, t) {
-	if (Z(t), e?.format !== 1 || !Array.isArray(e.rules)) throw Error("Mode availability requires format 1 and a rules array.");
+function Jt(e, t) {
+	if (Ht(t), e?.format !== 1 || !Array.isArray(e.rules)) throw Error("Mode availability requires format 1 and a rules array.");
 	let n = new Set(t.map((e) => e.id));
 	for (let t of e.rules) {
 		if (!t || !Array.isArray(t.builds) || !t.builds.length || t.builds.some((e) => typeof e != "string" || !/^[A-Za-z0-9*_.-]+$/.test(e))) throw Error("Each mode-availability rule requires build IDs or wildcard patterns.");
@@ -3612,8 +3624,8 @@ function qt(e, t) {
 	}
 	return e;
 }
-function Jt(e, t, n) {
-	if (qt(t, e), !t.rules.length) return e;
+function Yt(e, t, n) {
+	if (Jt(t, e), !t.rules.length) return e;
 	if (typeof n != "string" || !n) throw Error("Build-specific mode availability requires the current build ID.");
 	let r = (e) => RegExp("^" + e.split("*").map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*") + "$", "i").test(n), i = e;
 	for (let e of t.rules) {
@@ -3623,7 +3635,7 @@ function Jt(e, t, n) {
 	}
 	return i;
 }
-function Yt(e) {
+function Xt(e) {
 	if (![
 		"v1",
 		"v2",
@@ -3637,11 +3649,11 @@ function Yt(e) {
 	};
 }
 // ../tools/game-ui/src/components/BfModeExtension.vue?vue&type=script&setup=true&lang.ts
-var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-panel" }, $t = ["aria-label"], Q = { class: "bf-mode-grid" }, en = ["aria-label"], tn = ["src"], nn = ["src"], rn = [
+var Zt = ["inert", "aria-hidden"], Qt = ["aria-busy"], $t = { class: "bf-mode-panel" }, Q = ["aria-label"], en = { class: "bf-mode-grid" }, tn = ["aria-label"], nn = ["src"], rn = ["src"], an = [
 	"aria-label",
 	"aria-valuemax",
 	"aria-valuenow"
-], an = ["src"], $ = ["src"], on = ["src"], sn = ["aria-label"], cn = ["src"], ln = 602, un = 384, dn = 65, fn = /* @__PURE__ */ c({
+], $ = ["src"], on = ["src"], sn = ["src"], cn = ["aria-label"], ln = ["src"], un = 602, dn = 384, fn = 65, pn = /* @__PURE__ */ c({
 	__name: "BfModeExtension",
 	props: {
 		modes: {},
@@ -3666,25 +3678,25 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 		"error"
 	],
 	setup(t, { emit: i }) {
-		let c = t, l = i, u = v(Ut(c.modes, c.selectedId)), f = y(!1), _ = y(!1), x = n(() => f.value && _.value), S = y(), C = y(), T = y(), E = y(0), k = y(65), M = y(27), N = he(), P = n(() => u.modes), F = n(() => Yt(c.theme)), I = n(() => F.value.height), ee = n(() => Math.max(0, Math.ceil(P.value.length / 3) * dn - 6)), R = n(() => c.theme === "v3" ? 18 : 20), z = n(() => un - 2 * R.value), B = n(() => Wt(ee.value, un, E.value, z.value)), V = n(() => !!u.confirm()), H = n(() => [
+		let c = t, l = i, u = v(Wt(c.modes, c.selectedId)), f = y(!1), _ = y(!1), x = n(() => f.value && _.value), S = y(), C = y(), T = y(), E = y(0), k = y(65), M = y(27), N = me(), P = n(() => u.modes), F = n(() => Xt(c.theme)), I = n(() => F.value.height), R = n(() => Math.max(0, Math.ceil(P.value.length / 3) * fn - 6)), z = n(() => c.theme === "v3" ? 18 : 20), B = n(() => dn - 2 * z.value), V = n(() => Gt(R.value, dn, E.value, B.value)), H = n(() => !!u.confirm()), U = n(() => [
 			c.locale,
 			c.textScale,
 			c.appearance,
 			c.theme,
 			c.modes,
 			c.modeResourceRoot
-		]), te = n(() => [
+		]), ee = n(() => [
 			c.locale,
 			c.theme,
-			V.value,
+			H.value,
 			c.busy,
 			c.textScale
-		]), U = n(() => [
+		]), W = n(() => [
 			c.locale,
 			c.theme,
 			c.busy,
 			c.textScale
-		]), W = n(() => c.locale === "ko" ? "BFKorean" : "BF"), ne = n(() => c.theme === "v1" ? {
+		]), G = n(() => c.locale === "ko" ? "BFKorean" : "BF"), te = n(() => c.theme === "v1" ? {
 			top: 8,
 			height: 23
 		} : c.theme === "v2" ? {
@@ -3693,86 +3705,86 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 		} : {
 			top: 8,
 			height: 27
-		}), G = n(() => c.resourceRoot.replace(/\/?$/, "/")), re = n(() => (c.modeResourceRoot ?? c.resourceRoot).replace(/\/?$/, "/")), ie = n(() => "Images/Ui/" + (c.theme === "v3" ? "dialogueNew/" : "") + "ScrollbarVertical");
-		function ae(e) {
+		}), K = n(() => c.resourceRoot.replace(/\/?$/, "/")), ne = n(() => (c.modeResourceRoot ?? c.resourceRoot).replace(/\/?$/, "/")), re = n(() => "Images/Ui/" + (c.theme === "v3" ? "dialogueNew/" : "") + "ScrollbarVertical");
+		function ie(e) {
 			if (!N.value) return;
 			let t = N.value.manifest.imageFormat === "webp" ? "webp" : "png";
-			return `${G.value}${c.theme}/${ie.value}/${e}.${t}`;
+			return `${K.value}${c.theme}/${re.value}/${e}.${t}`;
 		}
-		function oe(e) {
+		function ae(e) {
 			l("cancel"), l("error", e);
 		}
-		let se = pe(), ce = 0, le = !1;
-		function ue() {
-			le && se && (se.pending.value--, le = !1);
+		let oe = fe(), se = 0, ce = !1;
+		function le() {
+			ce && oe && (oe.pending.value--, ce = !1);
 		}
 		D(() => [
 			T.value,
 			c.theme,
-			G.value,
+			K.value,
 			N.value,
 			N.value?.manifest.imageFormat
 		], async () => {
-			let e = ++ce, t = T.value;
-			if (_.value = !1, !t || !N.value) ue();
+			let e = ++se, t = T.value;
+			if (_.value = !1, !t || !N.value) le();
 			else {
-				se && !le && (se.pending.value++, le = !0);
+				oe && !ce && (oe.pending.value++, ce = !0);
 				try {
-					if (await Promise.all([...t.querySelectorAll("img")].map((e) => e.decode())), e !== ce) return;
-					_.value = !0, ue();
+					if (await Promise.all([...t.querySelectorAll("img")].map((e) => e.decode())), e !== se) return;
+					_.value = !0, le();
 				} catch (t) {
-					if (e !== ce) return;
-					ue(), oe(t instanceof Error ? t : Error(String(t)));
+					if (e !== se) return;
+					le(), ae(t instanceof Error ? t : Error(String(t)));
 				}
 			}
 		}, { flush: "post" }), m(() => {
-			ce++, ue();
+			se++, le();
 		});
-		function de(e) {
+		function ue(e) {
 			return e.names[c.locale] ?? e.names.en ?? e.key;
 		}
-		function fe(e) {
+		function de(e) {
 			return e.descriptions?.[c.locale] ?? c.labels.hidden;
 		}
-		function K(e) {
+		function q(e) {
 			c.busy || (u.select(e.id), l("select", e.id));
 		}
-		function me() {
+		function pe() {
 			let e = u.confirm();
 			e && !c.busy && l("confirm", e);
 		}
-		function ge() {
+		function he() {
 			c.busy || (u.cancel(), l("cancel"));
 		}
-		function _e(e) {
-			S.value && (S.value.scrollTop = e, ye());
+		function ge(e) {
+			S.value && (S.value.scrollTop = e, ve());
 		}
-		function q(e) {
-			_e((S.value?.scrollTop ?? 0) + e);
+		function J(e) {
+			ge((S.value?.scrollTop ?? 0) + e);
 		}
-		function ye() {
+		function ve() {
 			E.value = S.value?.scrollTop ?? 0;
 		}
-		function be(e) {
-			q((e.offsetY < B.value.top ? -1 : 1) * un);
+		function ye(e) {
+			J((e.offsetY < V.value.top ? -1 : 1) * dn);
 		}
 		D(() => c.selectedId, (e) => {
 			u.reset(e);
 		}), D(() => c.modes, (e) => {
-			u.replaceModes(e), d(ye);
+			u.replaceModes(e), d(ve);
 		}), D(() => [u.draftId, c.busy], () => {
 			for (let e of S.value?.querySelectorAll("[data-mode-id]") ?? []) e.setAttribute("aria-checked", String(Number(e.dataset.modeId) === u.draftId)), e.disabled = c.busy;
 		});
-		let xe = Kt({
+		let be = qt({
 			getTop: () => S.value?.scrollTop ?? 0,
-			setTop: _e,
-			getGeometry: () => B.value,
-			getScale: () => (C.value?.getBoundingClientRect().height ?? 0) / z.value
+			setTop: ge,
+			getGeometry: () => V.value,
+			getScale: () => (C.value?.getBoundingClientRect().height ?? 0) / B.value
 		});
-		m(() => xe.stop()), D(() => c.theme, () => xe.stop());
-		function Y(e) {
+		m(() => be.stop()), D(() => c.theme, () => be.stop());
+		function X(e) {
 			if (e.key === "Escape") {
-				e.preventDefault(), ge();
+				e.preventDefault(), he();
 				return;
 			}
 			if (c.busy || !e.target.closest("[data-mode-id]")) return;
@@ -3787,26 +3799,26 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 			if (!(e.key in n)) return;
 			e.preventDefault();
 			let r = P.value[Math.max(0, Math.min(P.value.length - 1, (t < 0 ? 0 : t) + n[e.key]))];
-			r && (K(r), d(() => {
+			r && (q(r), d(() => {
 				let e = S.value?.querySelector(`[data-mode-id="${r.id}"]`);
 				e?.focus({ preventScroll: !0 }), e?.scrollIntoView({ block: "nearest" });
 			}));
 		}
-		async function Se(e) {
+		async function xe(e) {
 			let t = document.createElement("div");
 			return await e.panel(t, 0, 0, 580, 402, c.theme === "v3" ? "Images/Ui/dialogueNew/dialogue_basic02.smf" : "Images/Ui/FrameBox.smf"), t;
 		}
-		async function Ce(e, t) {
+		async function Se(e, t) {
 			let n = Vt(t.key, c.appearance.skins, c.theme), r = document.createElement("button");
-			r.type = "button", r.className = "bf-mode-button", r.dataset.modeId = String(t.id), r.setAttribute("role", "radio"), r.dataset.state = "0", r.ariaLabel = de(t), r.dataset.bfPressSound = "toggleButtonOn";
+			r.type = "button", r.className = "bf-mode-button", r.dataset.modeId = String(t.id), r.setAttribute("role", "radio"), r.dataset.state = "0", r.ariaLabel = ue(t), r.dataset.bfPressSound = "toggleButtonOn";
 			let i = await Promise.all(n.states.map(async (e) => {
 				let t = new Image();
-				return t.crossOrigin = "anonymous", t.src = re.value + e, t.alt = "", t.draggable = !1, await t.decode(), t;
+				return t.crossOrigin = "anonymous", t.src = ne.value + e, t.alt = "", t.draggable = !1, await t.decode(), t;
 			}));
 			r.append(...i);
 			let a = document.createElement("span");
-			a.className = "bf-mode-name", r.append(a), await L(a, de(t), {
-				family: W.value,
+			a.className = "bf-mode-name", r.append(a), await L(a, ue(t), {
+				family: G.value,
 				size: 15,
 				weight: 700,
 				align: "left",
@@ -3823,8 +3835,8 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 				height: 20
 			});
 			let o = document.createElement("span");
-			o.className = "bf-mode-description", r.append(o), await L(o, fe(t), {
-				family: W.value,
+			o.className = "bf-mode-description", r.append(o), await L(o, de(t), {
+				family: G.value,
 				size: 11,
 				weight: 400,
 				align: "left",
@@ -3849,14 +3861,14 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 			]) r.addEventListener(e, () => {
 				r.dataset.state = String(t);
 			});
-			return r.addEventListener("click", () => K(t)), r;
+			return r.addEventListener("click", () => q(t)), r;
 		}
-		async function X(e, t) {
+		async function Z(e, t) {
 			let n = t === "Ok" ? c.labels.confirm : c.labels.cancel;
 			if (c.theme !== "v3") {
 				let r = c.actionSkins?.[t];
 				if (!r) throw Error("Native confirmation and cancellation skins are required.");
-				let i = await Ne([c.labels.confirm, c.labels.cancel], W.value), { height: a } = Ae(e, {
+				let i = await Ne([c.labels.confirm, c.labels.cancel], G.value), { height: a } = Ae(e, {
 					skins: [...r],
 					width: i,
 					height: 27
@@ -3868,8 +3880,8 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 					height: a,
 					skins: [...r],
 					kind: t,
-					disabled: c.busy || t === "Ok" && !V.value,
-					family: W.value,
+					disabled: c.busy || t === "Ok" && !H.value,
+					family: G.value,
 					size: 13,
 					renderer: "freetype",
 					resourceRoot: c.resourceRoot,
@@ -3878,7 +3890,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 				return o.dataset.action = t, o.dataset.bfPressSound = t === "Cancel" ? "cancel" : "press", o;
 			}
 			let r = document.createElement("button");
-			r.type = "button", r.className = "control sprite-button", r.style.cssText = "left:0;top:0;width:112px;height:33px", r.ariaLabel = n, r.dataset.action = t, r.disabled = c.busy || t === "Ok" && !V.value, r.dataset.bfPressSound = t === "Cancel" ? "cancel" : "press";
+			r.type = "button", r.className = "control sprite-button", r.style.cssText = "left:0;top:0;width:112px;height:33px", r.ariaLabel = n, r.dataset.action = t, r.disabled = c.busy || t === "Ok" && !H.value, r.dataset.bfPressSound = t === "Cancel" ? "cancel" : "press";
 			let i = t === "Ok" ? "dialogue_type01BTN" : "dialogue_type02BTN", a = [];
 			for (let t of [
 				"Up",
@@ -3888,7 +3900,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 			]) a.push(await e.panel(r, 0, 0, 112, 33, `Images/Ui/dialogueNew/${i}-${t}.smf`));
 			let o = document.createElement("span");
 			o.style.cssText = "position:absolute;inset:0;width:112px;height:33px;pointer-events:none", r.append(o), await L(o, n, {
-				family: W.value,
+				family: G.value,
 				size: 15,
 				weight: 400,
 				color: "#232323",
@@ -3918,7 +3930,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 			}), r;
 		}
 		return h(() => {
-			d(ye);
+			d(ve);
 		}), (n, i) => (g(), r(Rt, {
 			strict: "",
 			onReady: i[7] ||= (e) => f.value = !0
@@ -3932,30 +3944,30 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 					height: I.value + "px",
 					opacity: +!!x.value
 				})
-			}, [s(ve, {
+			}, [s(_e, {
 				title: t.labels.title,
-				width: ln,
+				width: un,
 				height: I.value,
 				"close-label": t.labels.close,
 				"title-align": t.theme === "v1" ? "left" : "center",
-				"font-family": W.value,
+				"font-family": G.value,
 				"font-weight": 600,
 				"text-renderer": "freetype",
 				"text-scale": t.textScale,
 				"resource-root": t.resourceRoot,
-				"title-bounds": ne.value,
-				onClose: ge,
-				onError: oe
+				"title-bounds": te.value,
+				onClose: he,
+				onError: ae
 			}, {
 				default: O(() => [o("section", {
 					class: "bf-mode-content",
 					"aria-busy": t.busy,
-					onKeydown: Y
+					onKeydown: X
 				}, [
-					o("div", Qt, [s(J, {
-						draw: Se,
+					o("div", $t, [s(Y, {
+						draw: xe,
 						revision: t.theme,
-						onError: oe
+						onError: ae
 					}, null, 8, ["revision"])]),
 					o("div", {
 						ref_key: "viewport",
@@ -3963,89 +3975,89 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 						class: "bf-mode-viewport",
 						role: "radiogroup",
 						"aria-label": t.labels.title,
-						onScroll: ye
-					}, [o("div", Q, [(g(!0), a(e, null, b(P.value, (e) => (g(), r(J, {
+						onScroll: ve
+					}, [o("div", en, [(g(!0), a(e, null, b(P.value, (e) => (g(), r(Y, {
 						key: e.id,
-						draw: (t) => Ce(t, e),
-						revision: H.value,
-						onError: oe
-					}, null, 8, ["draw", "revision"]))), 128))])], 40, $t),
+						draw: (t) => Se(t, e),
+						revision: U.value,
+						onError: ae
+					}, null, 8, ["draw", "revision"]))), 128))])], 40, Q),
 					o("div", {
 						ref_key: "scrollbar",
 						ref: T,
 						class: "bf-mode-scrollbar",
 						style: p({
 							"--scroll-width": (t.theme === "v3" ? 18 : 21) + "px",
-							"--arrow-height": R.value + "px"
+							"--arrow-height": z.value + "px"
 						})
 					}, [
 						o("button", {
 							class: "bf-mode-scroll-arrow",
 							type: "button",
 							"aria-label": t.labels.previous,
-							onClick: i[0] ||= (e) => q(-65)
+							onClick: i[0] ||= (e) => J(-65)
 						}, [o("img", {
-							src: ae(12),
+							src: ie(12),
 							alt: "",
 							draggable: "false"
-						}, null, 8, tn)], 8, en),
+						}, null, 8, nn)], 8, tn),
 						o("div", {
 							ref_key: "track",
 							ref: C,
 							class: "bf-mode-scroll-track",
-							onPointerdown: j(be, ["self"])
+							onPointerdown: j(ye, ["self"])
 						}, [o("img", {
 							class: "bf-mode-track-image",
-							src: ae(1),
+							src: ie(1),
 							alt: "",
 							draggable: "false"
-						}, null, 8, nn), o("div", {
+						}, null, 8, rn), o("div", {
 							class: "bf-mode-scroll-thumb",
 							role: "scrollbar",
 							tabindex: "0",
 							"aria-orientation": "vertical",
 							"aria-label": t.labels.scroll,
 							"aria-valuemin": 0,
-							"aria-valuemax": B.value.maximum,
+							"aria-valuemax": V.value.maximum,
 							"aria-valuenow": E.value,
 							style: p({
-								height: B.value.height + "px",
-								top: B.value.top + "px"
+								height: V.value.height + "px",
+								top: V.value.top + "px"
 							}),
-							onPointerdown: i[1] ||= (...e) => w(xe).start && w(xe).start(...e),
+							onPointerdown: i[1] ||= (...e) => w(be).start && w(be).start(...e),
 							onKeydown: [
-								i[2] ||= A(j((e) => q(-65), ["prevent"]), ["up"]),
-								i[3] ||= A(j((e) => q(dn), ["prevent"]), ["down"]),
-								i[4] ||= A(j((e) => q(-B.value.maximum), ["prevent"]), ["home"]),
-								i[5] ||= A(j((e) => q(B.value.maximum), ["prevent"]), ["end"])
+								i[2] ||= A(j((e) => J(-65), ["prevent"]), ["up"]),
+								i[3] ||= A(j((e) => J(fn), ["prevent"]), ["down"]),
+								i[4] ||= A(j((e) => J(-V.value.maximum), ["prevent"]), ["home"]),
+								i[5] ||= A(j((e) => J(V.value.maximum), ["prevent"]), ["end"])
 							]
 						}, [
 							o("img", {
-								src: ae(3),
-								alt: "",
-								draggable: "false"
-							}, null, 8, an),
-							o("img", {
-								src: ae(4),
+								src: ie(3),
 								alt: "",
 								draggable: "false"
 							}, null, 8, $),
 							o("img", {
-								src: ae(5),
+								src: ie(4),
 								alt: "",
 								draggable: "false"
-							}, null, 8, on)
-						], 44, rn)], 544),
+							}, null, 8, on),
+							o("img", {
+								src: ie(5),
+								alt: "",
+								draggable: "false"
+							}, null, 8, sn)
+						], 44, an)], 544),
 						o("button", {
 							class: "bf-mode-scroll-arrow",
 							type: "button",
 							"aria-label": t.labels.next,
-							onClick: i[6] ||= (e) => q(dn)
+							onClick: i[6] ||= (e) => J(fn)
 						}, [o("img", {
-							src: ae(15),
+							src: ie(15),
 							alt: "",
 							draggable: "false"
-						}, null, 8, cn)], 8, sn)
+						}, null, 8, ln)], 8, cn)
 					], 4),
 					o("footer", {
 						class: "bf-mode-actions",
@@ -4055,18 +4067,18 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 							"--action-width": (t.theme === "v3" ? 112 : k.value) + "px",
 							"--action-height": (t.theme === "v3" ? 33 : M.value) + "px"
 						})
-					}, [o("div", null, [s(J, {
-						draw: (e) => X(e, "Ok"),
-						revision: te.value,
-						onAction: me,
-						onError: oe
-					}, null, 8, ["draw", "revision"])]), o("div", null, [s(J, {
-						draw: (e) => X(e, "Cancel"),
-						revision: U.value,
-						onAction: ge,
-						onError: oe
+					}, [o("div", null, [s(Y, {
+						draw: (e) => Z(e, "Ok"),
+						revision: ee.value,
+						onAction: pe,
+						onError: ae
+					}, null, 8, ["draw", "revision"])]), o("div", null, [s(Y, {
+						draw: (e) => Z(e, "Cancel"),
+						revision: W.value,
+						onAction: he,
+						onError: ae
 					}, null, 8, ["draw", "revision"])])], 4)
-				], 40, Zt)]),
+				], 40, Qt)]),
 				_: 1
 			}, 8, [
 				"title",
@@ -4077,11 +4089,11 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 				"text-scale",
 				"resource-root",
 				"title-bounds"
-			])], 12, Xt)]),
+			])], 12, Zt)]),
 			_: 1
 		}));
 	}
-}), pn = /* @__PURE__ */ c({
+}), mn = /* @__PURE__ */ c({
 	__name: "BfCaptionButton",
 	props: {
 		label: {},
@@ -4138,7 +4150,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 				width: c() + "px",
 				height: l() + "px"
 			})
-		}, [s(J, {
+		}, [s(Y, {
 			onError: n[0] ||= (e) => r("error", e),
 			revision: [
 				e.label,
@@ -4171,7 +4183,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 			onAction: n[1] ||= (e) => r("click")
 		}, null, 8, ["revision", "draw"])], 4));
 	}
-}), mn = /* @__PURE__ */ c({
+}), hn = /* @__PURE__ */ c({
 	__name: "BfAnchoredPanel",
 	props: {
 		width: {},
@@ -4212,7 +4224,7 @@ var Xt = ["inert", "aria-hidden"], Zt = ["aria-busy"], Qt = { class: "bf-mode-pa
 	}
 });
 // ../tools/game-ui/tutorial-model.js
-function hn(e, t, n = 0) {
+function gn(e, t, n = 0) {
 	if (typeof e != "string" || !Number.isFinite(t) || t <= 0) throw Error("Invalid narrator timing");
 	return {
 		text: e,
@@ -4223,13 +4235,13 @@ function hn(e, t, n = 0) {
 		finishedAt: void 0
 	};
 }
-function gn(e, t) {
+function _n(e, t) {
 	return e.phase !== "typing" || t < e.deadline ? "idle" : e.visible < e.text.length ? (e.visible++, e.deadline = t + e.interval, "character") : (e.phase = "complete", e.finishedAt = t, "complete");
 }
-function _n(e, t) {
+function vn(e, t) {
 	return e.phase === "typing" ? (e.visible = e.text.length, e.phase = "complete", e.finishedAt = t, "reveal") : "advance";
 }
-function vn(e, t, n = 15) {
+function yn(e, t, n = 15) {
 	if (!e) return {
 		height: 0,
 		lines: []
@@ -4249,18 +4261,18 @@ function vn(e, t, n = 15) {
 		lines: a
 	};
 }
-function yn(e, t, n = !1) {
+function bn(e, t, n = !1) {
 	if (!t) return;
 	let r = e.filter((e) => e.stage === t.stage), i = r.find((e) => String(e.progress) === t.nextProgress);
 	if (i) return i;
 	if (n && r.length) return r[(r.findIndex((e) => e.progress === t.progress) + 1) % r.length];
 }
 // ../tools/game-ui/src/components/BfTutorialDialogue.vue?vue&type=script&setup=true&lang.ts
-var bn = [
+var xn = [
 	"data-status",
 	"data-progress",
 	"data-visible-count"
-], xn = ["src", "alt"], Sn = ["src"], Cn = ["aria-label"], wn = ["onKeydown"], Tn = /* @__PURE__ */ c({
+], Sn = ["src", "alt"], Cn = ["src"], wn = ["aria-label"], Tn = ["onKeydown"], En = /* @__PURE__ */ c({
 	__name: "BfTutorialDialogue",
 	props: {
 		stage: { default: "Stage1" },
@@ -4288,7 +4300,7 @@ var bn = [
 		"error"
 	],
 	setup(e, { expose: t, emit: r }) {
-		let s = e, c = r, l = he(), u = y(), d = y("loading"), f = y(""), p = n(() => s.resourceRoot.replace(/\/?$/, "/")), h = (e) => `${p.value}Images/TutorialStage/${e}`, _, v = {}, b, x, S, C = 0, T = 0, E = 0, O = !1, k, M = {}, N = /* @__PURE__ */ new Set();
+		let s = e, c = r, l = me(), u = y(), d = y("loading"), f = y(""), p = n(() => s.resourceRoot.replace(/\/?$/, "/")), h = (e) => `${p.value}Images/TutorialStage/${e}`, _, v = {}, b, x, S, C = 0, T = 0, E = 0, O = !1, k, M = {}, N = /* @__PURE__ */ new Set();
 		async function P(e) {
 			let t = await fetch(p.value + e);
 			if (!t.ok) throw Error(`Tutorial resource ${e}: ${t.status}`);
@@ -4300,8 +4312,8 @@ var bn = [
 				let [t, n] = await Promise.all([P("manifest.json"), P("glyphs.json")]);
 				if (O || e !== E) return;
 				let r = Object.assign(new Image(), { crossOrigin: "anonymous" });
-				if (r.src = p.value + "glyphs.png", await r.decode(), O || e !== E || (_ = t, v = n.glyphs, b = r, s.sound && (k ??= new AudioContext(), k.state === "running" && await ee()), O || e !== E)) return;
-				d.value = "ready", c("ready", t.dialogues), B();
+				if (r.src = p.value + "glyphs.png", await r.decode(), O || e !== E || (_ = t, v = n.glyphs, b = r, s.sound && (k ??= new AudioContext(), k.state === "running" && await R()), O || e !== E)) return;
+				d.value = "ready", c("ready", t.dialogues), V();
 			} catch (t) {
 				!O && e === E && (d.value = "error", c("error", t instanceof Error ? t : Error(String(t))));
 			}
@@ -4312,7 +4324,7 @@ var bn = [
 			e.clearRect(0, 0, 250, 100), e.imageSmoothingEnabled = !1;
 			let t = x.text.slice(0, x.visible);
 			f.value = t;
-			let n = vn(t, v, 15), r = 50 - Math.floor(n.height / 2);
+			let n = yn(t, v, 15), r = 50 - Math.floor(n.height / 2);
 			for (let t of n.lines) {
 				let n = 0;
 				for (let i of t.text) {
@@ -4332,7 +4344,7 @@ var bn = [
 				N.delete(t), t.disconnect();
 			}, t.start();
 		}
-		async function ee() {
+		async function R() {
 			if (s.sound && (k ??= new AudioContext(), await k.resume(), !M.type)) {
 				let e = k, t = await Promise.all(["type", "textbox"].map(async (t) => {
 					let n = await fetch(`${p.value}Sounds/ui-tut-${t}.wav`);
@@ -4343,33 +4355,33 @@ var bn = [
 				M = Object.fromEntries(t);
 			}
 		}
-		function R(e) {
+		function z(e) {
 			if (O || !x) return;
-			let t = gn(x, e);
-			t === "character" && (I(), L("type")), t === "complete" && c("complete"), s.autoplay && x.phase === "complete" && S && S.holdMs >= 0 && e - (x.finishedAt ?? e) >= S.holdMs ? (d.value = "complete", c("advance", z())) : C = requestAnimationFrame(R);
-		}
-		function z() {
-			return yn(_?.dialogues ?? [], S, s.loop);
+			let t = _n(x, e);
+			t === "character" && (I(), L("type")), t === "complete" && c("complete"), s.autoplay && x.phase === "complete" && S && S.holdMs >= 0 && e - (x.finishedAt ?? e) >= S.holdMs ? (d.value = "complete", c("advance", B())) : C = requestAnimationFrame(z);
 		}
 		function B() {
-			_ && u.value && (cancelAnimationFrame(C), T++, S = _.dialogues.find((e) => e.stage === s.stage && e.progress === s.progress), !S && s.text === void 0 ? c("error", Error(`Missing tutorial page ${s.stage}/${s.progress}`)) : (x = hn(s.text ?? S.text, _.textPrintSpeed, performance.now()), I(), s.sound && (k?.state !== "running" || !M.type) ? d.value = "awaiting-audio" : (d.value = "playing", L("textbox"), C = requestAnimationFrame(R))));
+			return bn(_?.dialogues ?? [], S, s.loop);
 		}
-		async function V() {
+		function V() {
+			_ && u.value && (cancelAnimationFrame(C), T++, S = _.dialogues.find((e) => e.stage === s.stage && e.progress === s.progress), !S && s.text === void 0 ? c("error", Error(`Missing tutorial page ${s.stage}/${s.progress}`)) : (x = gn(s.text ?? S.text, _.textPrintSpeed, performance.now()), I(), s.sound && (k?.state !== "running" || !M.type) ? d.value = "awaiting-audio" : (d.value = "playing", L("textbox"), C = requestAnimationFrame(z))));
+		}
+		async function H() {
 			try {
-				await ee(), O || B();
+				await R(), O || V();
 			} catch (e) {
 				c("error", e instanceof Error ? e : Error(String(e)));
 			}
 		}
-		async function H() {
+		async function U() {
 			let e = T;
 			try {
-				if (await ee(), O || e !== T || !x || S?.clickComplete === !1) return;
+				if (await R(), O || e !== T || !x || S?.clickComplete === !1) return;
 				if (d.value === "awaiting-audio") {
-					B();
+					V();
 					return;
 				}
-				_n(x, performance.now()) === "reveal" ? (I(), L("type"), c("complete")) : c("advance", z());
+				vn(x, performance.now()) === "reveal" ? (I(), L("type"), c("complete")) : c("advance", B());
 			} catch (e) {
 				c("error", e instanceof Error ? e : Error(String(e)));
 			}
@@ -4381,7 +4393,7 @@ var bn = [
 			() => s.progress,
 			() => s.text,
 			() => s.character
-		], () => B(), { flush: "post" }), D(() => s.sound, () => B()), D(p, () => {
+		], () => V(), { flush: "post" }), D(() => s.sound, () => V()), D(p, () => {
 			d.value = "loading", cancelAnimationFrame(C), _ = void 0, x = void 0, b = void 0, f.value = "", M = {};
 			for (let e of N) e.stop();
 			N.clear(), F();
@@ -4390,28 +4402,28 @@ var bn = [
 			for (let e of N) e.stop();
 			N.clear(), k?.close();
 		}), t({
-			start: V,
-			restart: B,
+			start: H,
+			restart: V,
 			status: d
 		}), (t, n) => (g(), a("div", {
 			class: "bf-tutorial-dialogue",
 			"data-status": d.value,
 			"data-progress": e.progress,
 			"data-visible-count": w(x)?.visible ?? 0,
-			onClick: H
+			onClick: U
 		}, [
 			o("img", {
 				class: "bf-tutorial-portrait",
 				src: h(e.character + ".png"),
 				alt: e.character,
 				draggable: "false"
-			}, null, 8, xn),
+			}, null, 8, Sn),
 			o("img", {
 				class: "bf-tutorial-balloon",
 				src: h("ChatBalloonNew.png"),
 				alt: "",
 				draggable: "false"
-			}, null, 8, Sn),
+			}, null, 8, Cn),
 			o("canvas", {
 				ref_key: "canvas",
 				ref: u,
@@ -4420,18 +4432,18 @@ var bn = [
 				height: "100",
 				role: "img",
 				"aria-label": f.value
-			}, null, 8, Cn),
+			}, null, 8, wn),
 			d.value === "awaiting-audio" ? (g(), a("button", {
 				key: 0,
 				class: "bf-tutorial-start",
-				onClick: j(V, ["stop"])
+				onClick: j(H, ["stop"])
 			}, "点击开始教学（播放声音）")) : i("v-if", !0),
 			o("button", {
 				class: "bf-tutorial-skip",
 				"aria-label": "跳过对话",
-				onKeydown: [A(j(H, ["prevent"]), ["enter"]), A(j(H, ["prevent"]), ["space"])]
-			}, null, 40, wn)
-		], 8, bn));
+				onKeydown: [A(j(U, ["prevent"]), ["enter"]), A(j(U, ["prevent"]), ["space"])]
+			}, null, 40, Tn)
+		], 8, xn));
 	}
 });
-export { mn as BfAnchoredPanel, Lt as BfBanPick, X as BfButton, pn as BfCaptionButton, Se as BfCheckbox, be as BfControl, Te as BfDialog, De as BfExtensionSettings, we as BfGamePage, xe as BfGroupBox, Y as BfLabel, Ee as BfMessageBox, fn as BfModeExtension, ye as BfPanel, Rt as BfReveal, Ce as BfSlider, Tn as BfTutorialDialogue, q as BfUiProvider, ve as BfWindow, N as DEFAULT_UI_VOLUME, je as NATIVE_ACTION_HEIGHT, M as UI_SOUND_EVENTS, F as createUiSoundPlayer, P as effectVolumeGain, Jt as filterModesForBuild, Me as fitCaptionWidth, Ne as measureCaptionWidth, Yt as modeWindowGeometry, I as themeForClientDate, qt as validateModeAvailability };
+export { hn as BfAnchoredPanel, Lt as BfBanPick, Z as BfButton, mn as BfCaptionButton, xe as BfCheckbox, ye as BfControl, we as BfDialog, De as BfExtensionSettings, Ce as BfGamePage, be as BfGroupBox, X as BfLabel, Te as BfMessageBox, pn as BfModeExtension, Ee as BfNotifyBox, ve as BfPanel, Rt as BfReveal, Se as BfSlider, En as BfTutorialDialogue, J as BfUiProvider, _e as BfWindow, N as DEFAULT_UI_VOLUME, je as NATIVE_ACTION_HEIGHT, M as UI_SOUND_EVENTS, F as createUiSoundPlayer, P as effectVolumeGain, Yt as filterModesForBuild, Me as fitCaptionWidth, Ne as measureCaptionWidth, Xt as modeWindowGeometry, I as themeForClientDate, Jt as validateModeAvailability };

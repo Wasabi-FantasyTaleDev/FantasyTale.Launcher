@@ -150,6 +150,8 @@ public sealed class CompanionOverlayNotifications : IAsyncDisposable
         CancellationToken connectionToken, CancellationToken token)
     {
         if (_native is null) return false;
+        // An overlay surface over the game would hide its own message box; the overlay dialog is drawn on top instead.
+        if (_overlay.Presentation.CoversNativeNotice()) return false;
         try
         {
             // Native button identities are restricted; a server id outside them keeps the overlay dialog.

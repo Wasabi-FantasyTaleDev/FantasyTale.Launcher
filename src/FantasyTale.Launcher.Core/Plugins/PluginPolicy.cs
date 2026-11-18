@@ -87,6 +87,37 @@ public static class PluginPolicy
         }
     }
 
+    /// <summary>
+    /// Turns on, transitively, every installed and build-compatible package that an enabled package of
+    /// <paramref name="instance"/> requires but that is switched off. Each client build keeps its own selection, so a
+    /// plugin turned on for every build would otherwise run without the dependencies enabled only where they were picked.
+    /// Language-specific requirements are left to the launch checks.
+    /// </summary>
+    /// <returns>The instance with those dependencies enabled, or <paramref name="instance"/> when none was off.</returns>
+    public static InstanceDefinition EnableRequiredDependencies(InstanceDefinition instance, BuildDefinition build,
+        IReadOnlyList<PluginDefinition> packages)
+    {
+        // Each pass enables at least one more package, so the loop ends after at most one pass per package.
+        for (var pass = 0; pass <= packages.Count; pass++)
+        {
+            var needed = Evaluate(instance, build, null, packages)
+                .Where(finding => finding.Rule.Type == "require" && finding.Status == "disabled" && finding.Target is not null)
+                .Select(finding => finding.Target!).DistinctBy(target => target.Id, StringComparer.Ordinal).ToArray();
+            if (needed.Length == 0) return instance;
+            var plugins = instance.Plugins.ToList();
+            foreach (var target in needed)
+            {
+                var index = plugins.FindIndex(plugin => plugin.Id == target.Id);
+                var kept = index >= 0 && plugins[index].Version == target.Version ? plugins[index] : null;
+                var enabled = new InstancePlugin(target.Id, target.Version, true, kept?.Required ?? (index >= 0 && plugins[index].Required),
+                    kept?.Options ?? PluginCatalog.ResolveOptionValues(target, new Dictionary<string, object>()), kept?.Grants);
+                if (index >= 0) plugins[index] = enabled; else plugins.Add(enabled);
+            }
+            instance = instance with { Plugins = plugins.ToArray() };
+        }
+        return instance;
+    }
+
     /// <summary>Whether <paramref name="rule"/> declared on <paramref name="owner"/> is currently satisfied.</summary>
     public static bool IsRuleSatisfied(PluginPolicyRule rule, PluginDefinition owner, BuildDefinition build,
         IReadOnlyList<PluginDefinition> enabled, IReadOnlyList<PluginDefinition> packages) =>

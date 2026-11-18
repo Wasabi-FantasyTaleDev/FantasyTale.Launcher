@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+Plugins
+- Ban Rules 0.2.5: errors appear as the client's notification box, also while the rules editor is open.
+- Ban Rules 0.2.4: on kr-1256 (Patch V1304) 2026-05-08 the room button is drawn like the room's own map setting button, with the same yellow button art, 56x23 size and caption size.
+- Ban Rules 0.2.3: on kr-1256 (Patch V1304) 2026-05-08 the room button sits left of the room's map setting button instead of over the top bar. An error, such as a server that refuses the rules, now appears in the game's own warning message box when the game control support plugin is installed, and otherwise in a game-styled message box drawn by the overlay, instead of a plain red label.
+
+## 0.2.3 (2026-11-18)
+
+Fixes
+- Plugins that another enabled plugin needs, such as the game control support and game interface graphics that Ban Rules and Mode Extension use, stayed on only for the client version where they were turned on; switching to another version needed them enabled again. Applying a version's plugins now also enables, for that version, every installed plugin the enabled ones need.
+- On some Windows installations the launcher closed at once with "Fatal error. Your Windows doesn't fully support CET." The launcher, its in-game overlay, its updater and the network gateway no longer require CET support, so they start on those systems.
+
+Overlay
+- Notices use the client's own buttonless notification box. When an overlay window, a modal or a dimmed background covers the middle of the game, where the game shows its notification, the overlay draws the same box on top instead; otherwise the game shows it, and the overlay steps in when the game cannot. Plugin pages get `nativeUi.notify`, and the SDK reports what the overlay is showing (`IOverlayHost.Presentation`) and shows the box (`ShowNotifyBoxAsync`).
+
 ## 0.2.2 (2026-11-17)
 
 Fixes

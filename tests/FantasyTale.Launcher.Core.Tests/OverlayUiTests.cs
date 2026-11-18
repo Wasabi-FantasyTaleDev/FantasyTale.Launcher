@@ -200,6 +200,57 @@ public sealed class OverlayUiTests
     public void UiResourceAdaptersRejectMalformedGeometry(string content) =>
         Assert.Throws<OverlayUiResourceFormatException>(() => OverlayUiResourceParser.Parse(content));
 
+    private static OverlayPresentation Report(string surfaces) => OverlayPresentation.FromState(JsonDocument.Parse(
+        "{\"type\":\"presentation-state\",\"visible\":true,\"viewport\":{\"width\":1000,\"height\":800},\"surfaces\":[" + surfaces + "]}").RootElement);
+
+    [Fact]
+    public void PresentationReadsThePageReport()
+    {
+        var presentation = Report("{\"x\":10,\"y\":20,\"width\":30,\"height\":40,\"modal\":true,\"backdrop\":false}");
+        Assert.True(presentation.Visible);
+        Assert.Equal(1000, presentation.ViewportWidth);
+        Assert.Equal(new OverlaySurface(10, 20, 30, 40, true, false), Assert.Single(presentation.Surfaces));
+        Assert.False(OverlayPresentation.Hidden.CoversNativeNotice());
+    }
+
+    [Theory]
+    // A modal or a scrim hides the native box wherever it sits.
+    [InlineData("{\"x\":0,\"y\":0,\"width\":10,\"height\":10,\"modal\":true,\"backdrop\":false}", true)]
+    [InlineData("{\"x\":0,\"y\":0,\"width\":10,\"height\":10,\"modal\":false,\"backdrop\":true}", true)]
+    // A small button in a corner leaves the middle band (200..800 x 160..640) free.
+    [InlineData("{\"x\":166,\"y\":102,\"width\":56,\"height\":23,\"modal\":false,\"backdrop\":false}", false)]
+    // Touching the band's edge is not covering; reaching into it is.
+    [InlineData("{\"x\":800,\"y\":300,\"width\":50,\"height\":50,\"modal\":false,\"backdrop\":false}", false)]
+    [InlineData("{\"x\":790,\"y\":300,\"width\":50,\"height\":50,\"modal\":false,\"backdrop\":false}", true)]
+    [InlineData("", false)]
+    public void NativeNoticeIsCoveredByModalsScrimsAndTheMiddleBand(string surfaces, bool covered) =>
+        Assert.Equal(covered, Report(surfaces).CoversNativeNotice());
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("{\"viewport\":{\"width\":\"wide\",\"height\":1}}")]
+    [InlineData("{\"surfaces\":[{\"x\":1,\"y\":1,\"width\":1}]}")]
+    public void MalformedPresentationReportsAreRejected(string json) =>
+        Assert.Throws<FormatException>(() => OverlayPresentation.FromState(JsonDocument.Parse(json).RootElement));
+
+    [Fact]
+    public async Task NotifyBoxIsRequestedOnAHiddenPanelAndReleasedWhenItCloses()
+    {
+        using var host = new FakeHost();
+        var shown = host.ShowNotifyBoxAsync("test.notice", "Friend is not online.", TimeSpan.FromSeconds(2));
+        Assert.False(host.Descriptor!.Interactive);
+        Assert.False(host.Panel.Shown);
+        Assert.Equal("game-ui.notify-box", host.Panel.EventName);
+        var payload = JsonSerializer.SerializeToElement(host.Panel.Payload);
+        Assert.Equal("Friend is not online.", payload.GetProperty("text").GetString());
+        Assert.Equal(2000, payload.GetProperty("durationMs").GetDouble());
+        Assert.False(shown.IsCompleted);
+        host.Panel.Emit("game-ui.close", "{}");
+        await shown;
+        Assert.True(host.Panel.Disposed);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => host.ShowNotifyBoxAsync("test.long", "x", TimeSpan.FromSeconds(30)));
+    }
+
     private sealed class FakeHost : IOverlayHost, IDisposable
     {
         internal OverlayPanelDescriptor? Descriptor;

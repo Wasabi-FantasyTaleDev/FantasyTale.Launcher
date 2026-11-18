@@ -17,6 +17,12 @@ public interface IOverlayHost
 
     /// <summary>Registers an isolated HTML panel and returns its lifetime handle.</summary>
     IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor);
+
+    /// <summary>What the overlay is displaying now; <see cref="OverlayPresentation.Hidden"/> until the page reports.</summary>
+    OverlayPresentation Presentation => OverlayPresentation.Hidden;
+
+    /// <summary>Raised after <see cref="Presentation"/> changes; hosts that never report do not raise it.</summary>
+    event EventHandler? PresentationChanged { add { } remove { } }
 }
 
 /// <summary>Describes one bounded HTML panel supplied by a trusted installed package.</summary>

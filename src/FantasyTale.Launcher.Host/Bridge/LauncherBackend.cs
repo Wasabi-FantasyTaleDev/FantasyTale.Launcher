@@ -1354,7 +1354,8 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
                     || packages.Any(item => item.Id == old.Id && item.Version == old.Version && PluginCatalog.IsRequired(item, build));
                 selections.Add(old with { Enabled = required, Required = required });
             }
-            var changed = instance with { Plugins = selections.ToArray() };
+            // A plugin enabled for this build brings its requirements along, as it does in the build where they were picked.
+            var changed = PluginPolicy.EnableRequiredDependencies(instance with { Plugins = selections.ToArray() }, build, packages);
             // A scheme is a preference, not a launch. Missing mandatory packages are handled by launch preflight.
             if (InstanceFile.Render(changed) == InstanceFile.Render(instance))
             {

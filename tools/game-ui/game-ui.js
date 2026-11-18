@@ -380,20 +380,27 @@ async function room(){if(theme==='v3')return formV3('Stages/Lobby/DlgCreateRoom.
 const description='只使用泡泡枪的基本规则：“泡封”、“击爆”、“营救”来展现自身实力的游戏模式。要精确击中对方和及时解救我方，才能获取胜利哦。';await panel(el,modern?207:205,modern?326:145,modern?228:228,modern?321:262,'Images/Ui/DialogInnerSkin06.smf');if(modern){await panel(el,207,111,228,114,'Images/Ui/DialogInnerSkin06.smf');label(el,'游戏选项',214,116,100,20,'#2a7ed4');for(const [text,x,y] of [['锤子战',214,139],['回合战',214,160],['极速击爆',214,181],['地图选项',214,202],['组织比赛',327,139]])await checkbox(el,text,x,y);await panel(el,207,229,228,94,'Images/Ui/DialogInnerSkin06.smf');label(el,'房间选项',214,234,100,20,'#2a7ed4');await checkbox(el,'随机组',214,257);await checkbox(el,'闯入',214,278,true);label(el,'模式说明',214,331,100,20,'#2a7ed4');}const copy=label(el,description,modern?211:208,modern?351:151,modern?217:218,100,'#5b5b5b',{vertical:'top',size:12});copy.style.alignItems='flex-start';copy.style.lineHeight='15px';await button(el,'Ok',modern?157:298,h-35,modern?65:67,modern?27:25,'确认');await button(el,'Cancel',modern?226:373,h-35,modern?65:68,modern?27:25,'取消');return el;}
 /** Compatibility entry point using the same shared extension settings tree. */
 async function customSettings(options){return drawExtensionSettings(ui,options);}
-async function message(){
-  const modern=theme!=='v1',w=modern?300:320,h=modern?60:82;
-  const el=place(document.createElement('div'),0,0,w,h);el.className='bf-form';
+/**
+ * The client's notification box (NotifyBox): a captionless, buttonless notice. Without text it draws the gallery
+ * sample. The box keeps the native width and grows only when the line needs more room.
+ */
+async function message({text}={}){
+  const modern=theme!=='v1',sample=modern?'9不在线':'9不在线。',copy=typeof text==='string'&&text?text:sample;
+  const notify=manifest.scheme.NotifyBox,size=modern?14:Number(notify.FontSize);
+  const minimum=modern?300:320,h=modern?60:82;
+  const w=Math.min(640,Math.max(minimum,Math.ceil(messageTextSize(copy,size,'BF').width)+48));
+  const el=place(document.createElement('div'),0,0,w,h);el.className='bf-form bf-notify-box';
   await skin(el,modern?'Images/Ui/dialogue_Notify_Back00.smf':'Images/Ui/NotifyBox.smf',w,h);
-  const text=place(document.createElement('span'),18,8,w-36,h-16);text.className='control';el.append(text);
-  const notify=manifest.scheme.NotifyBox;
-  await paintText(text,modern?'9不在线':'9不在线。',{size:modern?14:Number(notify.FontSize),weight:modern?400:Number(notify.FontWeight),family:'BF',align:'center',color:modern?'white':'#111',outline:modern?'#168ac2':'#888',outlineWidth:modern?2:0.75,decoration:modern?4:Number(notify.TextDecoration)});
+  const label=place(document.createElement('span'),18,8,w-36,h-16);label.className='control';el.append(label);
+  await paintText(label,copy,{size,weight:modern?400:Number(notify.FontWeight),family:'BF',align:'center',wrap:true,color:modern?'white':'#111',outline:modern?'#168ac2':'#888',outlineWidth:modern?2:0.75,decoration:modern?4:Number(notify.TextDecoration)});
   if(modern){
     const path='Images/Ui/Notify_Progress.smf';
     const frames=manifest.sprites[path];
     let frame=0;
-    const draw=async()=>{el.querySelectorAll('.notify-progress').forEach(node=>node.remove());const box=place(document.createElement('span'),w-28,h-28,20,20);box.className='tile notify-progress';const image=Object.assign(new Image(), { crossOrigin: 'anonymous' });image.src=base()+path.replace(/\.smf$/i,'')+'/'+image(frame+'.png');Object.assign(image.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(image);el.append(box);};
+    const draw=async()=>{el.querySelectorAll('.notify-progress').forEach(node=>node.remove());const box=place(document.createElement('span'),w-28,h-28,20,20);box.className='tile notify-progress';const picture=Object.assign(new Image(), { crossOrigin: 'anonymous' });picture.src=base()+path.replace(/\.smf$/i,'')+'/'+image(frame+'.png');Object.assign(picture.style,{width:'100%',height:'100%',left:'0',top:'0'});box.append(picture);el.append(box);};
     await draw();
-    window.setInterval(()=>{frame=(frame+1)%frames.length;void draw();},180);
+    // The animation stops once the box leaves the document, so a closed notice leaves no timer behind.
+    const timer=window.setInterval(()=>{if(!el.isConnected&&el.dataset.mounted){window.clearInterval(timer);return;}if(el.isConnected)el.dataset.mounted='1';frame=(frame+1)%frames.length;void draw();},180);
   }
   return el;
 }

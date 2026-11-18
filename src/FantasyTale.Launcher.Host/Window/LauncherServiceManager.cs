@@ -289,5 +289,12 @@ internal sealed class LauncherServiceManager : IAsyncDisposable
         public OverlayBuildContext? BuildContext => Current.BuildContext;
         public Task WaitUntilReadyAsync(CancellationToken cancellationToken = default) => Current.WaitUntilReadyAsync(cancellationToken);
         public IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor) => Current.RegisterPanel(panelId, descriptor);
+        // Read on demand: before the overlay exists nothing is shown, and a subscription reaches only an existing overlay.
+        public OverlayPresentation Presentation => resolve()?.Presentation ?? OverlayPresentation.Hidden;
+        public event EventHandler? PresentationChanged
+        {
+            add { if (resolve() is { } overlay) overlay.PresentationChanged += value; }
+            remove { if (resolve() is { } overlay) overlay.PresentationChanged -= value; }
+        }
     }
 }

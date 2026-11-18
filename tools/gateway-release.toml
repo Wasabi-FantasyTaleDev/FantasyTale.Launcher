@@ -39,7 +39,7 @@ sha256 = "e74b7dc6bf1b4d87cf2971ba93145a91c6eacf1d697cf81293502a67f365677b"
 [[files]]
 path = "win-arm64/FantasyTale.Gateway.exe"
 size = 3266048
-sha256 = "f95a1aa2c0a03de429c221eb2ad618c777dfd0ae15dfac742f2ef48539dcbac2"
+sha256 = "aaca9f8dc9a68e481025b5f3a8be32fef020d0f467862f626f07f66b31befaa5"
 machine = 43620
 
 [[files]]
@@ -50,5 +50,5 @@ sha256 = "e74b7dc6bf1b4d87cf2971ba93145a91c6eacf1d697cf81293502a67f365677b"
 [[files]]
 path = "win-x64/FantasyTale.Gateway.exe"
 size = 3146752
-sha256 = "cd6a0113a7b4db3c9ca65eb95077ff4c45061d74bff50c2e45706b6fe224caa5"
+sha256 = "202ccacaa8580b7b5f51e5d6065618cc36384a8917314ffc84ca9f5c91bd80de"
 machine = 34404

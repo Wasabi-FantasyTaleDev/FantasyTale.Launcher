@@ -65,5 +65,40 @@ public static class OverlayUi
     }
 }
 
+/// <summary>Overlay drawing of the client's buttonless notification box.</summary>
+public static class OverlayNotices
+{
+    /// <summary>
+    /// Shows the client's notification box (NotifyBox) above every overlay surface. The overlay keeps one box: a new
+    /// notice replaces the shown one. The returned task completes once the box was drawn and the request panel has
+    /// been released after the notice closed; it faults when the page cannot draw the box.
+    /// </summary>
+    /// <param name="host">The overlay.</param>
+    /// <param name="panelId">A unique id for the request panel; it is unregistered when the notice closes.</param>
+    /// <param name="text">The notice, at most 2048 characters.</param>
+    /// <param name="duration">How long the box stays, 1 to 15 seconds; three seconds when null.</param>
+    /// <param name="cancellationToken">Stops waiting and releases the request panel; a drawn box still closes on its own.</param>
+    public static async Task ShowNotifyBoxAsync(this IOverlayHost host, string panelId, string text, TimeSpan? duration = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        ArgumentException.ThrowIfNullOrEmpty(text);
+        if (text.Length > 2048) throw new ArgumentException("A notice holds at most 2048 characters.", nameof(text));
+        var milliseconds = duration is { } value ? value.TotalMilliseconds : 3000;
+        if (milliseconds is < 1000 or > 15000) throw new ArgumentOutOfRangeException(nameof(duration), "A notice stays 1 to 15 seconds.");
+        // The request panel is never shown; the page draws the shared NotifyBox and reports back through this panel.
+        using var panel = host.CreateGameUiPanel(panelId);
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        panel.MessageReceived += (_, args) =>
+        {
+            if (args.EventName == "game-ui.close") closed.TrySetResult();
+            else if (args.EventName == "game-ui.error")
+                closed.TrySetException(new InvalidOperationException("The overlay could not draw the notice."));
+        };
+        panel.Send("game-ui.notify-box", new { text, durationMs = milliseconds });
+        await closed.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+}
+
 /// <summary>A stable action name and caller-localized label for one game dialog button.</summary>
 public sealed record OverlayDialogButton(string Name, string Label);

@@ -68,6 +68,44 @@ public sealed partial class PluginImportTests
     }
 
     [Fact]
+    public async Task ApplyingASchemeEnablesTheRequirementsOfItsEnabledPlugins()
+    {
+        // A plugin installed for every build is enabled in each build's scheme; its requirements were enabled only in
+        // the build where they were picked, so applying another build's scheme must bring them along.
+        var game = Game();
+        var data = Path.Combine(_root, "scheme-requirement-data");
+        var dependent = Manifest
+            .Replace("schema = 1", "schema = 2", StringComparison.Ordinal)
+            .Replace("id = \"fixture.optional\"", "id = \"fixture.dependent\"", StringComparison.Ordinal)
+            .Replace("[compatibility]", "[[plugin_policy]]\nplugin = \"fixture.optional\"\ntype = \"require\"\n[compatibility]", StringComparison.Ordinal)
+            .Replace("id = \"fixture\"\nlocate", "id = \"dependent\"\nlocate", StringComparison.Ordinal);
+        using (var library = new PluginLibrary(Path.Combine(data, "plugins")))
+        {
+            library.Install(library.Prepare(Folder(), game).Token, game, game.Builds[0]);
+            library.Install(library.Prepare(Folder(dependent), game).Token, game, game.Builds[0]);
+        }
+        var store = new InstanceStore(Path.Combine(data, "instances"));
+        var instance = await store.CreateAsync(new("client", "Client", game.Id, game.Builds[0].Id, null, []));
+        await using var backend = new LauncherBackend(Path.Combine(_root, "games"), data);
+        var replies = new System.Collections.Concurrent.ConcurrentQueue<JsonNode>();
+        var bridge = new BridgeRouter(raw => replies.Enqueue(JsonNode.Parse(raw)!)); backend.Register(bridge);
+        long sequence = 0;
+        async Task<JsonNode> Call(string method, object arguments)
+        {
+            var id = ++sequence;
+            await bridge.HandleAsync(JsonSerializer.Serialize(new { id, method, @params = arguments }), default);
+            return replies.Single(row => row["id"]?.GetValue<long>() == id);
+        }
+        var applied = await Call("plugins.applyScheme", new { instanceId = instance.Id,
+            plugins = new[] { new { id = "fixture.dependent", version = "1.0.0", enabled = true, options = new { } } } });
+        Assert.Null(applied["error"]);
+        var plugins = applied["result"]!["plugins"]!.AsArray();
+        Assert.Contains(plugins, row => row!["id"]!.GetValue<string>() == "fixture.dependent" && row["enabled"]!.GetValue<bool>());
+        Assert.Contains(plugins, row => row!["id"]!.GetValue<string>() == "fixture.optional" && row["enabled"]!.GetValue<bool>());
+        Assert.True(store.Load(instance.Id).Plugins.Single(plugin => plugin.Id == "fixture.optional").Enabled);
+    }
+
+    [Fact]
     public async Task UnchangedSchemesAndInventoryRemainReadableWhileRealEditsReportTheLeaseContext()
     {
         var game = Game();

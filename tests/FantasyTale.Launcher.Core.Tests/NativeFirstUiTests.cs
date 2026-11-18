@@ -89,9 +89,23 @@ public sealed class NativeFirstUiTests
         await using var requests = new CompanionNativeUiRequests(channel, new FakeNative(ready: false), overlay);
         await channel.InvokeAsync(new { operation_id = "op2", kind = "notification", text = "Hello" });
         await WaitAsync(() => overlay.Panel?.Sent is not null);
-        Assert.Equal("game-ui.message-box", overlay.Panel!.Sent);
+        // A notification falls back to the client's buttonless NotifyBox, not a dialog with an OK button.
+        Assert.Equal("game-ui.notify-box", overlay.Panel!.Sent);
         await channel.InvokeAsync(new { operation_id = "op3", kind = "chat", text = "", runs = new[] { new { text = "hi", color = "#FFFFFF" } }, fallback = false });
         await WaitAsync(() => channel.Results.Any(r => r.Status == "unsupported"));
+    }
+
+    [Fact]
+    public async Task AnOverlaySurfaceOverTheGameSendsANoticeToTheOverlayAlthoughNativeIsReady()
+    {
+        var channel = new NativeChannel();
+        using var overlay = new FakeOverlay { Presentation = new(true, 1000, 800, [new(0, 0, 1000, 800, true, true)]) };
+        var native = new FakeNative(ready: true);
+        await using var requests = new CompanionNativeUiRequests(channel, native, overlay);
+        await channel.InvokeAsync(new { operation_id = "covered", kind = "notification", text = "Not online" });
+        await WaitAsync(() => overlay.Panel?.Sent is not null);
+        Assert.Equal("game-ui.notify-box", overlay.Panel!.Sent);
+        Assert.Empty(native.Requests);
     }
 
     /// <summary>A launch without an overlay can reject a requested fallback after native capability detection.</summary>
@@ -327,6 +341,7 @@ public sealed class NativeFirstUiTests
     {
         internal FakePanel? Panel;
         internal bool Unavailable { get; init; }
+        public OverlayPresentation Presentation { get; init; } = OverlayPresentation.Hidden;
         public Task WaitUntilReadyAsync(CancellationToken cancellationToken = default) =>
             Unavailable ? throw new NotSupportedException("This launch has no overlay.") : Task.CompletedTask;
         public IOverlayPanel RegisterPanel(string panelId, OverlayPanelDescriptor descriptor) => Panel = new FakePanel();

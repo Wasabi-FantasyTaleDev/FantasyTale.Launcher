@@ -20,9 +20,17 @@ const TABS = {
 const TAB_OF = new Map(Object.entries(TABS).flatMap(([tab, keys]) => keys.map(key => [key, tab])));
 
 // Game-pixel rectangles against an 800x600 reference, scaled to the client: the button sits at the room screen's top
-// right; the open editor covers the client.
+// right; the open editor covers the client. layoutWidth is the width the button is drawn at before it is zoomed to the box.
 const REFERENCE = { referenceWidth: 800, referenceHeight: 600, placement: 'cover' };
-const BUTTON_ANCHOR = { x: 690, y: 4, width: 104, height: 30, ...REFERENCE };
+const DEFAULT_BUTTON_ANCHOR = { x: 690, y: 4, width: 104, height: 30, layoutWidth: 104, ...REFERENCE };
+// A build whose room screen has a natural place for the button: kr-1256 puts it left of the room's map setting button,
+// in the 1280x800 room layout, drawn like that button (kr-1256 Ui/Stages/Room/RoomStage2_8vs8ver04.ui btnRoomGameSetting:
+// 56x23, font size 13, the v3 dialogue_type01BTN sprites).
+const V3_TEXT_BUTTON = ['Up', 'Down', 'Hover', 'Disabled'].map(state => `Images/Ui/dialogueNew/dialogue_type01BTN-${state}.smf`);
+const BUTTON_ANCHORS = {
+    'kr-1256': { x: 174, y: 102, width: 56, height: 23, layoutWidth: 56, referenceWidth: 1280, referenceHeight: 800, placement: 'cover',
+        look: { theme: 'v3', skins: V3_TEXT_BUTTON, height: 23, fontSize: 13 } },
+};
 const EDITOR_ANCHOR = { x: 0, y: 0, width: 800, height: 600, ...REFERENCE };
 
 async function json(url) {
@@ -55,6 +63,8 @@ async function addFonts(fontUrl) {
 export default async function setup({ vue, components, theme, locale, buildContext, companion, nativeUi, packages, present }) {
     const { h, ref, reactive, computed, watch, onMounted, onBeforeUnmount } = vue;
     const { BfUiProvider, BfBanPick, BfCaptionButton, BfMessageBox, BfReveal } = components;
+    const buttonAnchor = BUTTON_ANCHORS[buildContext?.buildId] ?? DEFAULT_BUTTON_ANCHOR;
+    const { layoutWidth, look: buttonLook, ...BUTTON_ANCHOR } = buttonAnchor;
     // The editor has v1 and v2 appearances only; a v3 client uses v2 rather than mixing generations.
     const style = theme === 'v1' ? 'v1' : 'v2';
     const uiRoot = packages.url('ui.json', UI).replace(/ui\.json$/, '');
@@ -67,7 +77,8 @@ export default async function setup({ vue, components, theme, locale, buildConte
     const dialogButton = kind => style === 'v1' ? `Images/Ui/DialogButton${kind}-Up.smf` : `Images/Ui/DialogBtn${kind}.smf`;
     const room = reactive({ inRoom: false, isHost: false, playing: false, count: 0, version: 0, button: '', entries: [] });
     // prepared: the editor is built (invisible) behind the room button, so opening only shows it.
-    const view = reactive({ open: false, prepared: false, ready: false, busy: false, notice: '', error: '' });
+    // plainError: the themed message box itself failed to draw, so the error falls back to plain text.
+    const view = reactive({ open: false, prepared: false, ready: false, busy: false, notice: '', error: '', plainError: false });
     const draft = ref([]);
     const confirm = ref(null);
     let confirmTimer = 0;
@@ -134,10 +145,15 @@ export default async function setup({ vue, components, theme, locale, buildConte
         } catch (error) { console.error(error); return null; }
     }
 
-    async function notify(text) {
-        if (!text) return;
-        if (await nativeOperation('notification', { text: String(text).slice(0, 2048) })) return;
-        view.error = String(text);
+    // An error is the client's buttonless notice: the overlay shows the game's own notification, or draws the same box
+    // on top when an overlay surface would hide it. Only without that service does the editor's own message box remain.
+    async function notify(message) {
+        if (!message) return;
+        if (typeof nativeUi?.notify === 'function') {
+            try { if ((await nativeUi.notify(String(message).slice(0, 2048)))?.status === 'shown') return; }
+            catch (error) { console.error(error); }
+        }
+        view.error = String(message);
     }
 
     function confirmationCurrent(generation, question) {
@@ -309,8 +325,8 @@ export default async function setup({ vue, components, theme, locale, buildConte
     const shown = computed(() => room.inRoom && !room.playing && (room.isHost || room.count > 0));
     // Leaving the room (or the button going away) releases the prepared editor and its pictures.
     watch(shown, value => { if (!value && !view.open) releaseEditor(); });
-    watch(() => [shown.value, view.open, confirm.value], () => {
-        if (view.open || confirm.value) present({ visible: true, interactive: true, modal: true, backdrop: true, anchor: EDITOR_ANCHOR });
+    watch(() => [shown.value, view.open, confirm.value, view.error], () => {
+        if (view.open || confirm.value || (view.error && !view.plainError)) present({ visible: true, interactive: true, modal: true, backdrop: true, anchor: EDITOR_ANCHOR });
         else if (shown.value) present({ visible: true, interactive: true, modal: false, backdrop: false, anchor: BUTTON_ANCHOR });
         else present({ visible: false });
     }, { immediate: true });
@@ -343,19 +359,22 @@ export default async function setup({ vue, components, theme, locale, buildConte
             const RoomButton = {
                 setup() {
                     const ready = ref(false), box = ref(), zoom = ref(1);
-                    // The panel box spans BUTTON_ANCHOR's 104 reference pixels; the button is laid out in those pixels and
-                    // zoomed to the box (not to the shared overlay page), so display scaling cannot enlarge it.
-                    const measure = () => { const width = box.value?.clientWidth ?? 0; if (width > 0) zoom.value = width / BUTTON_ANCHOR.width; };
+                    // The build's own room button look when it has one, otherwise the editor theme's OK button.
+                    const skins = buttonLook?.skins ?? looks[style].actionSkins.Ok;
+                    const height = buttonLook?.height ?? looks[style].actionHeight;
+                    // The button is laid out layoutWidth pixels wide and zoomed to the panel box (not to the shared overlay
+                    // page), so display scaling cannot enlarge it.
+                    const measure = () => { const width = box.value?.clientWidth ?? 0; if (width > 0) zoom.value = width / layoutWidth; };
                     let observer;
                     onMounted(() => { observer = new ResizeObserver(measure); observer.observe(box.value); measure(); });
                     onBeforeUnmount(() => observer?.disconnect());
                     // State skins explicitly set visibility, so a real box owns the initial opacity and input barrier.
                     return () => h('div', { ref: box, style: { position: 'absolute', inset: 0, overflow: 'hidden' } }, [
                         h('div', { inert: !ready.value, 'aria-hidden': !ready.value,
-                            style: { zoom: zoom.value, width: '104px', height: looks[style].actionHeight + 'px', opacity: ready.value ? 1 : 0 } }, [
+                            style: { zoom: zoom.value, width: layoutWidth + 'px', height: height + 'px', opacity: ready.value ? 1 : 0 } }, [
                             h(BfReveal, { onReady: () => { ready.value = true; void prepare(); } }, () => h(BfCaptionButton, {
-                                label: room.button || text.open, skins: looks[style].actionSkins.Ok,
-                                width: 104, height: looks[style].actionHeight, fontFamily: locale === 'ko' ? 'BFKorean' : 'BF', onClick: open,
+                                label: room.button || text.open, skins,
+                                width: layoutWidth, height, ...(buttonLook?.fontSize ? { fontSize: buttonLook.fontSize } : {}), fontFamily: locale === 'ko' ? 'BFKorean' : 'BF', onClick: open,
                                 renderer: 'freetype', resourceRoot: uiRoot, textScale: zoom.value,
                                 onError: error => { view.error = String(error?.message ?? error); view.ready = true; },
                             })),
@@ -372,6 +391,11 @@ export default async function setup({ vue, components, theme, locale, buildConte
                                 { name: 'cancel', label: confirm.value.no, sprite: dialogButton('Cancel') }],
                             textScale: scale.value,
                             onAction: data => answer(data?.name), onError: error => { view.error = String(error?.message ?? error); view.ready = true; } })])
+                        // An error is shown in the theme's own message box with one OK button, like the game's notices.
+                        : view.error && !view.plainError
+                        ? h('div', { style: { zoom: scale.value } }, [h(BfMessageBox, { title: text.open, text: view.error,
+                            buttons: [{ name: 'ok', label: 'OK', sprite: dialogButton('Ok') }], textScale: scale.value,
+                            onAction: () => { view.error = ''; }, onError: () => { view.plainError = true; } })])
                         : [view.prepared && appearance.value
                         // Built ahead and kept invisible until open and every part has drawn, so it never appears
                         // half-built; while closed it takes no room and no input.
@@ -392,9 +416,14 @@ export default async function setup({ vue, components, theme, locale, buildConte
                             onError: error => { view.error = String(error?.message ?? error); view.ready = true; },
                         })]) : null,
                         // The room button appears only once drawn, like the editor; then the editor is prepared.
-                        !view.open && shown.value ? h(RoomButton, { key: 'room-button' }) : null],
+                        !view.open && shown.value
+                            ? buttonLook?.theme
+                                ? h(BfUiProvider, { key: 'room-button', theme: buttonLook.theme, resourceRoot: uiRoot, sound: true,
+                                    onError: error => { view.error = String(error?.message ?? error); view.ready = true; } }, { default: () => h(RoomButton) })
+                                : h(RoomButton, { key: 'room-button' })
+                            : null],
                 }),
-                view.error ? h('p', { role: 'alert', class: 'ban-pick-room-error', onClick: () => { view.error = ''; },
+                view.error && view.plainError ? h('p', { role: 'alert', class: 'ban-pick-room-error', onClick: () => { view.error = ''; view.plainError = false; },
                     style: 'position:absolute;left:50%;bottom:8px;transform:translateX(-50%);margin:0;padding:4px 10px;border-radius:4px;background:#7a1f1f;color:#fff;font:12px sans-serif;cursor:pointer' }, view.error) : null,
             ]);
         },

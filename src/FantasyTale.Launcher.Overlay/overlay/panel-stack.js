@@ -1,7 +1,8 @@
 // Map insertion order breaks ties within a layer and is updated on activation.
 export function orderedPanels(panels) {
     return [...panels.values()].filter(p => p.host.classList.contains('visible'))
-        .sort((a, b) => Number(a.modal) - Number(b.modal) || a.layer - b.layer);
+        // A notice is never an input owner but always draws above every other surface, modal ones included.
+        .sort((a, b) => Number(a.notice === true) - Number(b.notice === true) || Number(a.modal) - Number(b.modal) || a.layer - b.layer);
 }
 
 export function inputPanels(shown) {

@@ -12,6 +12,7 @@ export {default as BfButton} from './components/BfButton.vue';
 export {default as BfControl} from './components/BfControl.vue';
 export {default as BfGamePage} from './components/BfGamePage.vue';
 export {default as BfMessageBox} from './components/BfMessageBox.vue';
+export {default as BfNotifyBox} from './components/BfNotifyBox.vue';
 export {default as BfDialog} from './components/BfDialog.vue';
 export {default as BfExtensionSettings} from './components/BfExtensionSettings.vue';
 export {default as BfBanPick} from './components/BfBanPick.vue';

@@ -182,6 +182,9 @@ public partial class OverlayWindow : Window
     /// <summary>Fires when the overlay page posts a message to the host.</summary>
     public event EventHandler<string>? MessageFromPage;
 
+    /// <summary>Fires when the overlay page reports what it shows over the game.</summary>
+    public event EventHandler<OverlayPresentation>? PresentationReported;
+
     /// <summary>Posts a raw JSON string to the overlay page's message handler.</summary>
     public void PostMessage(string json)
     {
@@ -329,6 +332,8 @@ public partial class OverlayWindow : Window
                         else SynchronizeGameWindow();
                         UpdateInputRouting();
                         if (_lastVisible != true) _ = SuspendWhenIdleAsync();
+                        try { PresentationReported?.Invoke(this, OverlayPresentation.FromState(message.RootElement)); }
+                        catch (FormatException) { OverlayLifecycleLog.Write("presentation-report-malformed"); }
                         return;
                     }
                     if (type.GetString() != "page-ready") { MessageFromPage?.Invoke(this, raw); return; }

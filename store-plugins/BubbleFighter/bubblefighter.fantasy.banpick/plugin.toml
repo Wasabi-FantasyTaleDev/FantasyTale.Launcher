@@ -2,7 +2,7 @@ schema = 2
 
 [plugin]
 id = "bubblefighter.fantasy.banpick"
-version = "0.2.2"
+version = "0.2.5"
 game = "bubblefighter"
 kind = "overlay"
 minimum_launcher_version = "0.1.71"

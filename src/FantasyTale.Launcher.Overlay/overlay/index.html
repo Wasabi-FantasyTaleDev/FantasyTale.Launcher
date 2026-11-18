@@ -155,6 +155,12 @@ function reportPresentation(force = false) {
             const r = p.host.getBoundingClientRect();
             return { x: r.x, y: r.y, width: r.width, height: r.height };
         }),
+        // Everything shown except the overlay's own notice, so owners can tell what covers the game.
+        surfaces: shown.filter(p => p.notice !== true).map(p => {
+            const r = p.host.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height, modal: !!p.modal, backdrop: !!p.backdrop };
+        }),
+        viewport: { width: innerWidth, height: innerHeight },
     });
     if (force === true || state !== lastPresentation) {
         lastPresentation = state;
@@ -167,6 +173,39 @@ function hidePanel(entry) {
     entry.host.classList.remove('visible');
     entry.dragging = false;
     reportPresentation();
+}
+
+// The part of the client where the game draws its own notification box: its middle band. A shown modal or scrim, or
+// any surface reaching into that band, hides the native box, so the overlay draws the notice there instead.
+const NATIVE_NOTICE_AREA = { left: 0.2, top: 0.2, right: 0.8, bottom: 0.8 };
+function coversNativeNotice() {
+    const w = innerWidth, h = innerHeight;
+    return orderedPanels(panels).some(p => {
+        if (p.notice === true) return false;
+        if (p.modal || p.backdrop) return true;
+        const r = p.host.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.left < w * NATIVE_NOTICE_AREA.right && r.right > w * NATIVE_NOTICE_AREA.left
+            && r.top < h * NATIVE_NOTICE_AREA.bottom && r.bottom > h * NATIVE_NOTICE_AREA.top;
+    });
+}
+
+// One overlay-owned notification box (the client's NotifyBox) above every surface; a new notice replaces the shown one.
+const NOTICE_PANEL = 'local.notify-box';
+let noticeTimer = 0;
+async function showNotifyBox(text, durationMs) {
+    if (typeof text !== 'string' || !text || text.length > 2048) throw new Error('Invalid notice text.');
+    const ms = Number.isFinite(durationMs) ? Math.min(Math.max(durationMs, 1000), 15000) : 3000;
+    const entry = panels.get(NOTICE_PANEL) ?? createPanel(NOTICE_PANEL,
+        '<style>:host{left:50%;top:40%;transform:translate(-50%,-50%)}</style><div data-game-ui-root></div>');
+    entry.notice = true;
+    await window.overlayBus.mountGameUi(NOTICE_PANEL, 'BfNotifyBox', { text });
+    entry.requestedVisible = true;
+    entry.host.classList.add('visible');
+    reportPresentation();
+    playSound(NOTICE_PANEL, 'notification');
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => hidePanel(entry), ms);
+    return ms;
 }
 
 function updateAnchor(entry) {
@@ -423,6 +462,21 @@ window.overlayBus = {
                 const reply = await call('capabilities', {});
                 return reply.status === 'completed'
                     && (reply.result?.operations ?? []).some(op => op.kind === kind && op.supported && op.ready);
+            },
+            /**
+             * Shows a buttonless notice: the game's own notification when Game Control Support can show it and no
+             * overlay surface covers where the game draws it, otherwise the overlay's NotifyBox above every surface.
+             * Resolves { status: 'shown' | 'failed', presenter: 'native' | 'overlay' | null }.
+             */
+            async notify(text, { durationMs } = {}) {
+                if (!coversNativeNotice() && await entry.nativeUi.available('notification')) {
+                    const operationId = 'notice-' + crypto.randomUUID().replaceAll('-', '');
+                    const reply = await call('invoke', { request: { operationId, kind: 'notification', text: String(text).slice(0, 2048) } });
+                    if (reply.status === 'completed' && !['unsupported', 'notReady', 'busy', 'failed', 'operationUnavailable']
+                        .includes(reply.result?.status)) return { status: 'shown', presenter: 'native' };
+                }
+                try { await showNotifyBox(String(text).slice(0, 2048), durationMs); return { status: 'shown', presenter: 'overlay' }; }
+                catch (error) { console.error(error); return { status: 'failed', presenter: null }; }
             },
         };
         return entry.nativeUi;
@@ -698,6 +752,13 @@ async function handleMessage(e) {
             if (msg.name === 'game-ui.interactive') {
                 entry.interactive = msg.data?.interactive === true;
                 reportPresentation();
+                break;
+            }
+            if (msg.name === 'game-ui.notify-box') {
+                // An owner's notice goes to the shared NotifyBox; the owner's panel only reports when it closes.
+                const ms = await showNotifyBox(msg.data?.text, Number(msg.data?.durationMs));
+                window.overlayBus.emit(panelId, 'game-ui.mounted');
+                setTimeout(() => { if (panels.has(panelId)) window.overlayBus.emit(panelId, 'game-ui.close'); }, ms);
                 break;
             }
             if (msg.name === 'game-ui.message-box') {

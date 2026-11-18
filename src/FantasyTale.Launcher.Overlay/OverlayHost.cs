@@ -54,6 +54,25 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
 
     internal event EventHandler? Ready;
 
+    private OverlayPresentation _presentation = OverlayPresentation.Hidden;
+
+    /// <inheritdoc />
+    public OverlayPresentation Presentation => Volatile.Read(ref _presentation);
+
+    /// <inheritdoc />
+    public event EventHandler? PresentationChanged;
+
+    private void OnPresentationReported(object? sender, OverlayPresentation presentation)
+    {
+        if (Equivalent(Volatile.Read(ref _presentation), presentation)) return;
+        Volatile.Write(ref _presentation, presentation);
+        PresentationChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    // Records compare lists by reference; two reports with the same surfaces are the same presentation.
+    private static bool Equivalent(OverlayPresentation a, OverlayPresentation b) => a.Visible == b.Visible
+        && a.ViewportWidth == b.ViewportWidth && a.ViewportHeight == b.ViewportHeight && a.Surfaces.SequenceEqual(b.Surfaces);
+
     /// <summary>Raised when a registered panel emits an event from its page.</summary>
     internal event EventHandler<OverlayMessageEventArgs>? PanelMessageReceived;
 
@@ -81,6 +100,7 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
         Application.Current.MainWindow = _window;
         _window.NavigationReady  += OnNavigationReady;
         _window.MessageFromPage  += OnMessageFromPage;
+        _window.PresentationReported += OnPresentationReported;
         _window.Show();
     }
 
@@ -145,6 +165,7 @@ public sealed class OverlayHost : IOverlayHost, IDisposable
         {
             _window.NavigationReady -= OnNavigationReady;
             _window.MessageFromPage -= OnMessageFromPage;
+            _window.PresentationReported -= OnPresentationReported;
             _window.Close();
             _window = null;
         }

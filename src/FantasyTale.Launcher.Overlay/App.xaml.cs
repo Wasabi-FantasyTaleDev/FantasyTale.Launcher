@@ -57,6 +57,7 @@ public partial class App : Application
             _pipeLifetime = pipeLifetime;
             overlayHost.PanelMessageReceived += (_, args) => _ = SendPageEventAsync(args, pipeLifetime.Token);
             overlayHost.Ready += (_, _) => _ = SendReadyAsync(pipeLifetime.Token);
+            overlayHost.PresentationChanged += (_, _) => _ = SendPresentationAsync(overlayHost.Presentation, pipeLifetime.Token);
             _ = ConnectAsync(pipeName, launchId, version, gamePid, pipeLifetime.Token);
         }
     }
@@ -191,6 +192,34 @@ public partial class App : Application
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or KeyNotFoundException or JsonException)
         {
             await WriteResponseAsync(pipe, requestId, false, error.Message, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // The launcher reads the same report shape the page posts (OverlayPresentation.FromState).
+    private async Task SendPresentationAsync(OverlayPresentation presentation, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var pipe = _pipe;
+            if (pipe is null || cancellationToken.IsCancellationRequested) return;
+            await WriteFrameAsync(pipe, JsonSerializer.Serialize(new
+            {
+                type = "presentation",
+                state = new
+                {
+                    visible = presentation.Visible,
+                    viewport = new { width = presentation.ViewportWidth, height = presentation.ViewportHeight },
+                    surfaces = presentation.Surfaces.Select(surface => new
+                    {
+                        x = surface.X, y = surface.Y, width = surface.Width, height = surface.Height,
+                        modal = surface.Modal, backdrop = surface.Backdrop,
+                    }).ToArray(),
+                },
+            }), cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception error) when (error is IOException or OperationCanceledException or ObjectDisposedException)
+        {
+            _ = error;
         }
     }
 

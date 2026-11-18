@@ -100,6 +100,8 @@ public sealed class CompanionNativeUiRequests : IAsyncDisposable
     private async Task<bool> TryNativeAsync(string operationId, GameNativeUiRequest request, CancellationToken connectionToken)
     {
         if (_native is null) return false;
+        // The game's own box would be hidden behind an overlay surface; the overlay draws it on top instead.
+        if (request.Kind is "messageBox" or "notification" && _overlay?.Presentation.CoversNativeNotice() == true) return false;
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token, connectionToken);
         GameNativeUiResult submitted;
         var invoking = false;
@@ -177,6 +179,14 @@ public sealed class CompanionNativeUiRequests : IAsyncDisposable
         try
         {
             await _overlay!.WaitUntilReadyAsync(connectionToken).ConfigureAwait(false);
+            if (request.Kind == "notification")
+            {
+                // A notification is the client's buttonless NotifyBox; it has no answer beyond being shown.
+                await _overlay.ShowNotifyBoxAsync(_namespace + "." + Guid.NewGuid().ToString("N")[..8], request.Text,
+                    cancellationToken: connectionToken).ConfigureAwait(false);
+                Queue(operationId, "shown", "overlay", null, connectionToken);
+                return;
+            }
             var buttons = request.Kind == "messageBox" ? request.Buttons : [new GameNativeUiButton("ok", "OK")];
             var done = new TaskCompletionSource<(string Status, string? Button)>(TaskCreationOptions.RunContinuationsAsynchronously);
             panel = _overlay.CreateGameUiPanel(_namespace + "." + Guid.NewGuid().ToString("N")[..8], interactive: true, modal: true);
