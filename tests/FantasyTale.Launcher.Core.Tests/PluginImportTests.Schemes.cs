@@ -34,6 +34,40 @@ public sealed partial class PluginImportTests
     }
 
     [Fact]
+    public async Task ResolvedSchemeRowsAreAcceptedUnchangedByApplyScheme()
+    {
+        // The frontend sends plugins.resolveScheme's reply straight to plugins.applyScheme; every field the backend
+        // writes into a selection row (including grants) must therefore pass applyScheme's parameter check.
+        var game = Game();
+        var data = Path.Combine(_root, "scheme-round-trip-data");
+        var store = new InstanceStore(Path.Combine(data, "instances"));
+        using (var library = new PluginLibrary(Path.Combine(data, "plugins")))
+            library.Install(library.Prepare(Folder(), game).Token, game, game.Builds[0]);
+        var instance = await store.CreateAsync(new("client", "Client", game.Id, game.Builds[0].Id, null,
+            [new("fixture.optional", "1.0.0", true, false, new Dictionary<string, object>())]));
+        await using var backend = new LauncherBackend(Path.Combine(_root, "games"), data);
+        var replies = new System.Collections.Concurrent.ConcurrentQueue<JsonNode>();
+        var bridge = new BridgeRouter(raw => replies.Enqueue(JsonNode.Parse(raw)!)); backend.Register(bridge);
+        long sequence = 0;
+        async Task<JsonNode> Call(string method, object arguments)
+        {
+            var id = ++sequence;
+            await bridge.HandleAsync(JsonSerializer.Serialize(new { id, method, @params = arguments }), default);
+            return replies.Single(row => row["id"]?.GetValue<long>() == id);
+        }
+        var resolved = await Call("plugins.resolveScheme", new { instanceId = instance.Id,
+            plugins = instance.Plugins.Select(plugin => new { id = plugin.Id, version = plugin.Version, enabled = plugin.Enabled, options = plugin.Options }) });
+        Assert.Null(resolved["error"]);
+        var rows = resolved["result"]!.AsArray();
+        Assert.Contains(rows, row => row!.AsObject().ContainsKey("grants"));
+        var applied = await Call("plugins.applyScheme", new { instanceId = instance.Id, plugins = rows });
+        Assert.Null(applied["error"]);
+        var unknown = await Call("plugins.applyScheme", new { instanceId = instance.Id,
+            plugins = new[] { new { id = "fixture.optional", version = "1.0.0", enabled = true, options = new { }, extra = 1 } } });
+        Assert.Equal("Unknown parameter.", unknown["error"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task UnchangedSchemesAndInventoryRemainReadableWhileRealEditsReportTheLeaseContext()
     {
         var game = Game();

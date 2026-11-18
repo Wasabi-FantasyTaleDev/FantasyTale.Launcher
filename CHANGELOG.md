@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 (2026-11-17)
+
+Fixes
+- After updating to 0.2.1, the launcher showed "Unknown parameter." right at startup and games could not be launched: applying a client's plugin scheme sent back a field the launcher itself had added and then refused it. Plugin schemes apply again and games launch as before.
+
 ## 0.2.1 (2026-11-17)
 
 Developer tools

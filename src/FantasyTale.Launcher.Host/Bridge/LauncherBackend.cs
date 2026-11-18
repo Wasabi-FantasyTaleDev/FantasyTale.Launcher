@@ -1469,7 +1469,9 @@ internal sealed partial class LauncherBackend : IAsyncDisposable
     private static InstancePlugin[] ReadSchemeSelections(JsonNode? parameters) =>
         (parameters?["plugins"] as JsonArray ?? throw new ArgumentException("Missing plugin selections.")).Select(row =>
         {
-            Keys(row, "id", "version", "enabled", "required", "options");
+            // "grants" is part of the rows plugins.resolveScheme returns, so the frontend sends it back unchanged; the
+            // backend records grants itself and never takes them from a selection, so the value is ignored here.
+            Keys(row, "id", "version", "enabled", "required", "options", "grants");
             return new InstancePlugin(Text(row, "id"), Text(row, "version"),
                 row?["enabled"]?.GetValue<bool>() ?? throw new ArgumentException("Missing plugin enabled state."), false, ReadOptions(row?["options"]));
         }).ToArray();
